@@ -28,7 +28,7 @@ int main() {
 	}
 
 	glfwMakeContextCurrent(Win.window);
-
+	 
 	DXM.hwnd = glfwGetWin32Window(Win.window);
 	
 	DXM.StartUpLogic();

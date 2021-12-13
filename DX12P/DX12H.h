@@ -18,6 +18,6 @@ struct MainDX12Objects {
 
 
 	void StartUpLogic() {
-
+		 
 	}
 }DXM;
