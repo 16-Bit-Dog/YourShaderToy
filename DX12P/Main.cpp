@@ -1,5 +1,7 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
+#define START_WIDTH 800
+#define START_HEIGHT 800
 
 #include <iostream>
 #include <../GLFW/glfw3.h>
@@ -9,49 +11,40 @@
 
 struct MainDX12Objects;
 struct GLFW_Window_C;
+struct AllWindowDrawLoop;
 
 int Start() {
-	Win.FillDXMWithGLFW(&DXM);
+
 	DXM.RendererStartUpLogic();
 	return 0;
 }
 
-int Close() {
-
-	return 0;
-}
-
 int runMain() {
-	while (!glfwWindowShouldClose(Win.window)) {
+	while (!glfwWindowShouldClose(MainWin.window)) {
 
-	}
+	} 
 	return 0;
 }
 
-void MainLogic() {
-	Start();
-	runMain();
-	Close();
-}
 
 int GLFWPreLogic() {
 	glfwInit();
+	
+	DXM.RendererStartUpLogic();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	Win.window = glfwCreateWindow(800, 800, "DX12_App", NULL, NULL);
 
-	if (Win.window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(Win.window);
+	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "Title");
+
+	GLFW_Window_C AnotherWin;
+	AnotherWin.CreateWindowM(START_WIDTH, START_HEIGHT / 2, "Title");
+
+	
+	AllWin.LoopRunAllContext();
+
 	return 0;
 }
 
 int main() {
-	if (GLFWPreLogic() == 0) {
-		MainLogic();
-	}
+	GLFWPreLogic();
 }
