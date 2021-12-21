@@ -4,6 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <functional>
+#include <map>
+#include <cstdint>
 #include <../GLFW/glfw3.h>
 #include <../GLFW/glfw3native.h>
 #include <../Renderer/DX12H.h>
@@ -12,8 +15,17 @@
 #include <../imGUI/imgui_impl_dx12.h>
 
 
+//main window in focus is window 0 -- C_GUI Win[0] -- You click to swap the main - each window must have min of 1 of these. Make Way to delete these contexts
+
+//make it so each window has a + icon to add sub context -- vector holds pointer to current context 
+//(which you switch around as you switch tabs). new context can be closed. has specific state info. 
+//window is imGUI size if not GAME or SCENE type 
+
+struct GroupData;
+
 void CreateimGUIContext() {
-	IM_ASSERT(ImGui::GetCurrentContext() != NULL && "Missing dear imgui context. Refer to examples app!");
+	//ImGui::CreateContext();
+	//ImGuiIO& io = ImGui::GetIO();
 
 	static bool no_titlebar = false;
 	static bool no_scrollbar = false;
@@ -39,9 +51,9 @@ void CreateimGUIContext() {
 	if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 	if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
 	
-	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+//	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+//	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+//	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
 
 
 }
@@ -50,37 +62,90 @@ enum WIN_TYPE { // not used for now, but important to share all "scene" data for
 	W_SETTING = 1,
 	W_SCENE = 2,
 	W_EDITOR = 3,
-	W_OBJECT = 4,
+	W_OBJECTS = 4,
 };
 
 
 
 struct MainDX12Objects;
 
+//TODO: make ID for object values to read from GroupData* GD, and add to map accordingly, default 0, else read from (And use consistant BUTTON ID) for new buttons
+
 struct MASTER_Setting {
 
+	void BasicViewDraw(GroupData* GD) {
 
+	}
 
-};
+}MASTER_Setting_m;
 struct MASTER_Scene {
 
+	void BasicViewDraw(GroupData* GD) {
 
+	}
 
-};
+}MASTER_Scene_m;
 struct MASTER_Editor {
 
+	void BasicViewDraw(GroupData* GD) {
 
+	}
 
-};
+}MASTER_Editor_m;
 struct MASTER_Objects {
 
+	void BasicViewDraw(GroupData* GD) {
+
+	}
+
+}MASTER_Objects_m;
 
 
+struct GroupData {
+	//the idea of this struct:
+	/*
+	when ever it moves - the pointer is passed
+	if associated tab is closed, this is deleted :TODO:
+
+	has map of uint to int which holds values of button unique id's from MASTER_*GUI_type* -- this value has the goal to set per window values to allow seperate views of things:
+	ex: expand a menu in 1 MASTER_SETTING tab, but in another have that menu not expanded. This allows Unity style syncronous work to be faster when looking at shader to make
+	//if ID does not exist it defaults it to 0 int value, and sets the UINT so it now exists
+	*/
+
+
+	int WindowType = 0;
+
+	std::function<void()> ToDraw;
+
+	std::map < UINT, int> BidI; //button id associated with for
+
+	
+
+	void LinkToSettings() {
+		WindowType = W_SETTING;
+		
+		ToDraw = [&]() { MASTER_Setting_m.BasicViewDraw(this); };
+	}
+	void LinkToScene() {
+		WindowType = W_SCENE;
+
+		ToDraw = [&]() { MASTER_Scene_m.BasicViewDraw(this); };
+	}
+	void LinkToEditor() {
+		WindowType = W_EDITOR;
+	
+		ToDraw = [&]() { MASTER_Editor_m.BasicViewDraw(this); };
+	}
+	void LinkToObjects() {
+		WindowType = W_OBJECTS;
+
+		ToDraw = [&]() { MASTER_Objects_m.BasicViewDraw(this); };
+	}
 };
 
 struct GLFW_Window_C {
 
-	UINT WinType = W_SCENE;
+	std::vector<GroupData*> C_GUI_Win;//GroupData* - window group associated with GLFW Object windows to allow tab stacking -[0] is your current tab
 
 	UINT id = -1;
 
@@ -97,9 +162,11 @@ struct GLFW_Window_C {
 
 	void RemoveWindowFromAllWindowList();
 
+	void RemoveAssociatedGUIFromWindowObj();
+
 	void FillDXMWithNewGLFW();
 
-	int CreateWindowM(int Swidth, int Sheight, std::string Stitle);
+	int CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType);
 
 	int RunWindowLogic();
 
@@ -115,10 +182,16 @@ struct AllWindowDrawLoop{
 
 }AllWin;
 
+void GLFW_Window_C::RemoveAssociatedGUIFromWindowObj() {
+	for (int i = 0; i < C_GUI_Win.size(); i++) {
+		delete C_GUI_Win[i];
+	}
+
+	C_GUI_Win.empty();
+}
+
 void GLFW_Window_C::RemoveWindowFromAllWindowList() {
-	AllWin.WinList.erase(AllWin.WinList.begin()+id);
-	
-	
+	AllWin.WinList.erase(AllWin.WinList.begin()+id);	
 }
 void GLFW_Window_C::CleanSwapChain() {
 	DXM.m_renderTargets.erase(DXM.m_renderTargets.begin()+id);
@@ -138,8 +211,12 @@ void GLFW_Window_C::FillDXMWithNewGLFW() {
 	DXM.MakeNewWindowSwapChainAndAssociate(glfwGetWin32Window(window), Width, Height);
 }
 
-int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle) {
+int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
 	if (Created == false) {
+		C_GUI_Win.push_back(new GroupData());
+
+		C_GUI_Win[0]->WindowType = WinType;
+
 		Width = Swidth;
 		Height = Sheight;
 		title = Stitle;
@@ -179,10 +256,8 @@ int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
 	
 	//basic window Startup
-	
 
-
-	switch(WinType) {
+	switch(C_GUI_Win[0]->WindowType) {
 	case W_SETTING:
 		//
 		break;
@@ -195,18 +270,20 @@ int GLFW_Window_C::RunWindowLogic() {
 		//
 		break;
 
-	case W_OBJECT:
+	case W_OBJECTS:
 		//
 		break;
 
 	}
 		
+	C_GUI_Win[0]->ToDraw();
 
 	return -1;
 }
 
 void GLFW_Window_C::KillWindow() {
 	CleanSwapChain();
+	RemoveAssociatedGUIFromWindowObj();
 	RemoveWindowFromAllWindowList();
 	glfwDestroyWindow(window);
 }
@@ -220,15 +297,13 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 	
 	while (!glfwWindowShouldClose(WinList[0]->window)) {
 		
-		IM_ASSERT(ImGui::GetCurrentContext() != NULL && "Missing dear imgui context. Refer to examples app!");
-
 		for (int i = 0; i < WinList.size(); i++) {
-			if (glfwWindowShouldClose(WinList[i]->window)) {
+			if (glfwWindowShouldClose(WinList[i]->window) || WinList[i]->C_GUI_Win.size()==0) {
 				KillWindowObj(WinList[i]);
+				i -= 1;
 			}
 		}
 		for (int i = 0; i < WinList.size(); i++) {
-
 			WinList[i]->id = i;
 		}
 		for (int i = 0; i < WinList.size(); i++) {

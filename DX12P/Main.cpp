@@ -34,7 +34,7 @@ int GLFWPreLogic() {
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "Title");
+	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
 
 	GLFW_Window_C AnotherWin;
 	AnotherWin.CreateWindowM(START_WIDTH, START_HEIGHT / 2, "Title");
