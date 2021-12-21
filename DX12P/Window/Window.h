@@ -11,6 +11,41 @@
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx12.h>
 
+
+void CreateimGUIContext() {
+	IM_ASSERT(ImGui::GetCurrentContext() != NULL && "Missing dear imgui context. Refer to examples app!");
+
+	static bool no_titlebar = false;
+	static bool no_scrollbar = false;
+	static bool no_menu = false;
+	static bool no_move = false;
+	static bool no_resize = false;
+	static bool no_collapse = false;
+	static bool no_close = false;
+	static bool no_nav = false;
+	static bool no_background = false;
+	static bool no_bring_to_front = false;
+	static bool unsaved_document = false;
+	
+	ImGuiWindowFlags window_flags = 0;
+	if (no_titlebar)        window_flags |= ImGuiWindowFlags_NoTitleBar;
+	if (no_scrollbar)       window_flags |= ImGuiWindowFlags_NoScrollbar;
+	if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
+	if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
+	if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
+	if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
+	if (no_nav)             window_flags |= ImGuiWindowFlags_NoNav;
+	if (no_background)      window_flags |= ImGuiWindowFlags_NoBackground;
+	if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+	if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
+	
+	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+
+
+}
+
 enum WIN_TYPE { // not used for now, but important to share all "scene" data for the most part
 	W_SETTING = 1,
 	W_SCENE = 2,
@@ -127,8 +162,26 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle) {
 	}
 }
 
+void SettingWindowLogic() {
+
+}
+void SceneWindowLogic() {
+
+}
+void EditorWindowLogic() {
+
+}
+void ObjectWindowLogic() {
+
+}
+
 int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
+	
+	//basic window Startup
+	
+
+
 	switch(WinType) {
 	case W_SETTING:
 		//
@@ -155,6 +208,7 @@ int GLFW_Window_C::RunWindowLogic() {
 void GLFW_Window_C::KillWindow() {
 	CleanSwapChain();
 	RemoveWindowFromAllWindowList();
+	glfwDestroyWindow(window);
 }
 
 void KillWindowObj(GLFW_Window_C* winObj) {
@@ -162,7 +216,11 @@ void KillWindowObj(GLFW_Window_C* winObj) {
 }
 
 void AllWindowDrawLoop::LoopRunAllContext() {
+	CreateimGUIContext();
+	
 	while (!glfwWindowShouldClose(WinList[0]->window)) {
+		
+		IM_ASSERT(ImGui::GetCurrentContext() != NULL && "Missing dear imgui context. Refer to examples app!");
 
 		for (int i = 0; i < WinList.size(); i++) {
 			if (glfwWindowShouldClose(WinList[i]->window)) {
