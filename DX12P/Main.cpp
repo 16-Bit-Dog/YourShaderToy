@@ -36,8 +36,8 @@ int GLFWPreLogic() {
 
 	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
 
-	GLFW_Window_C AnotherWin;
-	AnotherWin.CreateWindowM(START_WIDTH, START_HEIGHT / 2, "Title");
+	//GLFW_Window_C AnotherWin;
+	//AnotherWin.CreateWindowM(START_WIDTH, START_HEIGHT / 2, "Title");
 
 	
 	AllWin.LoopRunAllContext();

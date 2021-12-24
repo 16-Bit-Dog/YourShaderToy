@@ -39,6 +39,9 @@
     <ClCompile Include="imGUI\imgui_widgets.cpp">
       <Filter>Header Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="imGUI\imgui_demo.cpp">
+      <Filter>Header Files\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer\DX12H.h">

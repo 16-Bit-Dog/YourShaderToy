@@ -10,10 +10,13 @@
 #include <../GLFW/glfw3.h>
 #include <../GLFW/glfw3native.h>
 #include <../Renderer/DX12H.h>
+
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx12.h>
 
+
+//TODO: use glfwGetFramebufferSize and get window size and set DX + more
 
 //main window in focus is window 0 -- C_GUI Win[0] -- You click to swap the main - each window must have min of 1 of these. Make Way to delete these contexts
 
@@ -23,40 +26,7 @@
 
 struct GroupData;
 
-void CreateimGUIContext() {
-	//ImGui::CreateContext();
-	//ImGuiIO& io = ImGui::GetIO();
 
-	static bool no_titlebar = false;
-	static bool no_scrollbar = false;
-	static bool no_menu = false;
-	static bool no_move = false;
-	static bool no_resize = false;
-	static bool no_collapse = false;
-	static bool no_close = false;
-	static bool no_nav = false;
-	static bool no_background = false;
-	static bool no_bring_to_front = false;
-	static bool unsaved_document = false;
-	
-	ImGuiWindowFlags window_flags = 0;
-	if (no_titlebar)        window_flags |= ImGuiWindowFlags_NoTitleBar;
-	if (no_scrollbar)       window_flags |= ImGuiWindowFlags_NoScrollbar;
-	if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
-	if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
-	if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
-	if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
-	if (no_nav)             window_flags |= ImGuiWindowFlags_NoNav;
-	if (no_background)      window_flags |= ImGuiWindowFlags_NoBackground;
-	if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-	if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
-	
-//	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-//	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
-//	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
-
-
-}
 
 enum WIN_TYPE { // not used for now, but important to share all "scene" data for the most part
 	W_SETTING = 1,
@@ -65,6 +35,73 @@ enum WIN_TYPE { // not used for now, but important to share all "scene" data for
 	W_OBJECTS = 4,
 };
 
+struct MASTER_IM_GUI {
+	ImGuiContext* GUIContext; // global for global use
+	bool RendererMade = false;
+	GLFWwindow* window;
+
+	void SetGUIWindow(GLFWwindow* w) {
+		window = w;
+	}
+
+	void SetAndCreateimGUIContext(GLFWwindow* w) {
+		SetGUIWindow(w);
+		if (RendererMade == false) {
+			GUIContext = ImGui::CreateContext();
+			ImGuiIO& GUIio = ImGui::GetIO();
+			GUIio.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+			GUIio.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+			static bool no_titlebar = false;
+			static bool no_scrollbar = false;
+			static bool no_menu = false;
+			static bool no_move = false;
+			static bool no_resize = false;
+			static bool no_collapse = false;
+			static bool no_close = false;
+			static bool no_nav = false;
+			static bool no_background = false;
+			static bool no_bring_to_front = false;
+			static bool unsaved_document = false;
+
+			ImGuiWindowFlags window_flags = 0;
+			if (no_titlebar)        window_flags |= ImGuiWindowFlags_NoTitleBar;
+			if (no_scrollbar)       window_flags |= ImGuiWindowFlags_NoScrollbar;
+			if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
+			if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
+			if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
+			if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
+			if (no_nav)             window_flags |= ImGuiWindowFlags_NoNav;
+			if (no_background)      window_flags |= ImGuiWindowFlags_NoBackground;
+			if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+			if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
+
+			ImGuiStyle& style = ImGui::GetStyle();
+
+			style.WindowRounding = 0.0f;
+			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+
+
+			ImGui_ImplDX12_Init(DXM.m_device.Get(), DXM.FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, DXM.ImGUIHeap.Get(), DXM.ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), DXM.ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
+
+			ImGui_ImplGlfw_InitForOther(window, true);
+			RendererMade = true;
+
+			//	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+			//	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+			//	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+		}
+
+	}
+
+	void EndRender() {
+		ImGui::Render();
+
+		DXM.SetupAndSendimGUIData();
+	}
+
+}MASTER_IM_GUI_obj;
 
 
 struct MainDX12Objects;
@@ -117,7 +154,7 @@ struct GroupData {
 
 	std::function<void()> ToDraw;
 
-	std::map < UINT, int> BidI; //button id associated with for
+	std::map < UINT, int> BidI; //button id associated with for each i'm gui 
 
 	
 
@@ -155,6 +192,7 @@ struct GLFW_Window_C {
 	UINT Height = 0;
 
 	std::string title;
+
 
 	bool Created = false;
 
@@ -194,16 +232,6 @@ void GLFW_Window_C::RemoveWindowFromAllWindowList() {
 	AllWin.WinList.erase(AllWin.WinList.begin()+id);	
 }
 void GLFW_Window_C::CleanSwapChain() {
-	DXM.m_renderTargets.erase(DXM.m_renderTargets.begin()+id);
-	DXM.m_swapChain.erase(DXM.m_swapChain.begin() + id);
-	DXM.m_commandAllocator.erase(DXM.m_commandAllocator.begin() + id);
-	DXM.m_commandQueue.erase(DXM.m_commandQueue.begin() + id);
-	DXM.m_rtvHeap.erase(DXM.m_rtvHeap.begin() + id);
-	DXM.m_rtvDS.erase(DXM.m_rtvDS.begin() + id);
-	DXM.Width.erase(DXM.Width.begin() + id);
-	DXM.Height.erase(DXM.Height.begin() + id);
-	DXM.hwnd.erase(DXM.hwnd.begin() + id);
-	DXM.m_frameIndex.erase(DXM.m_frameIndex.begin() + id);
 	//clean swap chain+related from same index of this window inrelation to WinList which is your window id
 }
 
@@ -212,10 +240,11 @@ void GLFW_Window_C::FillDXMWithNewGLFW() {
 }
 
 int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
+	//kept this as a back bone from what I prev' did for window creation
 	if (Created == false) {
 		C_GUI_Win.push_back(new GroupData());
 
-		C_GUI_Win[0]->WindowType = WinType;
+		C_GUI_Win[0]->WindowType = WinType; // loop through all and make based on GroupData?
 
 		Width = Swidth;
 		Height = Sheight;
@@ -235,7 +264,6 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 		AllWin.WinList.push_back(this);
 
 		FillDXMWithNewGLFW();
-
 	}
 }
 
@@ -255,28 +283,21 @@ void ObjectWindowLogic() {
 int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
 	
-	//basic window Startup
+	{ //ex app
+		static float f = 0.0f;
+		static int counter = 0;
 
-	switch(C_GUI_Win[0]->WindowType) {
-	case W_SETTING:
-		//
-		break;
+		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-	case W_SCENE:
-		//
-		break;
-
-	case W_EDITOR:
-		//
-		break;
-
-	case W_OBJECTS:
-		//
-		break;
-
-	}
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		
-	C_GUI_Win[0]->ToDraw();
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+	}
+	ImGui::ShowDemoWindow();
 
 	return -1;
 }
@@ -293,9 +314,13 @@ void KillWindowObj(GLFW_Window_C* winObj) {
 }
 
 void AllWindowDrawLoop::LoopRunAllContext() {
-	CreateimGUIContext();
 	
+	glfwSwapInterval(1); //vsync
+
+	MASTER_IM_GUI_obj.SetAndCreateimGUIContext(WinList[0]->window);
+
 	while (!glfwWindowShouldClose(WinList[0]->window)) {
+
 		
 		for (int i = 0; i < WinList.size(); i++) {
 			if (glfwWindowShouldClose(WinList[i]->window) || WinList[i]->C_GUI_Win.size()==0) {
@@ -307,11 +332,18 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 			WinList[i]->id = i;
 		}
 		for (int i = 0; i < WinList.size(); i++) {
+
 				CurrWindow = i;
 
 				glfwMakeContextCurrent(WinList[i]->window);
 				glfwPollEvents();
+				ImGui_ImplDX12_NewFrame();
+				ImGui_ImplGlfw_NewFrame();
+				ImGui::NewFrame();
+
 				WinList[i]->RunWindowLogic();
+
+				MASTER_IM_GUI_obj.EndRender();
 		}
 		
 	}

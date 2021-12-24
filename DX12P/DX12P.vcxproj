@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="imGUI\imgui.cpp" />
+    <ClCompile Include="imGUI\imgui_demo.cpp" />
     <ClCompile Include="imGUI\imgui_draw.cpp" />
     <ClCompile Include="imGUI\imgui_impl_dx12.cpp" />
     <ClCompile Include="imGUI\imgui_impl_glfw.cpp" />
