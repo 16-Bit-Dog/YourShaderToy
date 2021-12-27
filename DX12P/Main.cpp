@@ -34,11 +34,9 @@ int GLFWPreLogic() {
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+	StartUpFillVecs(); // before first context do basic Setup
+
 	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
-
-	//GLFW_Window_C AnotherWin;
-	//AnotherWin.CreateWindowM(START_WIDTH, START_HEIGHT / 2, "Title");
-
 	
 	AllWin.LoopRunAllContext();
 

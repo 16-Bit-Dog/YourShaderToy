@@ -123,19 +123,6 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 	}
 }
 
-void SettingWindowLogic() {
-
-}
-void SceneWindowLogic() {
-
-}
-void EditorWindowLogic() {
-
-}
-void ObjectWindowLogic() {
-
-}
-
 int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
 	for (int i = 0; i < C_GUI_Win.size(); i++) {
@@ -145,11 +132,23 @@ int GLFW_Window_C::RunWindowLogic() {
 			i -= 1;
 		}
 	} //seperate loop in case I start wanting to assign unique ID's
+	for (int i = 0; i < C_GUI_Win.size(); i++) { //make new window
+		
+		for (int ii = 1; ii < Win_Type_ID_Vector.size() + 1;ii++) {
+			 
+			GroupData* TmpView = C_GUI_Win[i]->MakeNewMainWindowCheckAndDo(ii);
+			if (TmpView != nullptr) {
+				C_GUI_Win.push_back(TmpView);
+			}
+		
+		}
+		
+	}
 	for (int i = 0; i < C_GUI_Win.size(); i++) {
 		C_GUI_Win[i]->ToDraw();
 	}
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	return -1;
 }

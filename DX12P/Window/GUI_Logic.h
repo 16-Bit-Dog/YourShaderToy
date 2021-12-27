@@ -20,6 +20,7 @@ struct MainDX12Objects;
 UINT GLOBAL_WINDOW_ID = 0;
 
 UINT GLOBAL_WINDOW_ID_I() {
+	
 	GLOBAL_WINDOW_ID += 1;
 	return GLOBAL_WINDOW_ID-1;
 }
@@ -35,6 +36,8 @@ struct GroupData {
 	//if ID does not exist it defaults it to 0 int value, and sets the UINT so it now exists
 	*/
 
+	std::map<int, bool> NewWindowCreationHandle;
+
 	UINT ID = 0;
 
 	int WindowType = 0;
@@ -49,13 +52,37 @@ struct GroupData {
 	void LinkToScene();
 	void LinkToEditor();
 	void LinkToObjects();
+	int LinkBasedOnInt(int Input);
+	GroupData* MakeNewMainWindowCheckAndDo(int WindowType);
 };
+
+//
 enum WIN_TYPE { // not used for now, but important to share all "scene" data for the most part
 	W_SETTING = 1,
 	W_SCENE = 2,
 	W_EDITOR = 3,
 	W_OBJECTS = 4,
 };
+std::map<int, int> Win_Type_ID_Vector; // associated with Win_Type index for ease of adding more Win_type's
+std::map<int, std::string> Win_Type_Name_Vector; // associated with Win_Type index for ease of adding more Win_type's
+std::map<int, std::function<void(GroupData*)>> Win_Type_Initialization_Vector_Of_Type; //if int is equal, you run the function inside
+
+int Add_New_Win_Type(std::function<void(GroupData*)> InitializationFunction, std::string name) { //returns new win type
+	for (int i = Win_Type_ID_Vector.size() + 1; i >0; i++) {
+		if (Win_Type_ID_Vector.count(i) == 0) {
+
+			Win_Type_ID_Vector[i] = i;
+			Win_Type_Name_Vector[i] = name;
+			Win_Type_Initialization_Vector_Of_Type[i] = InitializationFunction;
+			
+			return i;
+		}
+	}
+
+	return 0;
+}
+//
+
 
 struct MASTER_IM_GUI {
 	ImGuiContext* GUIContext; // global for global use
@@ -110,7 +137,7 @@ struct MASTER_IM_GUI {
 
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-
+			
 
 
 			ImGui_ImplDX12_Init(DXM.m_device.Get(), DXM.FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, DXM.ImGUIHeap.Get(), DXM.ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), DXM.ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
@@ -131,32 +158,82 @@ struct MASTER_IM_GUI {
 		DXM.SetupAndSendimGUIData();
 	}
 
+	
+	//Settings that adjust with settings tab TODO:
+	
+	//Global Settings:
+	/*[All have Toggle option for USE_GLOBAL[Check box]*/
+	//Text: 
+	//TextSize
+	//TextColor
+	//TextFont - TTF file loader
+	//
+	//
+	//Window BackGround Color
+	//
+	
+	//Performance Settings:
+	//
+	//
+	//
+	//
+
 }MASTER_IM_GUI_obj;
 
 
 //TODO: make ID for object values to read from GroupData* GD, and add to map accordingly, default 0, else read from (And use consistant BUTTON ID) for new buttons
 
 struct MASTER_Function_Inherit {
-	ImGuiWindowFlags SettingWindowFlag;
+	ImGuiWindowFlags SettingWindowFlag; //DO NOT USE VARS FROM THIS STRUCT, ONLY FROM ALIAS OF THIS STRUCT
 
-	void DrawBasicDemoText(MASTER_Function_Inherit* WindowFlags, GroupData* GD) {
+	void DrawTopMenuBar(MASTER_Function_Inherit* WF, GroupData* GD) {
+		if (ImGui::BeginMenuBar()) {
+
+			if (ImGui::BeginMenu("New Window"))
+			{
+				for (const auto &i : Win_Type_Name_Vector) {
+					if (GD->NewWindowCreationHandle.count(i.first) == 0) { //new window bool set to false if not in map of new windows to be made bool map
+						GD->NewWindowCreationHandle[i.first] = false;
+					}
+					ImGui::MenuItem(i.second.c_str(), NULL, &GD->NewWindowCreationHandle[i.first]);
+				}
+				
+				ImGui::EndMenu();
+			}
+		
+			
+			ImGui::EndMenuBar();
+		}
+	}
+
+	bool DrawBasicWindow(MASTER_Function_Inherit* WF, GroupData* GD, std::string WindowName) {
 		if(GD->DontKillWindowBool){
-			if (!ImGui::Begin("This is a demo window" + GD->ID, &GD->DontKillWindowBool, WindowFlags->SettingWindowFlag)) {
+			if (!ImGui::Begin((WindowName+std::to_string(GD->ID)).c_str() /*This adds garbage to the end, but it is unique garbage which I use as an invisible 'id' to seperate closing tabs and such*/
+				, &GD->DontKillWindowBool, WF->SettingWindowFlag)) {
 				ImGui::End();
+				return false;
 			}
 			else {
-				ImGui::Text("This is some useful text.");
+				DrawTopMenuBar(WF, GD);
 
-				ImGui::SameLine();
-				ImGui::Text("counter = empty");
-
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::End();
+				//ImGui::Text("This is some useful text.");
+				//ImGui::SameLine();
+				//ImGui::Text("counter = empty");
+				//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				//ImGui::End();
+				return true;
 			}
 		}
 	}
 
 };
+/*
+STEPS TO MAKE NEW IMGUI WINDOW HANDLE FOR PROGRAM:
+1. make struct to inherit from MASTER_Function_Inherit with simmilar procedure to "MASTER_Setting" and associated
+2. call before using your new window struct Add_New_Win_Type([](GroupData* GDV) { MASTER_NEW-WINDOW-NAME_m.BasicViewDraw(GDV); }, "NEW-WINDOW-NAME");
+3. store the returned int as the window type ID
+and everything now works :thumbsup: -- TODO: Still need to make this easier by allowing easy acsess to the StartUpFillVecs() and adding custom extension 
+*/
 
 struct MASTER_Setting : MASTER_Function_Inherit {
 
@@ -174,9 +251,14 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 	}
 
 	void BasicViewDraw(GroupData* GD) {
+		if (DrawBasicWindow(this, GD, "Settings:")) {
 
-		DrawBasicDemoText(this, GD);
 
+
+
+			ImGui::End();
+		}
+		
 	}
 
 }MASTER_Setting_m;
@@ -196,9 +278,13 @@ struct MASTER_Scene : MASTER_Function_Inherit {
 	}
 
 	void BasicViewDraw(GroupData* GD) {
+		if (DrawBasicWindow(this, GD, "Scene:")) {
 
-		DrawBasicDemoText(this, GD);
 
+
+
+			ImGui::End();
+		}
 	}
 
 }MASTER_Scene_m;
@@ -218,9 +304,13 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	}
 
 	void BasicViewDraw(GroupData* GD) {
+		if (DrawBasicWindow(this, GD, "Editor:")) {
 
-		DrawBasicDemoText(this, GD);
 
+
+
+			ImGui::End();
+		}
 	}
 
 }MASTER_Editor_m;
@@ -240,35 +330,73 @@ struct MASTER_Objects : MASTER_Function_Inherit {
 	}
 
 	void BasicViewDraw(GroupData* GD) {
+		if (DrawBasicWindow(this, GD, "Objects:")) {
 
-		DrawBasicDemoText(this, GD);
 
+
+
+			ImGui::End();
+		}
 	}
 
 }MASTER_Objects_m;
 
-
-
-
-
 	void GroupData::LinkToSettings() {
 		WindowType = W_SETTING;
 
-		ToDraw = [&]() { MASTER_Setting_m.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Setting_m.BasicViewDraw(this); };
 	}
 	void GroupData::LinkToScene() {
 		WindowType = W_SCENE;
 
-		ToDraw = [&]() { MASTER_Scene_m.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Scene_m.BasicViewDraw(this); };
 	}
 	void GroupData::LinkToEditor() {
 		WindowType = W_EDITOR;
 
-		ToDraw = [&]() { MASTER_Editor_m.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Editor_m.BasicViewDraw(this); };
 	}
 	void GroupData::LinkToObjects() {
 		WindowType = W_OBJECTS;
 
-		ToDraw = [&]() { MASTER_Objects_m.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Objects_m.BasicViewDraw(this); };
+	}
+	int GroupData::LinkBasedOnInt(int Input) {
+		if (Win_Type_ID_Vector.count(Input)) {
+			WindowType = Input;
+			ToDraw = [this,Input]() {
+				Win_Type_Initialization_Vector_Of_Type[Input](this); 
+			};
+			return 1;
+		}
+		throw("Link Based On Int Fail");
+		return 0; //won't return since this is a FATAL flaw if it does not work
 	}
 
+	GroupData* GroupData::MakeNewMainWindowCheckAndDo(int WindowType = 1) {
+		//enter window type to check if needs to be made - this is individual
+		if (Win_Type_ID_Vector.count(WindowType)) {
+
+			if (NewWindowCreationHandle[WindowType] == true) {
+				
+				GroupData* TmpGUI_Win = new GroupData;
+				TmpGUI_Win->ID = GLOBAL_WINDOW_ID_I();
+				TmpGUI_Win->LinkBasedOnInt(WindowType);
+
+				NewWindowCreationHandle[WindowType] = false;
+
+				return TmpGUI_Win;
+			}
+
+			return nullptr;
+		}
+
+		return nullptr;
+	}
+
+	void StartUpFillVecs() {
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Setting_m.BasicViewDraw(GDV); }, "Settings");
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Scene_m.BasicViewDraw(GDV); }, "Scene");
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Editor_m.BasicViewDraw(GDV); }, "Editor");
+		Add_New_Win_Type([&](GroupData* GDV) { MASTER_Objects_m.BasicViewDraw(GDV);}, "Objects");
+	}
