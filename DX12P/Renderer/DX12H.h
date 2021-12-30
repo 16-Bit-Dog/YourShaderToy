@@ -123,6 +123,28 @@ struct MainDX12Objects {
 #endif
 
     }
+    void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter)
+    {
+        *ppAdapter = nullptr;
+        for (UINT adapterIndex = 0; ; ++adapterIndex)
+        {
+            IDXGIAdapter1* pAdapter = nullptr;
+            if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters1(adapterIndex, &pAdapter))
+            {
+                // No more adapters to enumerate.
+                break;
+            }
+
+            // Check to see if the adapter supports Direct3D 12, but don't create the
+            // actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(pAdapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+            {
+                *ppAdapter = pAdapter;
+                return;
+            }
+            pAdapter->Release();
+        }
+    }
     void SetupDXAdapter() {
         ThrowFailed(CreateDXGIFactory1(IID_PPV_ARGS(&factory)));
 
@@ -135,7 +157,7 @@ struct MainDX12Objects {
         else {
             ComPtr<IDXGIAdapter1> Hadapter;
 
-            ThrowFailed(factory->EnumWarpAdapter(IID_PPV_ARGS(&Hadapter)));
+            GetHardwareAdapter(factory.Get(), &Hadapter);
             ThrowFailed(D3D12CreateDevice(Hadapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
         }
 
@@ -204,7 +226,7 @@ struct MainDX12Objects {
             }
         }
         for (int i = 0; i < FrameCount; i++)
-            ThrowFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
+        ThrowFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
 
         ThrowFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[0].commandAllocator, NULL, IID_PPV_ARGS(&m_commandList)));
 
@@ -288,7 +310,7 @@ struct MainDX12Objects {
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
         m_commandList->ClearRenderTargetView(m_renderTargets.rtvHandle[backBufferIdx], clear_color_with_alpha, 0, NULL);
         m_commandList->OMSetRenderTargets(1, &m_renderTargets.rtvHandle[backBufferIdx], FALSE, nullptr);
-        //m_commandList->SetDescriptorHeaps(1, &ImGUIHeap);
+        m_commandList->SetDescriptorHeaps(1, ImGUIHeap.GetAddressOf());
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
