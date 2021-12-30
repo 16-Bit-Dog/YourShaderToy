@@ -17,6 +17,7 @@
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx12.h>
 #include <../Window/GUI_Logic.h>
+#include <../Window/WindowType.h>
 
 struct MASTER_IM_GUI;
 struct MainDX12Objects;
@@ -99,7 +100,7 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 		C_GUI_Win[1]->ID = GLOBAL_WINDOW_ID_I();
 		C_GUI_Win[2]->LinkToEditor();
 		C_GUI_Win[2]->ID = GLOBAL_WINDOW_ID_I();
-		C_GUI_Win[3]->LinkToObjects();
+		C_GUI_Win[3]->LinkToPipeline();
 		C_GUI_Win[3]->ID = GLOBAL_WINDOW_ID_I();
 
 		Width = Swidth;
@@ -125,6 +126,13 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 
 int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
+	if (C_GUI_Win.size() == 0) {
+		C_GUI_Win.push_back(new GroupData());
+
+		C_GUI_Win[0]->LinkToSettings();
+		C_GUI_Win[0]->ID = GLOBAL_WINDOW_ID_I();
+	}
+
 	for (int i = 0; i < C_GUI_Win.size(); i++) {
 		if (C_GUI_Win[i]->DontKillWindowBool == false) {
 			delete C_GUI_Win[i];

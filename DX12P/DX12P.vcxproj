@@ -152,11 +152,18 @@
     <ClCompile Include="imGUI\imgui_draw.cpp" />
     <ClCompile Include="imGUI\imgui_impl_dx12.cpp" />
     <ClCompile Include="imGUI\imgui_impl_glfw.cpp" />
+    <ClCompile Include="imGUI\imgui_stdlib.cpp" />
     <ClCompile Include="imGUI\imgui_tables.cpp" />
     <ClCompile Include="imGUI\imgui_widgets.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="imGUI\imgui_stdlib.h" />
+    <ClInclude Include="Window\Editor_Window.h" />
+    <ClInclude Include="Window\Pipeline_Window.h" />
+    <ClInclude Include="Window\Scene_Window.h" />
+    <ClInclude Include="Window\Settings_Window.h" />
+    <ClInclude Include="Window\WindowType.h" />
     <ClInclude Include="Window\GUI_Logic.h" />
     <ClInclude Include="imGUI\imconfig.h" />
     <ClInclude Include="imGUI\imgui.h" />
