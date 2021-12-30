@@ -15,7 +15,6 @@
 #include <../Renderer/DX12H.h>
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
-#include <../imGUI/imgui_impl_dx12.h>
 #include <../Window/GUI_Logic.h>
 #include <../Window/WindowType.h>
 
@@ -190,20 +189,20 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 		for (int i = 0; i < WinList.size(); i++) {
 			WinList[i]->id = i;
 		}
-		for (int i = 0; i < WinList.size(); i++) {
+
+		DXM.ImGUINewFrameLogic();
+
+		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
 
 				CurrWindow = i;
 
 				glfwMakeContextCurrent(WinList[i]->window);
 				glfwPollEvents();
-				ImGui_ImplDX12_NewFrame();
-				ImGui_ImplGlfw_NewFrame();
-				ImGui::NewFrame();
-
+				
 				WinList[i]->RunWindowLogic();
 
-				MASTER_IM_GUI_obj.EndRender();
+
 		}
-		
+		MASTER_IM_GUI_obj.EndRender();
 	}
 }

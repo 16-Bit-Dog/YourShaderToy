@@ -91,6 +91,15 @@ struct MainDX12Objects {
     HANDLE m_fenceEvent;
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_lastFenceValue = 0;
+    
+    void ImGUIInit() {
+        ImGui_ImplDX12_Init(m_device.Get(), FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, ImGUIHeap.Get(), ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
+    }
+    void ImGUINewFrameLogic() {
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+    }
 
     void CreateRenderTarget() {
         for (int n = 0; n < FrameCount; n++)
@@ -289,7 +298,7 @@ struct MainDX12Objects {
         return frameC;
     }
 
-    void SetupAndSendimGUIData() {
+    void DrawLogic() {
 
         FrameContext* frameC = WaitForNextFrameResources(); //TODO: this frame calc for backbuffer
         UINT backBufferIdx = m_swapChain->GetCurrentBackBufferIndex();

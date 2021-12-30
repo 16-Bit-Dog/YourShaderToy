@@ -15,7 +15,6 @@
 #include <../GLFW/glfw3native.h>
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
-#include <../imGUI/imgui_impl_dx12.h>
 #include <../Renderer/DX12H.h>
 #include <../Window/WindowType.h>
 #include <../imGUI/imgui_stdlib.h>
@@ -120,8 +119,7 @@ struct MASTER_IM_GUI {
 			//
 			
 
-
-			ImGui_ImplDX12_Init(DXM.m_device.Get(), DXM.FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, DXM.ImGUIHeap.Get(), DXM.ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), DXM.ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
+			DXM.ImGUIInit();
 
 			ImGui_ImplGlfw_InitForOther(window, true);
 			RendererMade = true;
@@ -136,7 +134,7 @@ struct MASTER_IM_GUI {
 	void EndRender() {
 		ImGui::Render();
 
-		DXM.SetupAndSendimGUIData();
+		DXM.DrawLogic();
 	}
 
 	
