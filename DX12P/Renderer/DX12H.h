@@ -1,45 +1,26 @@
 #pragma once
 //finally I will try to use com_ptr's
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-// Windows Runtime Library. Needed for Microsoft::WRL::ComPtr<> template class.
-#include <wrl.h>
-using namespace Microsoft::WRL;
-
-// DirectX 12 specific headers.
-#include <d3d12.h>
-#include <../Special_DX_Headers/d3dx12.h> //very good helper struct for DX12 - MSDN just refuses to teach raw stuff like D3D12_CPU_DESCRIPTOR_HANDLE prob due to it being a bad idea
-#include <dxgi1_6.h>
-#include <d3dcompiler.h>
-#include <DirectXMath.h>
-
+#include "DX12ShaderFuncs.h"
+#include "Renderable.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx12.h>
 
 using namespace DirectX;
 
-struct Vertex {
-	XMFLOAT3 pos;
-	XMFLOAT4 col;
-};
-
-void ThrowFailed(HRESULT v) {
-    if (v != S_OK) {
-        throw(v);
-    }
-}
 
 
-struct MainDX12Objects {
+
+
+struct MainDX12Objects : Renderable{
    
     bool UseWarpDev = false;
    
     UINT Width;
     UINT Height;
     HWND hwnd;
+    GLFWwindow* window;
 
     ComPtr<ID3D12DescriptorHeap> ImGUIHeap;
 
@@ -92,7 +73,7 @@ struct MainDX12Objects {
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_lastFenceValue = 0;
     
-    void ImGUIInit() {
+    void ImGUIInit() override{
         ImGui_ImplDX12_Init(m_device.Get(), FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, ImGUIHeap.Get(), ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
     }
     void ImGUINewFrameLogic() {
@@ -172,8 +153,8 @@ struct MainDX12Objects {
 
     }
 
-    void MakeNewWindowSwapChainAndAssociate(HWND sHwnd, UINT sWidth, UINT sHeight) {
-
+    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, UINT sWidth, UINT sHeight) override{
+        window = windowW;
         Width = sWidth;
         Height = sHeight;
         hwnd = sHwnd;
@@ -270,7 +251,7 @@ struct MainDX12Objects {
 
     }
 
-	void RendererStartUpLogic() {
+	void RendererStartUpLogic() override{
         SetupRendererDebugLayer();
         SetupDXAdapter();
         GetDescHandleIncrements();
@@ -298,7 +279,7 @@ struct MainDX12Objects {
         return frameC;
     }
 
-    void DrawLogic() {
+    void DrawLogic(bool sync = false) override{
 
         FrameContext* frameC = WaitForNextFrameResources(); //TODO: this frame calc for backbuffer
         UINT backBufferIdx = m_swapChain->GetCurrentBackBufferIndex();
@@ -341,4 +322,8 @@ struct MainDX12Objects {
         FrameC->FenceValue = fenceValue;
 
     }
-}DXM;
+
+    void CleanRendererState() override {
+
+    }
+}DX12Obj;

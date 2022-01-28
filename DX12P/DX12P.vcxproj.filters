@@ -19,6 +19,24 @@
     <Filter Include="Header Files\Window">
       <UniqueIdentifier>{73af37f7-560a-411c-8e7a-e879ddd8a342}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Renderer">
+      <UniqueIdentifier>{b139b082-0712-42e7-974a-f0feb2f4a1d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer\DX12">
+      <UniqueIdentifier>{465fe0f0-4f17-4c46-b7b9-f6ee2bb6f3d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer\DX11">
+      <UniqueIdentifier>{4be6ce7a-ac47-46ae-abdd-506667007ba5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer\ShaderFuncs">
+      <UniqueIdentifier>{22057ae3-41a3-4efa-a9b6-2406c86200cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Window\specificWindow">
+      <UniqueIdentifier>{aff57264-71d4-4e3f-a10e-74ce6030d57a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer\3DCommons">
+      <UniqueIdentifier>{af297f12-283a-4e83-8042-b0c3c31a4f2a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -48,14 +66,11 @@
     <ClCompile Include="imGUI\imgui_stdlib.cpp">
       <Filter>Header Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="imGUI\imgui_impl_dx11.cpp">
+      <Filter>Header Files\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Renderer\DX12H.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Special_DX_Headers\d3dx12.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="imGUI\imconfig.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
@@ -86,23 +101,59 @@
     <ClInclude Include="Window\GUI_Logic.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
-    <ClInclude Include="Window\Pipeline_Window.h">
-      <Filter>Header Files\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Scene_Window.h">
-      <Filter>Header Files\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Settings_Window.h">
-      <Filter>Header Files\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Editor_Window.h">
-      <Filter>Header Files\Window</Filter>
-    </ClInclude>
     <ClInclude Include="Window\WindowType.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
     <ClInclude Include="Window\Window.h">
       <Filter>Header Files\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="imGUI\imgui_impl_dx11.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12H.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Special_DX_Headers\d3dx12.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11H.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h">
+      <Filter>Header Files\Renderer\ShaderFuncs</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderable.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DXSafeInclude.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11IncludeMain.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12IncludeMain.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h">
+      <Filter>Header Files\Renderer\ShaderFuncs</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Pipeline_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Scene_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Settings_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Editor_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\RenderableManager.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\3DCommon.h">
+      <Filter>Header Files\Renderer\3DCommons</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

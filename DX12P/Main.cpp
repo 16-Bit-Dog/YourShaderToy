@@ -6,7 +6,7 @@
 #include <iostream>
 #include <../GLFW/glfw3.h>
 #include <../GLFW/glfw3native.h>
-#include <../Renderer/DX12H.h>
+#include "RenderableManager.h"
 #include <../Window/Window.h>
 
 struct MainDX12Objects;
@@ -15,7 +15,7 @@ struct AllWindowDrawLoop;
 
 int Start() {
 
-	DXM.RendererStartUpLogic();
+	DXM->RendererStartUpLogic();
 	return 0;
 }
 
@@ -28,9 +28,11 @@ int runMain() {
 
 
 int GLFWPreLogic() {
+	SetDX11Renderer(); //default DX11
+
 	glfwInit();
 	
-	DXM.RendererStartUpLogic();
+	DXM->RendererStartUpLogic();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 

@@ -11,8 +11,7 @@
 #include <cstdint>
 #include <../GLFW/glfw3.h>
 #include <../GLFW/glfw3native.h>
-
-#include <../Renderer/DX12H.h>
+#include "RenderableManager.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../Window/GUI_Logic.h>
@@ -82,7 +81,7 @@ void GLFW_Window_C::CleanSwapChain() {
 }
 
 void GLFW_Window_C::FillDXMWithNewGLFW() {
-	DXM.MakeNewWindowSwapChainAndAssociate(glfwGetWin32Window(window), Width, Height);
+	DXM->MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), Width, Height);
 }
 
 int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
@@ -190,7 +189,7 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 			WinList[i]->id = i;
 		}
 
-		DXM.ImGUINewFrameLogic();
+		DXM->ImGUINewFrameLogic();
 
 		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
 

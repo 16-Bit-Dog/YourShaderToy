@@ -15,7 +15,7 @@
 #include <../GLFW/glfw3native.h>
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
-#include <../Renderer/DX12H.h>
+#include "RenderableManager.h"
 #include <../Window/WindowType.h>
 #include <../imGUI/imgui_stdlib.h>
 
@@ -119,7 +119,7 @@ struct MASTER_IM_GUI {
 			//
 			
 
-			DXM.ImGUIInit();
+			DXM->ImGUIInit();
 
 			ImGui_ImplGlfw_InitForOther(window, true);
 			RendererMade = true;
@@ -134,7 +134,7 @@ struct MASTER_IM_GUI {
 	void EndRender() {
 		ImGui::Render();
 
-		DXM.DrawLogic();
+		DXM->DrawLogic();
 	}
 
 	
