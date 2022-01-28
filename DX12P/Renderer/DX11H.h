@@ -18,8 +18,6 @@ struct MainDX11Objects : Renderable{
 
     int BLOCK_SIZE = 8;
 
-    bool NewImGUIDat = false;
-
     bool ClearRTV = true;
 
     int CurrentFrameRate = 23;

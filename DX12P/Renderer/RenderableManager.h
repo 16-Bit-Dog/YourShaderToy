@@ -7,9 +7,9 @@ Renderable* DXM;
 
 
 void SetDX11Renderer() {
-	//DXM = &DX11Obj;
+	DXM = &DX11Obj;
 }
 
 void SetDX12Renderer() {
-	//DXM = &DX12Obj;
+	DXM = &DX12Obj;
 }

@@ -301,7 +301,9 @@ struct MainDX12Objects : Renderable{
         m_commandList->ClearRenderTargetView(m_renderTargets.rtvHandle[backBufferIdx], clear_color_with_alpha, 0, NULL);
         m_commandList->OMSetRenderTargets(1, &m_renderTargets.rtvHandle[backBufferIdx], FALSE, nullptr);
         m_commandList->SetDescriptorHeaps(1, ImGUIHeap.GetAddressOf());
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
+        
+        if(NewImGUIDat) ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
+
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
         m_commandList->ResourceBarrier(1, &barrier);
@@ -321,6 +323,7 @@ struct MainDX12Objects : Renderable{
         m_lastFenceValue = fenceValue;
         FrameC->FenceValue = fenceValue;
 
+        NewImGUIDat = false;
     }
 
     void CleanRendererState() override {

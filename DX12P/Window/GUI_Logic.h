@@ -133,7 +133,7 @@ struct MASTER_IM_GUI {
 
 	void EndRender() {
 		ImGui::Render();
-
+		DXM->NewImGUIDat = true;
 		DXM->DrawLogic();
 	}
 

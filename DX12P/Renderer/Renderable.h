@@ -5,6 +5,8 @@
 
 struct Renderable {
 
+	bool NewImGUIDat = false;
+
 	virtual void ImGUINewFrameLogic() = 0;
 
 	virtual void DrawLogic(bool sync = false) = 0;
