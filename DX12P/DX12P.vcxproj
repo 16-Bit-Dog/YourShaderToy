@@ -78,9 +78,15 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\Build\$(ProjectName)\$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)\Intermediate\$(ProjectName)\$(Configuration)</IntDir>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\Build\$(ProjectName)\$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)\Intermediate\$(ProjectName)\$(Configuration)</IntDir>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -120,14 +126,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)/GLFW</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DXGI.lib;D3d12.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)/GLFW;$(SolutionDir)\Build\Lua\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Lua.lib;DXGI.lib;D3d12.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,12 +144,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Lua.lib;DXGI.lib;D3d12.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)/GLFW;$(SolutionDir)\Build\Lua\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -159,9 +169,17 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FileManager_Window.h" />
     <ClInclude Include="imGUI\imgui_impl_dx11.h" />
     <ClInclude Include="imGUI\imgui_stdlib.h" />
-    <ClInclude Include="Renderer\3DCommon.h" />
+    <ClInclude Include="LuaSingle\config.hpp" />
+    <ClInclude Include="LuaSingle\forward.hpp" />
+    <ClInclude Include="LuaSingle\sol.hpp" />
+    <ClInclude Include="LuaWork\LuaObj.h" />
+    <ClInclude Include="PipelineObj\PipelineMain.h" />
+    <ClInclude Include="Renderer\3DCommons\3DCommon.h" />
+    <ClInclude Include="Renderer\3DCommons\3DDXObj.h" />
+    <ClInclude Include="Renderer\3DCommons\ofbxMini.h" />
     <ClInclude Include="Renderer\DX11H.h" />
     <ClInclude Include="Renderer\DX11IncludeMain.h" />
     <ClInclude Include="Renderer\DX12IncludeMain.h" />
@@ -171,10 +189,12 @@
     <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h" />
     <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h" />
     <ClInclude Include="Window\Editor_Window.h" />
+    <ClInclude Include="Window\Main_Window.h" />
+    <ClInclude Include="Window\Master_ImGUI_Settings.h" />
     <ClInclude Include="Window\Pipeline_Window.h" />
     <ClInclude Include="Window\Scene_Window.h" />
     <ClInclude Include="Window\Settings_Window.h" />
-    <ClInclude Include="Window\WindowType.h" />
+    <ClInclude Include="Window\Window_Type.h" />
     <ClInclude Include="Window\GUI_Logic.h" />
     <ClInclude Include="imGUI\imconfig.h" />
     <ClInclude Include="imGUI\imgui.h" />

@@ -15,7 +15,7 @@
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../Window/GUI_Logic.h>
-#include <../Window/WindowType.h>
+#include <../Window/Window_Type.h>
 
 struct MASTER_IM_GUI;
 struct MainDX12Objects;

@@ -6,6 +6,7 @@
 #include "DirectXMath.h"
 #include <iostream>
 #include <unordered_map>
+#include <array>
 using namespace DirectX;
 
 
@@ -46,12 +47,9 @@ struct VNT
 	XMFLOAT3 Normal;
 	XMFLOAT3 BiNormal;
 	XMFLOAT3 Tangent;
-
 	XMFLOAT2 Tex;
-
 	TopBoneIDs tbi; //uint 4
 	TopBoneWeight tbw; //float 4
-
 };
 
 struct Joint {
@@ -87,12 +85,6 @@ struct Joint {
 	}
 };
 
-
-
-
-
-
-
 XMFLOAT4X4 ofbxMatToXM(ofbx::Matrix* TMPtm) {
 	return XMFLOAT4X4(static_cast<float>(TMPtm->m[0]), static_cast<float>(TMPtm->m[1]), static_cast<float>(TMPtm->m[2]), static_cast<float>(TMPtm->m[3]), static_cast<float>(TMPtm->m[4]), static_cast<float>(TMPtm->m[5]), static_cast<float>(TMPtm->m[6]), static_cast<float>(TMPtm->m[7]), static_cast<float>(TMPtm->m[8]), static_cast<float>(TMPtm->m[9]), static_cast<float>(TMPtm->m[10]), static_cast<float>(TMPtm->m[11]), static_cast<float>(TMPtm->m[12]), static_cast<float>(TMPtm->m[13]), static_cast<float>(TMPtm->m[14]), static_cast<float>(TMPtm->m[15]));
 }
@@ -101,8 +93,21 @@ ofbx::Matrix XMToofbxMat(XMFLOAT4X4* TMPtm) {
 
 }
 
-struct M3DR { //model Resource data only 
+struct ObjTuneStatReg { //TODO: make scale and translate work in shader - make obj visible
+	std::array<float, 3> Translate = { 0.0f,0.0f,0.0f }; //not using xm float, so sad... :(
+	float pad1 = 0.0f;
+	std::array<float, 3> Scale = { 1.0f,1.0f,1.0f };
+	float pad2 = 0.0f;
+	XMFLOAT4 Quat = { 0.0f,0.0f,0.0f,0.0f };
+};
 
+
+struct M3DR { //model Resource data only 
+	
+	bool UpdateVDat = false;
+	bool UpdateAnimDat = false;
+
+	ObjTuneStatReg ObjTune;
 	std::vector < std::vector<VNT> > modelDat;
 	std::vector<Joint> Bones;
 	const ofbx::Object* rootObj;
@@ -140,6 +145,13 @@ struct M3DR { //model Resource data only
 		}
 	}
 
+	void AutoFillIndice(int Obj) {
+		if (Obj >= Indice.size()) { Indice.resize(Obj + 1); }
+		Indice[Obj].resize(modelDat[Obj].size());
+		for (int i = 0; i < modelDat[Obj].size(); i++) {
+			Indice[Obj][i] = i;
+		}
+	}
 
 	void PostProcessTangents() {
 		for (int i = 0; i < modelDat.size(); i++) {
@@ -394,6 +406,50 @@ struct M3DR { //model Resource data only
 		if (Anim >= animStackMaxTime.size()) { return 0; }
 		return animStackMaxTime[Anim];
 	}
+	void GetAnimEndTime(int Anim) {
+		float max = 0; // max time getter func - iterate through keys
+
+		for (int i = 0; i < Bones.size(); i++) {
+
+			for (int x = 0; x < 3; x++) {
+				ofbx::i64 tcnV = 0.0f;
+				ofbx::i64 rcnV = 0.0f;
+				ofbx::i64 scnV = 0.0f;
+
+				if (Bones[i].tNode[Anim] != NULL) {
+					if (Bones[i].tNode[Anim]->getCurve(x)) {
+						const ofbx::AnimationCurve* tc = Bones[i].tNode[Anim]->getCurve(x);
+						int tcn = tc->getKeyCount() - 1;
+						tcnV = tc->getKeyTime()[tcn];
+					}
+				}
+
+				if (Bones[i].rNode[Anim] != NULL) {
+					if (Bones[i].rNode[Anim]->getCurve(x)) {
+						const ofbx::AnimationCurve* rc = Bones[i].rNode[Anim]->getCurve(x);
+						int rcn = rc->getKeyCount() - 1;
+						rcnV = rc->getKeyTime()[rcn];
+					}
+				}
+
+				if (Bones[i].sNode[Anim] != NULL) {
+					if (Bones[i].sNode[Anim]->getCurve(x)) {
+						const ofbx::AnimationCurve* sc = Bones[i].sNode[Anim]->getCurve(x);
+						int scn = sc->getKeyCount() - 1;
+						scnV = sc->getKeyTime()[scn];
+					}
+				}
+
+
+				ofbx::i64 maxTmp = std::max({ tcnV,rcnV,scnV });
+
+				if (max < maxTmp) max = static_cast<float>(ofbx::fbxTimeToSeconds(maxTmp));
+			}
+
+		}
+		animStackMaxTime[Anim] = max;
+	}
+
 	void GetAllAnimEndTime() {
 		for (int i = 0; i < animStack.size(); i++) {
 			GetAnimEndTime(i);

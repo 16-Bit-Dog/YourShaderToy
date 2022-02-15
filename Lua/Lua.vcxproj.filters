@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ltm.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lua.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lundump.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lutf8lib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lvm.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lzio.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lapi.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lauxlib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lbaselib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lcode.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lcorolib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lctype.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ldblib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ldebug.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ldo.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ldump.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lfunc.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lgc.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\linit.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\liolib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\llex.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lmathlib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lmem.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\loadlib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lobject.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lopcodes.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\loslib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lparser.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lstate.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lstring.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\lstrlib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ltable.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DX12P\LuaSingle\lua\src\ltablib.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\ltm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lua.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lua.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\luaconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lualib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lundump.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lvm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lzio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lauxlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lcode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lctype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\ldebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\ldo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lfunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lgc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\ljumptab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\llex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\llimits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lmem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lobject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lopcodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lopnames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lprefix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lstate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\lstring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DX12P\LuaSingle\lua\src\ltable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DX12P\LuaSingle\lua\src\Makefile">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

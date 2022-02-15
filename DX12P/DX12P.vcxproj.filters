@@ -37,6 +37,15 @@
     <Filter Include="Header Files\Renderer\3DCommons">
       <UniqueIdentifier>{af297f12-283a-4e83-8042-b0c3c31a4f2a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\PipelineObjects">
+      <UniqueIdentifier>{4333a185-141f-4641-86f4-2262637f3457}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LuaSingle">
+      <UniqueIdentifier>{0f6fbf38-2f58-49c1-b04e-b0639f645858}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LuaWork">
+      <UniqueIdentifier>{73dc839d-a151-41c4-b6fa-a89539538fb3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -101,7 +110,7 @@
     <ClInclude Include="Window\GUI_Logic.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
-    <ClInclude Include="Window\WindowType.h">
+    <ClInclude Include="Window\Window_Type.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
     <ClInclude Include="Window\Window.h">
@@ -152,8 +161,38 @@
     <ClInclude Include="Renderer\RenderableManager.h">
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\3DCommon.h">
+    <ClInclude Include="Renderer\3DCommons\ofbxMini.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\3DCommons\3DCommon.h">
+      <Filter>Header Files\Renderer\3DCommons</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\3DCommons\3DDXObj.h">
+      <Filter>Header Files\Renderer\3DCommons</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Main_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Master_ImGUI_Settings.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\PipelineMain.h">
+      <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaSingle\sol.hpp">
+      <Filter>Header Files\LuaSingle</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaSingle\config.hpp">
+      <Filter>Header Files\LuaSingle</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaSingle\forward.hpp">
+      <Filter>Header Files\LuaSingle</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaWork\LuaObj.h">
+      <Filter>Header Files\LuaWork</Filter>
+    </ClInclude>
+    <ClInclude Include="FileManager_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

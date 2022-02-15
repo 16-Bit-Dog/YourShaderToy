@@ -69,7 +69,7 @@ struct MainDX11Objects : Renderable{
 
         if (ClearDepth) dxDeviceContext->ClearDepthStencilView(dxDepthStencilView, D3D11_CLEAR_DEPTH, 1, 0);
     }
-    void DrawLogic(bool sync = false) override {
+    void DrawLogic(bool sync = true) override {
 
         if (NewImGUIDat) {
             ImGui::Render();
@@ -299,4 +299,4 @@ struct MainDX11Objects : Renderable{
 
     }
 
-}DX11Obj;
+};

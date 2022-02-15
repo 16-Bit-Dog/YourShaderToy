@@ -1,0 +1,4 @@
+I plan to use Lua for the windowing system if you won't recompile the entire code base
+
+
+I also need to make a python script to extract all functions of a file and convert to lua wrapped equal named thing --- this makes coding in lua the same as c++ for UI

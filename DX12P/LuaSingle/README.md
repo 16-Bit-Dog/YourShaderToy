@@ -1,0 +1,1 @@
+All rights to Lua is reserved by the Lua Team - I only am using the library

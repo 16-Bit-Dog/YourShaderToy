@@ -279,7 +279,7 @@ struct MainDX12Objects : Renderable{
         return frameC;
     }
 
-    void DrawLogic(bool sync = false) override{
+    void DrawLogic(bool vsync = true) override{
 
         FrameContext* frameC = WaitForNextFrameResources(); //TODO: this frame calc for backbuffer
         UINT backBufferIdx = m_swapChain->GetCurrentBackBufferIndex();
@@ -315,7 +315,7 @@ struct MainDX12Objects : Renderable{
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault(NULL, m_commandList.Get());
 
-        m_swapChain->Present(1, 0); // Present with vsync
+        m_swapChain->Present(vsync, 0); // Present with vsync
         //g_pSwapChain->Present(0, 0); // Present without vsync
 
         UINT64 fenceValue = m_lastFenceValue + 1;
@@ -329,4 +329,4 @@ struct MainDX12Objects : Renderable{
     void CleanRendererState() override {
 
     }
-}DX12Obj;
+};

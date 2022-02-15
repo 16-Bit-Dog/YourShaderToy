@@ -17,7 +17,8 @@ enum WIN_TYPE { // not used for now, but important to share all "scene" data for
 	W_SETTING = 1,
 	W_SCENE = 2,
 	W_EDITOR = 3,
-	W_Pipeline = 4,
+	W_PIPELINE = 4,
+	W_FILEMANAGER = 5
 };
 std::map<int, int> Win_Type_ID_Vector; // associated with Win_Type index for ease of adding more Win_type's
 std::map<int, std::string> Win_Type_Name_Vector; // associated with Win_Type index for ease of adding more Win_type's
