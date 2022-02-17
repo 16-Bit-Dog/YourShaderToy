@@ -46,6 +46,12 @@
     <Filter Include="Header Files\LuaWork">
       <UniqueIdentifier>{73dc839d-a151-41c4-b6fa-a89539538fb3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ImageLib">
+      <UniqueIdentifier>{a3c6820f-1a80-462c-93d0-3d5f81d70719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\imgui\Dialog">
+      <UniqueIdentifier>{2b44162c-9687-4c30-9bc4-31dcd369fca3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -77,6 +83,9 @@
     </ClCompile>
     <ClCompile Include="imGUI\imgui_impl_dx11.cpp">
       <Filter>Header Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.cpp">
+      <Filter>Header Files\imgui\Dialog</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -193,6 +202,15 @@
     </ClInclude>
     <ClInclude Include="FileManager_Window.h">
       <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageLib\stb_image.h">
+      <Filter>Header Files\ImageLib</Filter>
+    </ClInclude>
+    <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.h">
+      <Filter>Header Files\imgui\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h">
+      <Filter>Header Files\imgui\Dialog</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DX11IncludeMain.h"
 #include "3DCommon.h"
 #include "RenderableManager.h"
 

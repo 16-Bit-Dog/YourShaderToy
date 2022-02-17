@@ -1,5 +1,7 @@
 #pragma once
 
+#include "3DCommons/3DCommon.h"
+#include "LuaObj.h"
 #include <vector>
 #include <string>
 #include <functional>
@@ -15,7 +17,6 @@
 #include <../imGUI/ImGUIFileDialog/ImGuiFileDialog.h>
 #include "PipelineMain.h"
 
-#include "LuaObj.h"
 
 namespace ImGui {
 
@@ -154,7 +155,11 @@ struct MASTER_IM_GUI {
 	//
 
 }MASTER_IM_GUI_obj;
-
+std::string sPad(int num) {
+	std::string n = " ";
+	for (int i = 0; i < num; i++) n += " ";
+	return n;
+}
 
 //TODO: make ID for object values to read from GroupData* GD, and add to map accordingly, default 0, else read from (And use consistant BUTTON ID) for new buttons
 

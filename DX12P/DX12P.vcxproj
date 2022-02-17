@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -158,6 +158,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="imGUI\imgui.cpp" />
+    <ClCompile Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="imGUI\imgui_demo.cpp" />
     <ClCompile Include="imGUI\imgui_draw.cpp" />
     <ClCompile Include="imGUI\imgui_impl_dx11.cpp" />
@@ -170,6 +171,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileManager_Window.h" />
+    <ClInclude Include="ImageLib\stb_image.h" />
+    <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="imGUI\imgui_impl_dx11.h" />
     <ClInclude Include="imGUI\imgui_stdlib.h" />
     <ClInclude Include="LuaSingle\config.hpp" />

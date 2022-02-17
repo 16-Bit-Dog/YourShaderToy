@@ -2,6 +2,8 @@
 #include "Main_Window.h"
 #include <functional>
 
+//TODO: hit compile option to fetch textures, build objects, ect
+
 struct MASTER_Pipeline : MASTER_Function_Inherit {
 	std::vector<std::function<void()>> PipelineAddQueue;
 
@@ -88,11 +90,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		if (PipeM.P[i]->name == "") PipeM.P[i]->name = " ";
 	}
-	std::string sPad(int num) {
-		std::string n = " ";
-		for (int i = 0; i < num; i++) n += " ";
-		return n;
-	}
+
 
 	void PostAddPipelines() {
 		for (int i = 0; i < PipelineAddQueue.size(); i++)

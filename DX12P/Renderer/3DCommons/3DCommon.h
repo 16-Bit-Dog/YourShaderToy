@@ -85,6 +85,8 @@ struct Joint {
 	}
 };
 
+
+
 XMFLOAT4X4 ofbxMatToXM(ofbx::Matrix* TMPtm) {
 	return XMFLOAT4X4(static_cast<float>(TMPtm->m[0]), static_cast<float>(TMPtm->m[1]), static_cast<float>(TMPtm->m[2]), static_cast<float>(TMPtm->m[3]), static_cast<float>(TMPtm->m[4]), static_cast<float>(TMPtm->m[5]), static_cast<float>(TMPtm->m[6]), static_cast<float>(TMPtm->m[7]), static_cast<float>(TMPtm->m[8]), static_cast<float>(TMPtm->m[9]), static_cast<float>(TMPtm->m[10]), static_cast<float>(TMPtm->m[11]), static_cast<float>(TMPtm->m[12]), static_cast<float>(TMPtm->m[13]), static_cast<float>(TMPtm->m[14]), static_cast<float>(TMPtm->m[15]));
 }
@@ -125,6 +127,23 @@ struct M3DR { //model Resource data only
 	XMMATRIX globalInverseTransform;
 	XMMATRIX globalTransform;
 
+	const ofbx::AnimationCurveNode* GetNodeCurve(int Anim, std::string valueType, const ofbx::Object* Bone) {
+
+
+		for (int ii = 0; animStack[Anim]->getLayer(ii); ++ii)
+		{
+
+			const ofbx::AnimationLayer* layer = animStack[Anim]->getLayer(ii);
+
+			if (layer->getCurveNode(*Bone, valueType.c_str())) {
+				return layer->getCurveNode(*Bone, valueType.c_str());
+
+			}
+			else {
+				return nullptr;
+			}
+		}
+	}
 
 	void PostProcessNormals() {
 		for (int i = 0; i < modelDat.size(); i++) {
@@ -439,9 +458,15 @@ struct M3DR { //model Resource data only
 						scnV = sc->getKeyTime()[scn];
 					}
 				}
-
-
-				ofbx::i64 maxTmp = std::max({ tcnV,rcnV,scnV });
+				//std::max not working...
+				ofbx::i64 maxTmp;
+				if (tcnV > rcnV) {
+					maxTmp = tcnV;
+				}
+				else {
+					maxTmp = rcnV;
+				}
+				if (maxTmp < scnV) maxTmp = scnV;
 
 				if (max < maxTmp) max = static_cast<float>(ofbx::fbxTimeToSeconds(maxTmp));
 			}
