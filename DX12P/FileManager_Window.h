@@ -673,6 +673,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 					AddConstantInt(&ToAddConstantMenuName, &ToAddConstantInt, i);
 				}
 				
+
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Uint##UintConstantModelStore" + sPad(i)).c_str())) {
 					AddConstantUint(&ToAddConstantMenuName, &ToAddConstantUint, i);
