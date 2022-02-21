@@ -26,10 +26,9 @@ int runMain() {
 	return 0;
 }
 
-
 int GLFWPreLogic() {
 	SetDX11Renderer(); //default DX11
-
+	
 	glfwInit();
 	
 	DXM->RendererStartUpLogic();
@@ -39,7 +38,7 @@ int GLFWPreLogic() {
 	StartUpFillVecs(); // before first context do basic Setup
 
 	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
-	
+
 	AllWin.LoopRunAllContext();
 
 	return 0;

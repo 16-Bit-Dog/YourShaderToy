@@ -33,8 +33,20 @@ struct GLFW_Window_C {
 
 	GLFWwindow* window;
 
-	UINT Width = 0;
-	UINT Height = 0;
+	GLFWscrollfun GLFWscrollfunObj;
+	GLFWmousebuttonfun GLFWmousebuttonfunObj;
+
+	int Width = 0;
+	int Height = 0;
+
+	double MousePosX;
+	double MousePosY;
+
+	int MouseLeftState;
+	int MouseRightState;
+	int MouseMiddleState;
+
+	double time;
 
 	std::string title;
 
@@ -55,6 +67,15 @@ struct GLFW_Window_C {
 
 	void CleanSwapChain();
 
+	void WindowPreamble() {
+		glfwGetCursorPos(MainWin.window, &MousePosX, &MousePosY);
+		glfwGetFramebufferSize(MainWin.window, &MainWin.Width, &MainWin.Height);
+		MouseLeftState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+		MouseRightState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+		MouseMiddleState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
+		time = glfwGetTime();
+	}
+	
 }MainWin;
 
 struct AllWindowDrawLoop{
@@ -87,10 +108,11 @@ void GLFW_Window_C::FillDXMWithNewGLFW() {
 int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
 	//kept this as a back bone from what I prev' did for window creation
 	if (Created == false) {
-		C_GUI_Win.push_back(new GroupData());
-		C_GUI_Win.push_back(new GroupData());
-		C_GUI_Win.push_back(new GroupData());
-		C_GUI_Win.push_back(new GroupData());
+
+		C_GUI_Win.push_back(new GroupData(this));
+		C_GUI_Win.push_back(new GroupData(this));
+		C_GUI_Win.push_back(new GroupData(this));
+		C_GUI_Win.push_back(new GroupData(this));
 
 		C_GUI_Win[0]->LinkToSettings();
 		C_GUI_Win[0]->ID = GLOBAL_WINDOW_ID_I();
@@ -124,8 +146,10 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 
 int GLFW_Window_C::RunWindowLogic() {
 	//TODO, have vector with lambda of void which run? have premade methods based on type? dunno
+	WindowPreamble();
+
 	if (C_GUI_Win.size() == 0) {
-		C_GUI_Win.push_back(new GroupData());
+		C_GUI_Win.push_back(new GroupData(this));
 
 		C_GUI_Win[0]->LinkToSettings();
 		C_GUI_Win[0]->ID = GLOBAL_WINDOW_ID_I();
@@ -198,6 +222,7 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 				glfwMakeContextCurrent(WinList[i]->window);
 				glfwPollEvents();
 				
+
 				WinList[i]->RunWindowLogic();
 
 

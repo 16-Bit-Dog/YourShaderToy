@@ -63,7 +63,7 @@ struct GroupData;
 
 			if (NewWindowCreationHandle[WindowType] == true) {
 				
-				GroupData* TmpGUI_Win = new GroupData;
+				GroupData* TmpGUI_Win = new GroupData(WindowTopHandle);
 				TmpGUI_Win->ID = GLOBAL_WINDOW_ID_I();
 				TmpGUI_Win->LinkBasedOnInt(WindowType);
 

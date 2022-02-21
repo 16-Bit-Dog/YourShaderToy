@@ -17,11 +17,24 @@
 #include <../imGUI/ImGUIFileDialog/ImGuiFileDialog.h>
 #include "PipelineMain.h"
 
+struct GLFW_Window_C;
 
 namespace ImGui {
 
 	void InputTextMultilineQuick(std::string Tag, std::string* S, ImGuiInputTextFlags* flags) {
 		ImGui::InputTextMultiline(Tag.c_str(), S, ImVec2(ImGui::GetWindowWidth() * 0.8f, 200), *flags, NULL, nullptr);
+	}
+	static void HelpMarker(const char* desc)
+	{
+		ImGui::TextDisabled("(?)");
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(desc);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
 	}
 
 }
@@ -37,6 +50,11 @@ struct GroupData {
 	ex: expand a menu in 1 MASTER_SETTING tab, but in another have that menu not expanded. This allows Unity style syncronous work to be faster when looking at shader to make
 	//if ID does not exist it defaults it to 0 int value, and sets the UINT so it now exists
 	*/
+	GroupData(GLFW_Window_C* WTH) {
+		WindowTopHandle = WTH;
+	}
+
+	GLFW_Window_C* WindowTopHandle;
 
 	std::map<int, bool> NewWindowCreationHandle;
 
