@@ -12,6 +12,7 @@
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include "RenderableManager.h"
+#include "D3D11ResourceObjects.h"
 #include <../Window/Window_Type.h>
 #include <../imGUI/imgui_stdlib.h>
 #include <../imGUI/ImGUIFileDialog/ImGuiFileDialog.h>

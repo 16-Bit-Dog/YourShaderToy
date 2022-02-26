@@ -176,7 +176,7 @@
     <ClInclude Include="Renderer\3DCommons\3DCommon.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\3DCommons\3DDXObj.h">
+    <ClInclude Include="Renderer\3DCommons\3DDX11Obj.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
     </ClInclude>
     <ClInclude Include="Window\Main_Window.h">
@@ -200,9 +200,6 @@
     <ClInclude Include="LuaWork\LuaObj.h">
       <Filter>Header Files\LuaWork</Filter>
     </ClInclude>
-    <ClInclude Include="FileManager_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
     <ClInclude Include="ImageLib\stb_image.h">
       <Filter>Header Files\ImageLib</Filter>
     </ClInclude>
@@ -211,6 +208,18 @@
     </ClInclude>
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h">
       <Filter>Header Files\imgui\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\D3D11ResourceObjects.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\FileManager_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ResourceObjectBase.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\FileManagerResourceStruct.h">
+      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

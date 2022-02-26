@@ -33,3 +33,5 @@ using namespace Microsoft::WRL;
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "dxguid.lib")
+
+#include "DXSafeInclude.h"

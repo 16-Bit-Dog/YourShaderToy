@@ -6,311 +6,11 @@
 #include "Main_Window.h"
 #include <algorithm>
 #include <set>
+#include "FileManagerResourceStruct.h"
 //TODO: delete from set in deconstructor the name usage, also add to set
 //TODO: make global name check for conflict struct, to make sure name is valid
 
 
-#define MAX_IMAGE_NAME 10
-
-void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict);
-
-struct IntTypeAndName_c {
-	int32_t val = 0;
-	std::string n;
-	IntTypeAndName_c(std::string* s, int32_t* intV) {
-		n = *s;
-		n = *intV;
-	}
-};
-struct UintTypeAndName_c {
-	uint32_t val = 0;
-	std::string n;
-	UintTypeAndName_c(std::string* s, uint32_t* uintV) {
-		n = *s;
-		val = *uintV;
-	}
-};
-struct FloatTypeAndName_c {
-	float val = 0.0f;
-	std::string n;
-	FloatTypeAndName_c(std::string* s, float* floatV) {
-		n = *s;
-		val = *floatV;
-	}
-};
-
-struct TypeStorageMass {
-	std::vector< IntTypeAndName_c > IT;
-	std::vector< UintTypeAndName_c > UT;
-	std::vector< FloatTypeAndName_c > FT;
-};
-
-struct d4 { 
-	uint8_t* data8 = nullptr; //only 1 is non null
-	uint16_t* data16 = nullptr;
-	uint32_t* data32 = nullptr;
-	uint64_t* data64 = nullptr;
-	d4(uint8_t* data8t) {
-		data8 = data8t;
-	}
-	d4(int sizeX, int sizeY, int bpp) {
-		if (bpp == 8) {
-			data8 = new uint8_t[sizeY*sizeX];
-		}
-		else if (bpp == 16) {
-			data16 = new uint16_t[sizeY*sizeX];
-		}
-		else if (bpp == 32) {
-			data32 = new uint32_t[sizeY*sizeX];
-		}
-		else if (bpp == 64) {
-			data64 = new uint64_t[sizeY*sizeX];
-		}
-		else {
-			throw("wrong format");
-		}
-	}
-};
-
-/*
-void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
-	if (usedName->count(*Name) != 0) {
-		for (int i = 0; i < Name->size(); i++) {
-			if (usedName->count(*Name + "_" + std::to_string(i)) == 0) *Name += "_" + std::to_string(i); //don't allow dup names
-		}
-	}
-}
-*/
-
-struct ObjectBuilder {
-
-	virtual void BuildItemGeneric() = 0;
-	
-};
-
-struct CONST_DATA_PASS_c { //just for sizeof()
-	UINT32 WindowSizeX;
-	UINT32 WindowSizeY;
-	UINT32 MousePosX;
-	UINT32 MousePosY;
-
-	UINT32 LeftClickState;
-	UINT32 RightClickState;
-	UINT32 MiddleClickState;
-	FLOAT time;
-
-};
-
-struct BuiltPredefined_c : ObjectBuilder {
-	//UINT32 WindowSizeX; -> //MainWin.Width;
-	//UINT32 WindowSizeY; -> //MainWin.Height;
-
-	//UINT32 MousePoxX; -> //MainWin.CursorPosX -> glfwGetCursorPos(MainWin.window, &xpos, &ypos);
-	//UINT32 MousePoxY; -> //MainWin.CursorPosY -> glfwGetCursorPos(MainWin.window, &xpos, &ypos);
-
-	// UINT32 LeftClickState; -> // MainWin.LeftClickState -> mouse_button_callback
-	//UINT32 RightClick; -> //MainWin.RightClickState -> mouse_button_callback
-	// UINT32 MiddleClick; -> //MainWin.MiddleClickState -> mouse_button_callback
-
-	//float time; -> time
-
-	void BuildFromExistingData() {
-		//TODO - build from pre set data in WinMain.XXX <-- using sizeof(CONST_DATA_PASS_c) Const Buffer 
-	}
-	void CleanPreviousBuild() {
-		//TODO - build from pre set data
-	}
-	void BuildItemGeneric() {
-		CleanPreviousBuild();
-		BuildFromExistingData();
-	}
-
-	void UpdateFromExistingData() {
-		//TODO: update objects
-	}
-};
-
-std::set<std::string> usedNameCont;
-struct BuiltImage_c : ObjectBuilder{
-	//I read data immedeatly since it is simple, fast, and I want to make a TODO: preview option of image once loaded
-	
-	std::string Path = "";
-	std::string Name = "";
-	
-	int bpp;
-	int sizeX;
-	int sizeY;
-	int channels;
-	bool ReadWrite = false;
-	bool IsPath;
-
-	uint8_t* data8 = nullptr; //only 1 is non null
-	uint16_t* data16 = nullptr; 
-	uint32_t* data32 = nullptr;
-	uint64_t* data64 = nullptr;
-
-
-	void BuildEmpty() {
-		//TODO
-	}
-	void BuildFromPath() {
-		//TODO
-	}
-	void CleanPreviousBuild() {
-		//TODO
-	}
-	void BuildItemGeneric() {
-		CleanPreviousBuild();
-		if (IsPath) {
-			BuildFromPath();
-		}
-		else {
-			BuildEmpty();
-		}
-	}
-
-	BuiltImage_c(std::string p, std::string s, bool IsPath, int sizeX_tmp, int sizeY_tmp, int channels_tmp, int bpp_tmp) {
-		//set name
-		IsPath = IsPath;
-		Path = p;
-		bpp = bpp_tmp;
-		
-		if (s == "") s = "TMP_TEX";
-		else Name = s;
-		
-		DealWithNameConflict(&usedNameCont, &Name, "TEX");
-		
-		sizeX = sizeX_tmp;
-		sizeY = sizeY_tmp;
-		channels = channels_tmp;
-
-		
-	}
-	~BuiltImage_c() {
-		usedNameCont.erase(Name);
-		if (data8 != nullptr) delete[] data8;
-		if (data16 != nullptr) delete[] data16;
-		if (data32 != nullptr) delete[] data32;
-		if (data64 != nullptr) delete[] data64;
-	}
-
-
-
-};
-
-
-struct BuiltModel_c {
-
-	std::string Path = "";
-	std::string Name = ""; //same as Buffer <-- when loaded 
-	std::string NameRW = ""; //same as UAV which is already made in 3DDXObj.h - when I fetch, 
-
-	M3DR* ModelDat = nullptr;
-
-	//TODO: preinclude cube and sphere file which includes as menu item if you click the option, and auto sets up in loader
-
-	void BuildFromPath() {
-		//TODO
-	}
-	void CleanPreviousBuild() {
-		//TODO
-	}
-	void BuildItemGeneric() {
-		CleanPreviousBuild();
-		BuildFromPath();
-	}
-
-	BuiltModel_c(std::string p, std::string s) {
-		//TODO fill M3DR based on path, else stop trying to load and throw error saying "invalid" 
-		Path = p;
-
-		if (s == "") s = "TMP_MODEL";
-		else Name = s;
-
-		NameRW = Name + "_RW";
-
-		DealWithNameConflict(&usedNameCont, &Name, "MODEL");
-		DealWithNameConflict(&usedNameCont, &NameRW, "MODEL_RW");
-
-	}
-
-	~BuiltModel_c() {
-
-		usedNameCont.erase(Name);
-		usedNameCont.erase(NameRW);
-		
-		if(ModelDat!=nullptr) delete[] ModelDat;
-	}
-
-};
-
-std::set<std::string> usedName_Constant;
-
-struct BuiltConstant_c {
-	std::string Name = "";
-	TypeStorageMass vars;
-
-	BuiltConstant_c(std::string s) {
-		Name = s;
-		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
-	}
-
-	void AddInt(std::string* s, int32_t* intV) {
-		std::string stmp = *s;
-		DealWithNameConflict(&usedNameCont, &stmp, "INT");
-		vars.IT.push_back(IntTypeAndName_c(s, intV));
-	}
-	void AddUint(std::string* s, uint32_t* uintV) {
-		std::string stmp = *s;
-		DealWithNameConflict(&usedNameCont, &stmp, "UINT");
-		vars.UT.push_back(UintTypeAndName_c(s, uintV));
-	}
-	void AddFloat(std::string* s, float* floatV) {
-		std::string stmp = *s;
-		DealWithNameConflict(&usedNameCont, &stmp, "FLOAT");
-		vars.FT.push_back(FloatTypeAndName_c(s, floatV));
-	}
-
-
-	
-	bool ReadWrite = false;
-
-	bool IsPath = false;
-	//TODO, make value setter in info tab - this is gonna be messyish
-
-	void BuildFromInfoTab() {
-		 //use preexisting build data to build, defaults to 0
-	}
-	void BuildFromInfoPath() {
-		//dunno how to make this yet- prob Renderdoc syntax
-	}
-	void CleanPreviousBuild() {
-
-	}
-	void BuildItemGeneric() {
-		CleanPreviousBuild();
-		BuildFromInfoTab();
-	}
-	~BuiltConstant_c() {
-		usedNameCont.erase(Name);
-		usedNameCont.erase(Name);
-	}
-};
-
-void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict) {
-	if (usedName->count(*Name) != 0) {
-		for (int i = 0; i < usedName->size(); i++) {
-			if (usedName->count(*Name + "_" + suffixConflict + "_" + std::to_string(i)) == 0) {
-				*Name += +"_" + suffixConflict + "_" + std::to_string(i); //don't allow dup names
-				i = usedName->size();
-				(*usedName).insert(*Name);
-			} 
-		}
-	}
-	else {
-		(*usedName).insert(*Name);
-	}
-}
 
 struct MASTER_FileManager : MASTER_Function_Inherit {
 
@@ -338,7 +38,33 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		settingWindowSettingsMaker();
 	}
 
+	void BuildAllDefaults() {
+		
+	}
+	void BuildAllImages() {
+		for (int i = 0; i < ImageStore.size(); i++) {
+			ImageStore[i]->BuildItem();
+		}
+	}
+	void BuildAllModels() {
+		for (int i = 0; i < ModelStore.size(); i++) {
+			ModelStore[i]->BuildItem();
+		}
+	}
+	void BuildAllConstants() {
+		for (int i = 0; i < ConstantStore.size(); i++) {
+			ConstantStore[i]->BuildItem();
+		}
+	}
+	void CleanAllBuild() {
+
+	}
 	void BuildAllObjectsItem() {
+		CleanAllBuild();
+		BuildAllDefaults();
+		BuildAllImages();
+		BuildAllModels();
+		BuildAllConstants();
 		//iterate through all items, run "clear mem" - THEN - run object builder from path
 	}//TODO
 	void DrawBuildAllObjects() {
@@ -378,8 +104,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	//TODO, RW toggle after creation
 
-	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp) {
-		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp));
+	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp, bool UNORM_ELSE_FLOAT, d4 data) {
+		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, &data));
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
 	void AddModelToList(std::string Path, std::string Name) {
@@ -405,15 +131,16 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				ImGui::InputInt("SizeY: ##RGBA Add image", &RGBA_sizeY);
 
 				ImGui::InputInt("Bit Per Channel: ##RGBA Add image", &RGBA_bbp, RGBA_bbp, RGBA_bbp);
-				if (RGBA_bbp > 64) RGBA_bbp = 64;
+				if (RGBA_bbp > 32) RGBA_bbp = 32;
 				else if (RGBA_bbp < 0) RGBA_bbp = 8;
 				
 				for (int i = 3; i < 7; i++) {
 					if (RGBA_bbp > pow(2, i) && (RGBA_bbp % int(pow(2, i))) != 0) RGBA_bbp = int(pow(2, i));
 				}
 
+				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
 				if (ImGui::Button("Create ## RGBA Add image")) {
-					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp /*, d4(RGBA_sizeX, RGBA_sizeY, RGBA_bbp)*/);
+					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, UNORM_ELSE_FLOAT_Driver, d4(RGBA_sizeX, RGBA_sizeY, RGBA_bbp));
 				}
 				
 				ImGui::EndMenu();
@@ -430,8 +157,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			{
 				int width, height, channels;
 				std::string path = fImage.GetFilePathName();
-				/*uint8_t* data = */ stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
-				AddImageToList(path, ToAddImageName, true, width, height, channels, 8/*, d4(data)*/);
+				uint8_t* data = stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
+				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, d4(data, width, height));
 				// action
 			}
 			// close

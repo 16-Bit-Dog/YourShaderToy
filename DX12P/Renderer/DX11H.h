@@ -1,4 +1,6 @@
-#pragma once
+
+#ifndef DX11_H
+#define DX11_H
 
 #include "DX11ShaderFuncs.h"
 #include "Renderable.h"
@@ -8,14 +10,13 @@
 
 int BLOCK_SIZE = 8;
     
-    bool NewImGUIDat = false;
-
+bool NewImGUIDat = false;
 
 using namespace DirectX;
 
 
 struct MainDX11Objects : Renderable{
-
+    
     int BLOCK_SIZE = 8;
 
     bool ClearRTV = true;
@@ -299,3 +300,5 @@ struct MainDX11Objects : Renderable{
     }
 
 };
+
+#endif 

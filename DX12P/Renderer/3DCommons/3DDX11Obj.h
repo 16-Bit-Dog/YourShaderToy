@@ -1,4 +1,7 @@
-#pragma once
+
+
+#ifndef DX11OBJ_LOADER
+#define DX11OBJ_LOADER
 
 #include "DX11IncludeMain.h"
 #include "3DCommon.h"
@@ -61,6 +64,10 @@ struct DX11M3DR : M3DR{
 
 	ID3D11Buffer* CBuf;
 	ID3D11Buffer* ArmatureCBuf;
+
+	std::vector < ID3D11Buffer* > VBuf;
+	std::vector < ID3D11UnorderedAccessView* > VBufUAV;
+	std::vector < ID3D11Buffer* > IBuf;
 
 
 	void CreateArmatureCBuf() {
@@ -189,9 +196,9 @@ struct DX11M3DR : M3DR{
 		bufDesc.CPUAccessFlags = 0;
 		bufDesc.ByteWidth = sizeof(ObjTuneStatReg);
 
-		dxDevice->CreateBuffer(&bufDesc, nullptr, &CBuf);
+		DX11Obj.dxDevice->CreateBuffer(&bufDesc, nullptr, &CBuf);
 
-		dxDeviceContext->UpdateSubresource(CBuf, 0, nullptr, &ObjTune, 0, 0);
+		DX11Obj.dxDeviceContext->UpdateSubresource(CBuf, 0, nullptr, &ObjTune, 0, 0);
 	}
 	void DefaultSampler() {
 		D3D11_SAMPLER_DESC tmpSampleDesc;
@@ -207,8 +214,27 @@ struct DX11M3DR : M3DR{
 		tmpSampleDesc.Filter = D3D11_FILTER{ D3D11_FILTER_MIN_MAG_MIP_LINEAR };
 		tmpSampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_MIRROR };
 
-		dxDevice->CreateSamplerState(&tmpSampleDesc, &Sampler);
+		DX11Obj.dxDevice->CreateSamplerState(&tmpSampleDesc, &Sampler);
 	}
+
+	void SetupBlendStateDefault() {
+		D3D11_BLEND_DESC blendVal;
+
+		blendVal.AlphaToCoverageEnable = false;
+		blendVal.IndependentBlendEnable = false;
+		blendVal.RenderTarget[0].BlendEnable = true;
+		blendVal.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		blendVal.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		blendVal.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+		blendVal.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+		blendVal.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+		blendVal.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		blendVal.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		SafeRelease(BlendState);
+		DX11Obj.dxDevice->CreateBlendState(&blendVal, &BlendState);
+	}
+
 
 	DX11M3DR(std::vector<VNT> V) {
 
@@ -243,4 +269,10 @@ struct DX11M3DR : M3DR{
 		DefaultAllMatBuf();
 
 	}
+	~DX11M3DR() {
+		//TODO: make deconstructor
+	}
 };
+
+
+#endif

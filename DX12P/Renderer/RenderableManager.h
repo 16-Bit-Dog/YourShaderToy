@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef RENDERABLE_MANAGER
+#define RENDERABLE_MANAGER
 
 #include <DX12H.h>
 #include <DX11H.h>
@@ -13,6 +13,9 @@ void SetDX11Renderer() {
 	DXM = &DX11Obj;
 }
 
-void SetDX12Renderer() { 
+void SetDX12Renderer() {
 	DXM = &DX12Obj;
 }
+
+
+#endif

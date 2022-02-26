@@ -9,10 +9,6 @@
 
 using namespace DirectX;
 
-
-
-
-
 struct MainDX12Objects : Renderable{
    
     bool UseWarpDev = false;

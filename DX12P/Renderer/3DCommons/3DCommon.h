@@ -71,6 +71,7 @@ struct Joint {
 	std::vector<std::shared_ptr<Joint>> children;
 	std::shared_ptr<Joint> parent;
 
+	
 	void GetInvBindT(XMMATRIX parentBindT) {
 
 		XMMATRIX BT = parentBindT * LBT;
@@ -126,6 +127,8 @@ struct M3DR { //model Resource data only
 	std::vector < std::vector<UINT> > Indice;
 	XMMATRIX globalInverseTransform;
 	XMMATRIX globalTransform;
+
+
 
 	const ofbx::AnimationCurveNode* GetNodeCurve(int Anim, std::string valueType, const ofbx::Object* Bone) {
 
@@ -634,6 +637,10 @@ struct M3DR { //model Resource data only
 		BindPoseBones();
 
 		FillTopBones();
+	}
+
+	~M3DR() {
+		//TODO: make deconstructor
 	}
 
 };
