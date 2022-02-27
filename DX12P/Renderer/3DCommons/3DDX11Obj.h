@@ -5,7 +5,7 @@
 
 #include "DX11IncludeMain.h"
 #include "3DCommon.h"
-#include "RenderableManager.h"
+//#include "RenderableManager.h"
 
 //TODO: load texture with WCI loader
 
@@ -58,6 +58,15 @@ struct MaterialDX11 {
 };
 
 struct DX11M3DR : M3DR{
+	
+	inline static ComPtr<ID3D11Device5> dxDevice;
+	inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext;
+
+	inline static void SET_DX_CONTENT(ComPtr<ID3D11Device5> dxDevice_tmp, ComPtr<ID3D11DeviceContext4> dxDeviceContext_tmp) {
+		DX11M3DR::dxDevice = dxDevice_tmp;
+		DX11M3DR::dxDeviceContext = dxDeviceContext_tmp;
+	}
+
 	std::vector<MaterialDX11> Mat = {};
 	ID3D11SamplerState* Sampler = NULL;
 	ID3D11BlendState* BlendState = NULL;
@@ -85,10 +94,10 @@ struct DX11M3DR : M3DR{
 		bufDesc.CPUAccessFlags = 0;
 		bufDesc.ByteWidth = sizeof(XMFLOAT4X4) * BoneDataTLMA.size(); //for now max 64 bones
 
-		DX11Obj.dxDevice->CreateBuffer(&bufDesc, nullptr, &ArmatureCBuf);
+		dxDevice->CreateBuffer(&bufDesc, nullptr, &ArmatureCBuf);
 
 		if (BoneDataTLMA.size() != 0) {
-			DX11Obj.dxDeviceContext->UpdateSubresource(ArmatureCBuf, 0, nullptr, &BoneDataTLMA[0], 0, 0);
+			dxDeviceContext->UpdateSubresource(ArmatureCBuf, 0, nullptr, &BoneDataTLMA[0], 0, 0);
 		}
 		else {
 
@@ -102,9 +111,9 @@ struct DX11M3DR : M3DR{
 		bufDesc.CPUAccessFlags = 0;
 		bufDesc.ByteWidth = sizeof(MaterialData);
 
-		DX11Obj.dxDevice->CreateBuffer(&bufDesc, nullptr, &Mat[i].MatDataBuf);
+		dxDevice->CreateBuffer(&bufDesc, nullptr, &Mat[i].MatDataBuf);
 
-		DX11Obj.dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf, 0, nullptr, &Mat[i].MatData, 0, 0);
+		dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf, 0, nullptr, &Mat[i].MatData, 0, 0);
 	}
 
 	void DefaultAllMatBuf() {
@@ -140,7 +149,7 @@ struct DX11M3DR : M3DR{
 			ZeroMemory(&resourceData, sizeof(D3D11_SUBRESOURCE_DATA));
 			resourceData.pSysMem = &modelDat[i][0]; //Vertex data for sub source
 
-			DX11Obj.dxDevice->CreateBuffer(&vertexBufferDesc, &resourceData, &VBuf[i]); //create buffer, using data settings struct, struct of data, and vertex buffer output - this is also used to create other buffer styles
+			dxDevice->CreateBuffer(&vertexBufferDesc, &resourceData, &VBuf[i]); //create buffer, using data settings struct, struct of data, and vertex buffer output - this is also used to create other buffer styles
 
 			D3D11_BUFFER_DESC a;
 			VBuf[i]->GetDesc(&a);
@@ -162,7 +171,7 @@ struct DX11M3DR : M3DR{
 
 			resourceData.pSysMem = &modelDat[i][0]; //Vertex data pos for sub source - use Position?
 
-			DX11Obj.dxDevice->CreateBuffer(&vertexBufferDescU, &resourceData, &tmpVertex);
+			dxDevice->CreateBuffer(&vertexBufferDescU, &resourceData, &tmpVertex);
 
 			D3D11_UNORDERED_ACCESS_VIEW_DESC UAVdesc;
 			//DXGI_FORMAT_R32_TYPELESS
@@ -172,7 +181,7 @@ struct DX11M3DR : M3DR{
 			UAVdesc.Buffer.NumElements = modelDat[i].size();
 			UAVdesc.Buffer.Flags = 0;
 
-			DX11Obj.dxDevice->CreateUnorderedAccessView(tmpVertex, &UAVdesc, &VBufUAV[i]);
+			dxDevice->CreateUnorderedAccessView(tmpVertex, &UAVdesc, &VBufUAV[i]);
 
 			D3D11_BUFFER_DESC indexBufferDesc; //buffer obj
 			ZeroMemory(&indexBufferDesc, sizeof(D3D11_BUFFER_DESC)); //alloc
@@ -185,7 +194,7 @@ struct DX11M3DR : M3DR{
 
 			resourceData.pSysMem = &Indice[i][0]; //indice data for sub source
 
-			DX11Obj.dxDevice->CreateBuffer(&indexBufferDesc, &resourceData, &IBuf[i]); //make buffer
+			dxDevice->CreateBuffer(&indexBufferDesc, &resourceData, &IBuf[i]); //make buffer
 		}
 	}
 	void DefaultCBuf() {
@@ -196,9 +205,9 @@ struct DX11M3DR : M3DR{
 		bufDesc.CPUAccessFlags = 0;
 		bufDesc.ByteWidth = sizeof(ObjTuneStatReg);
 
-		DX11Obj.dxDevice->CreateBuffer(&bufDesc, nullptr, &CBuf);
+		dxDevice->CreateBuffer(&bufDesc, nullptr, &CBuf);
 
-		DX11Obj.dxDeviceContext->UpdateSubresource(CBuf, 0, nullptr, &ObjTune, 0, 0);
+		dxDeviceContext->UpdateSubresource(CBuf, 0, nullptr, &ObjTune, 0, 0);
 	}
 	void DefaultSampler() {
 		D3D11_SAMPLER_DESC tmpSampleDesc;
@@ -214,7 +223,7 @@ struct DX11M3DR : M3DR{
 		tmpSampleDesc.Filter = D3D11_FILTER{ D3D11_FILTER_MIN_MAG_MIP_LINEAR };
 		tmpSampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_MIRROR };
 
-		DX11Obj.dxDevice->CreateSamplerState(&tmpSampleDesc, &Sampler);
+		dxDevice->CreateSamplerState(&tmpSampleDesc, &Sampler);
 	}
 
 	void SetupBlendStateDefault() {
@@ -232,7 +241,7 @@ struct DX11M3DR : M3DR{
 		blendVal.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 		SafeRelease(BlendState);
-		DX11Obj.dxDevice->CreateBlendState(&blendVal, &BlendState);
+		dxDevice->CreateBlendState(&blendVal, &BlendState);
 	}
 
 

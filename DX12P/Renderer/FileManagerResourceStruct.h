@@ -8,7 +8,15 @@
 #include <string>
 #include "ResourceObjectBase.h"
 #include "RenderableManager.h"
+#include "Renderable.h"
 
+struct RendererFileM {
+	inline static Renderable* Render;
+
+	inline static void SET_RENDERABLE(Renderable* r_tmp) {
+		Render = r_tmp;
+	}
+};
 
 struct IntTypeAndName_c {
 	int32_t val = 0;
@@ -51,6 +59,9 @@ struct d4 {
 	int sizeX_c;
 	int sizeY_c;
 	int bpp_c;
+
+	d4();
+
 	d4(uint8_t* data8t, int sizeX, int sizeY) {
 		sizeX_c = sizeX;
 		sizeY_c = sizeY;
@@ -110,6 +121,9 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 
 struct ObjectBuilder {
 
+	inline static bool UNORM_ELSE_FLOAT_Driver;
+	inline static std::set<std::string> usedNameCont;
+
 	virtual void BuildItem() = 0;
 
 };
@@ -146,32 +160,31 @@ struct BuiltPredefined_c : ObjectBuilder {
 
 };
 
-static bool UNORM_ELSE_FLOAT_Driver;
-static std::set<std::string> usedNameCont;
+
 struct BuiltImage_c : ObjectBuilder {
 	//I read data immedeatly since it is simple, fast, and I want to make a TODO: preview option of image once loaded
 
 	std::string Path = "";
 	std::string Name = "";
 
-	d4* data;
+	d4 data = NULL;
 
 	int bpp;
 	int sizeX;
 	int sizeY;
-	int channels;
+	int channels; 
 	bool ReadWrite = false;
 	bool IsPath;
 	bool UNORM_ELSE_FLOAT;
 	//d4 data;
 
 	void BuildItem() {
-		DXM->ROB->LoadImageFromData(this);
+		RendererFileM::Render->ROB->LoadImageFromData(this);
 	}
 
 	BuiltImage_c(std::string p, std::string s, bool IsPath, int sizeX_tmp, int sizeY_tmp, int channels_tmp, int bpp_tmp, bool UNORM_ELSE_FLOAT_tmp, d4* data_tmp) {
 		//set name
-		data = data_tmp;
+		data = *data_tmp;
 
 		UNORM_ELSE_FLOAT = UNORM_ELSE_FLOAT_tmp;
 		IsPath = IsPath;
@@ -191,7 +204,6 @@ struct BuiltImage_c : ObjectBuilder {
 	}
 	~BuiltImage_c() {
 		usedNameCont.erase(Name);
-		delete[] data;
 	}
 
 
@@ -199,7 +211,7 @@ struct BuiltImage_c : ObjectBuilder {
 };
 
 
-struct BuiltModel_c {
+struct BuiltModel_c : ObjectBuilder {
 
 	std::string Path = "";
 	std::string Name = ""; //same as Buffer <-- when loaded 
@@ -209,7 +221,7 @@ struct BuiltModel_c {
 
 
 	void BuildItem() {
-		DXM->ROB->LoadModelFromData(this);
+		RendererFileM::Render->ROB->LoadModelFromData(this);
 	}
 
 	BuiltModel_c(std::string p, std::string s) {
@@ -237,7 +249,7 @@ struct BuiltModel_c {
 
 static std::set<std::string> usedName_Constant;
 
-struct BuiltConstant_c {
+struct BuiltConstant_c : ObjectBuilder {
 	std::string Name = "";
 	TypeStorageMass vars;
 
@@ -270,7 +282,7 @@ struct BuiltConstant_c {
 	//TODO, make value setter in info tab - this is gonna be messyish
 
 	void BuildItem() {
-		DXM->ROB->LoadConstantFromData(this);
+		RendererFileM::Render->ROB->LoadConstantFromData(this);
 	}
 
 	~BuiltConstant_c() {

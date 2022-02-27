@@ -21,6 +21,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	ImGuiFileDialog fModel;
 	ImGuiFileDialog fConstant; //to read a XML or something I guess?
 
+
+	BuiltPredefined_c* PredefinedStore;
 	std::vector<BuiltImage_c*> ImageStore;
 	std::vector<BuiltModel_c*> ModelStore;
 	std::vector<BuiltConstant_c*> ConstantStore;
@@ -39,7 +41,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 
 	void BuildAllDefaults() {
-		
+		PredefinedStore->BuildItem();
 	}
 	void BuildAllImages() {
 		for (int i = 0; i < ImageStore.size(); i++) {
@@ -57,7 +59,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 	}
 	void CleanAllBuild() {
-
+		DXM->ROB->ClearAllObjects();
 	}
 	void BuildAllObjectsItem() {
 		CleanAllBuild();
@@ -69,7 +71,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}//TODO
 	void DrawBuildAllObjects() {
 		//TODO: button draw for BUILD OBJECTS
-		BuildAllObjectsItem();
+		if(ImGui::Button("COMPILE ALL##main resource compile button")) BuildAllObjectsItem();
 	}
 
 	void DrawPREDEFINED() {
@@ -138,9 +140,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 					if (RGBA_bbp > pow(2, i) && (RGBA_bbp % int(pow(2, i))) != 0) RGBA_bbp = int(pow(2, i));
 				}
 
-				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
+				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &ObjectBuilder::UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
 				if (ImGui::Button("Create ## RGBA Add image")) {
-					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, UNORM_ELSE_FLOAT_Driver, d4(RGBA_sizeX, RGBA_sizeY, RGBA_bbp));
+					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, d4(RGBA_sizeX, RGBA_sizeY, RGBA_bbp));
 				}
 				
 				ImGui::EndMenu();

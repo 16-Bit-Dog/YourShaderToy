@@ -12,10 +12,11 @@ struct DX11M3DR;
 
 struct ResourceObjectBase {
 
+	virtual void ClearAllPredefined() = 0;
 	virtual void ClearAllImages() = 0;
 	virtual void ClearAllModels() = 0;
 	virtual void ClearAllConstants() = 0;
-	virtual void ClearAllObjects();
+	virtual void ClearAllObjects() = 0;
 	virtual void LoadImageFromData(BuiltImage_c* bI) = 0;
 	virtual void LoadModelFromData(BuiltModel_c* bI) = 0;
 	virtual void LoadConstantFromData(BuiltConstant_c* bI) = 0;
