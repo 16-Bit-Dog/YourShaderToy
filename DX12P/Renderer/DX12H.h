@@ -319,7 +319,7 @@ struct MainDX12Objects : Renderable{
         m_lastFenceValue = fenceValue;
         FrameC->FenceValue = fenceValue;
 
-        NewImGUIDat = false;
+        NewImGUIDat = false; 
     }
 
     void CleanRendererState() override {

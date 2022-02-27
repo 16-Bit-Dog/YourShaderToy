@@ -189,6 +189,7 @@
     <ClInclude Include="Renderer\DX12IncludeMain.h" />
     <ClInclude Include="Renderer\DXSafeInclude.h" />
     <ClInclude Include="Renderer\FileManagerResourceStruct.h" />
+    <ClInclude Include="Renderer\GlobalRendererManager\GlobalRendererContent.h" />
     <ClInclude Include="Renderer\Renderable.h" />
     <ClInclude Include="Renderer\RenderableManager.h" />
     <ClInclude Include="Renderer\ResourceObjectBase.h" />
@@ -201,6 +202,7 @@
     <ClInclude Include="Window\Pipeline_Window.h" />
     <ClInclude Include="Window\Scene_Window.h" />
     <ClInclude Include="Window\Settings_Window.h" />
+    <ClInclude Include="Window\Window_Struct.h" />
     <ClInclude Include="Window\Window_Type.h" />
     <ClInclude Include="Window\GUI_Logic.h" />
     <ClInclude Include="imGUI\imconfig.h" />

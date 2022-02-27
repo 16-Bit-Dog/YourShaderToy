@@ -9,11 +9,8 @@
 #include <functional>
 #include <map>
 #include <cstdint>
-#include <../GLFW/glfw3.h>
-#include <../GLFW/glfw3native.h>
 #include "RenderableManager.h"
-#include <../imGUI/imgui.h>
-#include <../imGUI/imgui_impl_glfw.h>
+#include "Window_Struct.h"
 #include <../Window/GUI_Logic.h>
 #include <../Window/Window_Type.h>
 
@@ -25,66 +22,15 @@ struct MASTER_Editor;
 struct MASTER_Objects;
 struct GroupData;
 
-struct GLFW_Window_C {
+GLFW_Window_C MainWin;
 
-	std::vector<GroupData*> C_GUI_Win;//GroupData* - window group associated with GLFW Object windows to allow tab stacking -[0] is your current tab
+struct AllWin {
+	inline static UINT CurrWindow = 0;
+	inline static std::vector<GLFW_Window_C*> WinList;
 
-	UINT id = -1;
+	inline static void LoopRunAllContext();
 
-	GLFWwindow* window;
-
-	GLFWscrollfun GLFWscrollfunObj;
-	GLFWmousebuttonfun GLFWmousebuttonfunObj;
-
-	int Width = 0;
-	int Height = 0;
-
-	double MousePosX;
-	double MousePosY;
-
-	int MouseLeftState;
-	int MouseRightState;
-	int MouseMiddleState;
-
-	double time;
-
-	std::string title;
-
-
-	bool Created = false;
-
-	void KillWindow();
-
-	void RemoveWindowFromAllWindowList();
-
-	void RemoveAssociatedGUIFromWindowObj();
-
-	void FillDXMWithNewGLFW();
-
-	int CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType);
-
-	int RunWindowLogic();
-
-	void CleanSwapChain();
-
-	void WindowPreamble() {
-		glfwGetCursorPos(MainWin.window, &MousePosX, &MousePosY);
-		glfwGetFramebufferSize(MainWin.window, &MainWin.Width, &MainWin.Height);
-		MouseLeftState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-		MouseRightState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
-		MouseMiddleState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-		time = glfwGetTime();
-	}
-	
-}MainWin;
-
-struct AllWindowDrawLoop{
-	UINT CurrWindow = 0;
-	std::vector<GLFW_Window_C*> WinList;
-
-	void LoopRunAllContext();
-
-}AllWin;
+};
 
 void GLFW_Window_C::RemoveAssociatedGUIFromWindowObj() {
 	for (int i = 0; i < C_GUI_Win.size(); i++) {
@@ -95,7 +41,7 @@ void GLFW_Window_C::RemoveAssociatedGUIFromWindowObj() {
 }
 
 void GLFW_Window_C::RemoveWindowFromAllWindowList() {
-	AllWin.WinList.erase(AllWin.WinList.begin()+id);	
+	AllWin::WinList.erase(AllWin::WinList.begin() + id);
 }
 void GLFW_Window_C::CleanSwapChain() {
 	//clean swap chain+related from same index of this window inrelation to WinList which is your window id
@@ -136,9 +82,9 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 			return -1;
 		}
 
-		id = AllWin.WinList.size();
+		id = AllWin::WinList.size();
 		Created = true;
-		AllWin.WinList.push_back(this);
+		AllWin::WinList.push_back(this);
 
 		FillDXMWithNewGLFW();
 	}
@@ -163,16 +109,16 @@ int GLFW_Window_C::RunWindowLogic() {
 		}
 	} //seperate loop in case I start wanting to assign unique ID's
 	for (int i = 0; i < C_GUI_Win.size(); i++) { //make new window
-		
-		for (int ii = 1; ii < Win_Type_ID_Vector.size() + 1;ii++) {
-			 
+
+		for (int ii = 1; ii < WIN_TYPE::Win_Type_ID_Vector.size() + 1; ii++) {
+
 			GroupData* TmpView = C_GUI_Win[i]->MakeNewMainWindowCheckAndDo(ii);
 			if (TmpView != nullptr) {
 				C_GUI_Win.push_back(TmpView);
 			}
-		
+
 		}
-		
+
 	}
 	for (int i = 0; i < C_GUI_Win.size(); i++) {
 		C_GUI_Win[i]->ToDraw();
@@ -194,15 +140,15 @@ void KillWindowObj(GLFW_Window_C* winObj) {
 	winObj->KillWindow();
 }
 
-void AllWindowDrawLoop::LoopRunAllContext() {
-	
+void AllWin::LoopRunAllContext() {
+
 	glfwSwapInterval(1); //vsync
 
 	MASTER_IM_GUI_obj.SetAndCreateimGUIContext(WinList[0]->window);
 
-	while (WinList.size()>0 && !glfwWindowShouldClose(WinList[0]->window)) {
+	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
-		
+
 		for (int i = 0; i < WinList.size(); i++) {
 			if (glfwWindowShouldClose(WinList[i]->window)) {
 				KillWindowObj(WinList[i]);
@@ -217,13 +163,13 @@ void AllWindowDrawLoop::LoopRunAllContext() {
 
 		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
 
-				CurrWindow = i;
+			CurrWindow = i;
 
-				glfwMakeContextCurrent(WinList[i]->window);
-				glfwPollEvents();
-				
+			glfwMakeContextCurrent(WinList[i]->window);
+			glfwPollEvents();
 
-				WinList[i]->RunWindowLogic();
+
+			WinList[i]->RunWindowLogic();
 
 
 		}

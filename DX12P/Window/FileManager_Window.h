@@ -22,7 +22,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	ImGuiFileDialog fConstant; //to read a XML or something I guess?
 
 
-	BuiltPredefined_c* PredefinedStore;
+	BuiltPredefined_c* PredefinedStore = new BuiltPredefined_c();
 	std::vector<BuiltImage_c*> ImageStore;
 	std::vector<BuiltModel_c*> ModelStore;
 	std::vector<BuiltConstant_c*> ConstantStore;

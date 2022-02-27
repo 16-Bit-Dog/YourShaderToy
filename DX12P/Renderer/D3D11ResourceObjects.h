@@ -9,9 +9,10 @@
 #include "RenderableManager.h"
 #include "DX11H.h"
 #include "Renderable.h"
+
 //DX11M3DR
 
-
+/*
 struct DX11_OBJ_RESOURCE_S {
 	inline static Renderable* DX11Obj;
 
@@ -25,7 +26,7 @@ struct DX11_OBJ_RESOURCE_S {
 	}
 
 };
-
+*/
 
 //TODO: texture loaded clamp, mirror, ect. and sampling options
 struct SrvUavPairDX11 {
@@ -69,7 +70,7 @@ struct SrvUavPairDX11 {
 		gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
 
 
-		DX11_OBJ_RESOURCE_S::dxDeviceR->CreateTexture2D(
+		MainDX11Objects::dxDevice->CreateTexture2D(
 			&gpuTexDesc,
 			&defaultResourceData,
 			&r);
@@ -80,8 +81,8 @@ struct SrvUavPairDX11 {
 		UAVDesc.Format = format; //
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
-		DX11_OBJ_RESOURCE_S::dxDeviceR->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
-		DX11_OBJ_RESOURCE_S::dxDeviceR->CreateShaderResourceView(r.Get(), nullptr, &srv);
+		MainDX11Objects::dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
+		MainDX11Objects::dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
 	}
 
@@ -136,13 +137,16 @@ struct ModelToRendererDX11 {
 };
 
 struct PredefinedToRendererDX11 {
+	PredefinedToRendererDX11(BuiltPredefined_c* data) {
 
+		//TODO: load data into const buffer under names stated previously
+	}
 };
 
 struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
-	ResourceObjectBaseDX11() {
-		DX11_OBJ_RESOURCE_S::DX11Obj->ROB = this;
+	void SetResourceObjectBaseDX11() {
+		MainDX11Objects::ROB = this;
 	}
 
 	PredefinedToRendererDX11* PredefinedData;
@@ -191,6 +195,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void LoadConstantFromData(BuiltConstant_c* bI) {
 		ConstantData[bI->Name] = new StructObjectToRendererDX11(bI);
+	}
+	void LoadPredefinedFromData(BuiltPredefined_c* bI) {
+		PredefinedData = new PredefinedToRendererDX11(bI);
 	}
 
 };

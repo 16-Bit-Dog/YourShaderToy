@@ -24,7 +24,7 @@ struct MASTER_Function_Inherit {
 
 			if (ImGui::BeginMenu("New Window"))
 			{
-				for (const auto& i : Win_Type_Name_Vector) {
+				for (const auto& i : WIN_TYPE::Win_Type_Name_Vector) {
 					if (GD->NewWindowCreationHandle.count(i.first) == 0) { //new window bool set to false if not in map of new windows to be made bool map
 						GD->NewWindowCreationHandle[i.first] = false;
 					}

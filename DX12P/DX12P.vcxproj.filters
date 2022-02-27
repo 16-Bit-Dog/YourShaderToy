@@ -52,6 +52,9 @@
     <Filter Include="Header Files\imgui\Dialog">
       <UniqueIdentifier>{2b44162c-9687-4c30-9bc4-31dcd369fca3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Renderer\GlobalRenderManager">
+      <UniqueIdentifier>{d5b844e1-0835-48be-9aed-e9c430cf628f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -220,6 +223,12 @@
     </ClInclude>
     <ClInclude Include="Renderer\FileManagerResourceStruct.h">
       <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GlobalRendererManager\GlobalRendererContent.h">
+      <Filter>Header Files\Renderer\GlobalRenderManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Window_Struct.h">
+      <Filter>Header Files\Window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

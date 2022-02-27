@@ -39,7 +39,7 @@ int GLFWPreLogic() {
 
 	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
 
-	AllWin.LoopRunAllContext();
+	AllWin::LoopRunAllContext();
 
 	return 0;
 }

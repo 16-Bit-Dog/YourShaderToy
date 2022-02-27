@@ -8,7 +8,7 @@ struct ResourceObjectBase;
 
 struct Renderable {
 
-	ResourceObjectBase* ROB;
+	inline static ResourceObjectBase* ROB;
 
 	bool NewImGUIDat = false;
 

@@ -46,10 +46,10 @@ struct GroupData;
 		ToDraw = [this]() { MASTER_Pipeline_m.BasicViewDraw(this); };
 	}
 	int GroupData::LinkBasedOnInt(int Input) {
-		if (Win_Type_ID_Vector.count(Input)) {
+		if (WIN_TYPE::Win_Type_ID_Vector.count(Input)) {
 			WindowType = Input;
 			ToDraw = [this,Input]() {
-				Win_Type_Initialization_Vector_Of_Type[Input](this); 
+				WIN_TYPE::Win_Type_Initialization_Vector_Of_Type[Input](this);
 			};
 			return 1;
 		}
@@ -59,7 +59,7 @@ struct GroupData;
 
 	GroupData* GroupData::MakeNewMainWindowCheckAndDo(int WindowType = 1) {
 		//enter window type to check if needs to be made - this is individual
-		if (Win_Type_ID_Vector.count(WindowType)) {
+		if (WIN_TYPE::Win_Type_ID_Vector.count(WindowType)) {
 
 			if (NewWindowCreationHandle[WindowType] == true) {
 				

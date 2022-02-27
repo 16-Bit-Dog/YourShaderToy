@@ -10,14 +10,7 @@
 #include "ResourceObjectBase.h"
 #include "RenderableManager.h"
 #include "Renderable.h"
-
-struct RendererFileM {
-	inline static Renderable* Render;
-
-	inline static void SET_RENDERABLE(Renderable* r_tmp) {
-		Render = r_tmp;
-	}
-};
+#include "Window_Struct.h"
 
 struct IntTypeAndName_c {
 	int32_t val = 0;
@@ -141,9 +134,36 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 	uint32_t MiddleClickState;
 	float time;
 
+	CONST_DATA_PASS_c() {
+		
+		WindowSizeX = GLFW_Window_C::Width;
+		WindowSizeY = GLFW_Window_C::Height;
+
+		MousePosX = std::floor(GLFW_Window_C::MousePosX);
+		MousePosY = std::floor(GLFW_Window_C::MousePosY);
+
+		LeftClickState = GLFW_Window_C::MouseLeftState;
+		RightClickState = GLFW_Window_C::MouseRightState;
+		MiddleClickState = GLFW_Window_C::MouseMiddleState;
+		time = GLFW_Window_C::time;
+		//TODO fill struct to do built item compile
+	}
+	void update() {
+		WindowSizeX = GLFW_Window_C::Width;
+		WindowSizeY = GLFW_Window_C::Height;
+
+		MousePosX = std::floor(GLFW_Window_C::MousePosX);
+		MousePosY = std::floor(GLFW_Window_C::MousePosY);
+
+		LeftClickState = GLFW_Window_C::MouseLeftState;
+		RightClickState = GLFW_Window_C::MouseRightState;
+		MiddleClickState = GLFW_Window_C::MouseMiddleState;
+		time = GLFW_Window_C::time;
+	}
 };
 
 struct BuiltPredefined_c : ObjectBuilder {
+	CONST_DATA_PASS_c* data = new CONST_DATA_PASS_c();;
 	//UINT32 WindowSizeX; -> //MainWin.Width;
 	//UINT32 WindowSizeY; -> //MainWin.Height;
 
@@ -155,9 +175,31 @@ struct BuiltPredefined_c : ObjectBuilder {
 	// UINT32 MiddleClick; -> //MainWin.MiddleClickState -> mouse_button_callback
 
 	//float time; -> time
+	BuiltPredefined_c() {
+		usedNameCont.insert("WINDOW_SIZE_X");
+		usedNameCont.insert("WINDOW_SIZE_Y");
+		usedNameCont.insert("MOUSE_POS_X");
+		usedNameCont.insert("MOUSE_POS_Y");
+		usedNameCont.insert("LEFT_CLICK_STATE");
+		usedNameCont.insert("RIGHT_CLICK_STATE");
+		usedNameCont.insert("MIDDLE_CLICK_STATE");
+		usedNameCont.insert("NET_TIME");
+	}
 
 	void BuildItem() {
+		data->update();
+		Renderable::ROB->LoadPredefinedFromData(this);
+	}
 
+	~BuiltPredefined_c() {
+		usedNameCont.erase("WINDOW_SIZE_X");
+		usedNameCont.erase("WINDOW_SIZE_Y");
+		usedNameCont.erase("MOUSE_POS_X");
+		usedNameCont.erase("MOUSE_POS_Y");
+		usedNameCont.erase("LEFT_CLICK_STATE");
+		usedNameCont.erase("RIGHT_CLICK_STATE");
+		usedNameCont.erase("MIDDLE_CLICK_STATE");
+		usedNameCont.erase("NET_TIME");
 	}
 
 };
@@ -181,7 +223,7 @@ struct BuiltImage_c : ObjectBuilder {
 	//d4 data;
 
 	void BuildItem() {
-		RendererFileM::Render->ROB->LoadImageFromData(this);
+		Renderable::ROB->LoadImageFromData(this);
 	}
 
 	BuiltImage_c(std::string p, std::string s, bool IsPath, int sizeX_tmp, int sizeY_tmp, int channels_tmp, int bpp_tmp, bool UNORM_ELSE_FLOAT_tmp, d4* data_tmp) {
@@ -223,7 +265,7 @@ struct BuiltModel_c : ObjectBuilder {
 
 
 	void BuildItem() {
-		RendererFileM::Render->ROB->LoadModelFromData(this);
+		Renderable::ROB->LoadModelFromData(this);
 	}
 
 	BuiltModel_c(std::string p, std::string s) {
@@ -284,7 +326,7 @@ struct BuiltConstant_c : ObjectBuilder {
 	//TODO, make value setter in info tab - this is gonna be messyish
 
 	void BuildItem() {
-		RendererFileM::Render->ROB->LoadConstantFromData(this);
+		Renderable::ROB->LoadConstantFromData(this);
 	}
 
 	~BuiltConstant_c() {

@@ -4,21 +4,17 @@
 
 #include "DX11ShaderFuncs.h"
 #include "Renderable.h"
-#include "D3D11ResourceObjects.h"
+//#include "D3D11ResourceObjects.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx11.h>
 #include "3DCommons/3DDX11Obj.h"
 
-//int BLOCK_SIZE = 8;
-    
-bool NewImGUIDat = false;
 
 using namespace DirectX;
 
 
 struct MainDX11Objects : Renderable{
-    
 
     int BLOCK_SIZE = 8;
 
@@ -43,8 +39,8 @@ struct MainDX11Objects : Renderable{
 
     //Pipeline Objects
     
-    ComPtr<ID3D11Device5> dxDevice = 0;
-    ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
+    inline static ComPtr<ID3D11Device5> dxDevice = 0;
+    inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
     ComPtr<IDXGISwapChain1> dxSwapChain = nullptr;
 
     D3D11_DEPTH_STENCIL_VIEW_DESC dxDepthStencilDesc{
@@ -238,9 +234,9 @@ struct MainDX11Objects : Renderable{
 #ifdef DX11OBJ_LOADER
         DX11M3DR::SET_DX_CONTENT(dxDevice, dxDeviceContext);
 #endif
-#ifdef DX11_H_RESOURCE_OBJ
-        DX11_OBJ_RESOURCE_S::SET_DX_CONTENT(dxDevice, dxDeviceContext, this);
-#endif
+//#ifdef DX11_H_RESOURCE_OBJ
+//        DX11_OBJ_RESOURCE_S::SET_DX_CONTENT(dxDevice, dxDeviceContext, this);
+//#endif
     }
 
     void ImGUIInit() override{
