@@ -1,6 +1,7 @@
 #ifndef FILE_MANAGER_STRUCTS
 #define FILE_MANAGER_STRUCTS
 
+//TODO: save somewhere on close the windows opened and reopen on program start based on txt file or smthing
 
 #define MAX_IMAGE_NAME 10
 #include <set>
@@ -60,7 +61,9 @@ struct d4 {
 	int sizeY_c;
 	int bpp_c;
 
-	d4();
+	d4() {
+
+	}
 
 	d4(uint8_t* data8t, int sizeX, int sizeY) {
 		sizeX_c = sizeX;
@@ -97,12 +100,11 @@ struct d4 {
 		return dataV;
 	}
 	~d4() {
-
+//		if(dataV != nullptr) delete[] dataV;
 		if (data8 != nullptr) delete[] data8;
 		if (data16 != nullptr) delete[] data16;
 		if (data32 != nullptr) delete[] data32;
 		if (data64 != nullptr) delete[] data64;
-
 	}
 };
 
@@ -167,7 +169,7 @@ struct BuiltImage_c : ObjectBuilder {
 	std::string Path = "";
 	std::string Name = "";
 
-	d4 data = NULL;
+	d4 data;
 
 	int bpp;
 	int sizeX;

@@ -106,8 +106,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	//TODO, RW toggle after creation
 
-	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp, bool UNORM_ELSE_FLOAT, d4 data) {
-		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, &data));
+	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp, bool UNORM_ELSE_FLOAT, d4* data) {
+		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, data));
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
 	void AddModelToList(std::string Path, std::string Name) {
@@ -142,7 +142,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &ObjectBuilder::UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
 				if (ImGui::Button("Create ## RGBA Add image")) {
-					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, d4(RGBA_sizeX, RGBA_sizeY, RGBA_bbp));
+					d4 idat(RGBA_sizeX, RGBA_sizeY, RGBA_bbp);
+					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, &idat);
 				}
 				
 				ImGui::EndMenu();
@@ -160,7 +161,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				int width, height, channels;
 				std::string path = fImage.GetFilePathName();
 				uint8_t* data = stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
-				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, d4(data, width, height));
+				d4 idat(data, width, height);
+				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, &idat);
 				// action
 			}
 			// close
