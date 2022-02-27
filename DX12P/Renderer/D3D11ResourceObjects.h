@@ -32,6 +32,7 @@ struct DX11_OBJ_RESOURCE_S {
 struct SrvUavPairDX11 {
 	ComPtr<ID3D11ShaderResourceView> srv;
 	ComPtr<ID3D11UnorderedAccessView> uav;
+	bool HasRW = false;
 
 	DXGI_FORMAT format;
 
@@ -81,7 +82,11 @@ struct SrvUavPairDX11 {
 		UAVDesc.Format = format; //
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
-		MainDX11Objects::dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
+		if (data->ReadWrite) {
+			MainDX11Objects::dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
+			HasRW = data->ReadWrite;
+		}
+
 		MainDX11Objects::dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
 	}
@@ -138,7 +143,7 @@ struct ModelToRendererDX11 {
 
 struct PredefinedToRendererDX11 {
 	PredefinedToRendererDX11(BuiltPredefined_c* data) {
-
+		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
 		//TODO: load data into const buffer under names stated previously
 	}
 };

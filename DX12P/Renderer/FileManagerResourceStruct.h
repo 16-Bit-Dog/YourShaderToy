@@ -117,7 +117,7 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 struct ObjectBuilder {
 
 	inline static bool UNORM_ELSE_FLOAT_Driver;
-	inline static std::set<std::string> usedNameCont;
+	inline static std::set<std::string> usedNameCont = {""};
 
 	virtual void BuildItem() = 0;
 
@@ -335,7 +335,13 @@ struct BuiltConstant_c : ObjectBuilder {
 	}
 };
 
+bool IsNotAlphaAndUnderScore(unsigned char ch) {
+	return (!std::isalpha(ch) && ch != '_');
+}
+
 void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict) {
+	Name->erase(std::remove_if(Name->begin(), Name->end(), IsNotAlphaAndUnderScore), Name->end()); //replace escape chars and such
+	
 	if (usedName->count(*Name) != 0) {
 		for (int i = 0; i < usedName->size(); i++) {
 			if (usedName->count(*Name + "_" + suffixConflict + "_" + std::to_string(i)) == 0) {
