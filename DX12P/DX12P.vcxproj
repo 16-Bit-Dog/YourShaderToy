@@ -195,6 +195,7 @@
     <ClInclude Include="Renderer\ResourceObjectBase.h" />
     <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h" />
     <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h" />
+    <ClInclude Include="Renderer\Type_Enum.h" />
     <ClInclude Include="Window\Editor_Window.h" />
     <ClInclude Include="Window\FileManager_Window.h" />
     <ClInclude Include="Window\Main_Window.h" />

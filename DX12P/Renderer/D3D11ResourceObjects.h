@@ -9,7 +9,7 @@
 #include "RenderableManager.h"
 #include "DX11H.h"
 #include "Renderable.h"
-
+#include "Type_Enum.h"
 //DX11M3DR
 
 /*
@@ -29,14 +29,25 @@ struct DX11_OBJ_RESOURCE_S {
 */
 
 //TODO: texture loaded clamp, mirror, ect. and sampling options
-struct SrvUavPairDX11 {
+
+
+
+struct ImageObjectToRendererDX11 {
+
 	ComPtr<ID3D11ShaderResourceView> srv;
 	ComPtr<ID3D11UnorderedAccessView> uav;
 	bool HasRW = false;
 
 	DXGI_FORMAT format;
 
-	SrvUavPairDX11(BuiltImage_c* data) {
+	std::string name;
+	std::string nameRW;
+
+
+	ImageObjectToRendererDX11(BuiltImage_c* data) {
+		nameRW = data->NameRW;
+		name = data->Name;
+
 		ComPtr<ID3D11Texture2D> r;
 
 		if (data->data.bpp_c == 8) {
@@ -90,61 +101,82 @@ struct SrvUavPairDX11 {
 		MainDX11Objects::dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
 	}
-
-	~SrvUavPairDX11() {
-		//SafeRelease(srv);
-		//SafeRelease(uav);
-		//TODO make deconsturctor
-	}
-};
-
-struct ImageObjectToRendererDX11 {
-
-	SrvUavPairDX11* data;
-
-	ImageObjectToRendererDX11(BuiltImage_c* data_tmp) {
-		data = new SrvUavPairDX11(data_tmp);
-	}
 	~ImageObjectToRendererDX11() {
-		delete[] data;
+		
 	}
 };
 
-struct ConUavPairDX11 {
+
+struct StructObjectToRendererDX11 {
 	ComPtr<ID3D11Buffer> con;
 	ComPtr<ID3D11UnorderedAccessView> uav;
 
-	ConUavPairDX11() {
-		//bI->Path
-	}
+	std::string Name;
+	std::string NameRW;
 
-	~ConUavPairDX11() {
-		//TODO make deconsturctor
-	}
-};
+	std::vector<int> typesInOrder = { };
+	std::vector<std::string> typesInOrderName = { }; //TODO: remove and change to fill with constructor
+	std::vector<std::string> typesInOrderNameRW = { }; //TODO: remove and change to fill with constructor
 
-struct StructObjectToRendererDX11 {
 
-	ConUavPairDX11 data;
 	TypeStorageMass ReferToData; //copy of type storage mass since you have compiled data here with names
 
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
+		Name = data->Name;
+		NameRW = data->NameRW;
+
 		ReferToData = data->vars; //copy
+
+		//TODO: load data and names
 	}
 
 };
 
 struct ModelToRendererDX11 {
 	DX11M3DR Model;
+	std::string Name;
+	std::string NameRW;
+
 	ModelToRendererDX11(BuiltModel_c* data) {
+		Name = data->Name;
+		NameRW = data->NameRW;
+
 		Model = DX11M3DR(data->Path);
 	}
 };
 
 struct PredefinedToRendererDX11 {
+	std::vector<int> typesInOrder = { UINT_OBJ, UINT_OBJ, UINT_OBJ, UINT_OBJ,
+		UINT_OBJ, UINT_OBJ, UINT_OBJ,
+		FLOAT_OBJ };
+	std::vector<std::string> typesInOrderName = { "WINDOW_SIZE_X", "WINDOW_SIZE_Y", "MOUSE_POS_X", "MOUSE_POS_Y",
+		"LEFT_CLICK_STATE", "RIGHT_CLICK_STATE", "MIDDLE_CLICK_STATE",
+		"NET_TIME" };
+	
+	ComPtr<ID3D11Buffer> Cdata;
+	std::string Name = "PROGRAM_CONSTANTS";
+	
 	PredefinedToRendererDX11(BuiltPredefined_c* data) {
+
+		D3D11_BUFFER_DESC bufDesc;
+		ZeroMemory(&bufDesc, sizeof(bufDesc));
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+		bufDesc.ByteWidth = sizeof(CONST_DATA_PASS_c);
+
+		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
+		defaultResourceData.pSysMem = data->data;
+
+		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &Cdata);
+
+
 		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
 		//TODO: load data into const buffer under names stated previously
+	}
+
+	void update(BuiltPredefined_c* bI) {
+		MainDX11Objects::dxDeviceContext->UpdateSubresource(Cdata.Get(), 0, nullptr, bI->data, 0, 0);
 	}
 };
 
@@ -203,6 +235,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void LoadPredefinedFromData(BuiltPredefined_c* bI) {
 		PredefinedData = new PredefinedToRendererDX11(bI);
+	}
+	void UpdatePredefinedFromData(BuiltPredefined_c* bI) {
+		PredefinedData->update(bI);
 	}
 
 };

@@ -12,28 +12,48 @@
 #include "Renderable.h"
 #include "Window_Struct.h"
 
+static std::set<std::string> usedName_Constant{ "PROGRAM_CONSTANTS", "" };
+
 struct IntTypeAndName_c {
 	int32_t val = 0;
 	std::string n;
-	IntTypeAndName_c(std::string* s, int32_t* intV) {
+	std::string nRW;
+	IntTypeAndName_c(std::string* s, std::string* sRW, int32_t* intV) {
 		n = *s;
+		nRW = *sRW;
 		n = *intV;
+	}
+	~IntTypeAndName_c() {
+		usedName_Constant.erase(n);
+		usedName_Constant.erase(nRW);
 	}
 };
 struct UintTypeAndName_c {
 	uint32_t val = 0;
 	std::string n;
-	UintTypeAndName_c(std::string* s, uint32_t* uintV) {
+	std::string nRW;
+	UintTypeAndName_c(std::string* s, std::string* sRW, uint32_t* uintV) {
 		n = *s;
+		nRW = *sRW;
 		val = *uintV;
+	}
+	~UintTypeAndName_c() {
+		usedName_Constant.erase(n);
+		usedName_Constant.erase(nRW);
 	}
 };
 struct FloatTypeAndName_c {
 	float val = 0.0f;
 	std::string n;
-	FloatTypeAndName_c(std::string* s, float* floatV) {
+	std::string nRW;
+	FloatTypeAndName_c(std::string* s, std::string* sRW, float* floatV) {
 		n = *s;
+		nRW = *sRW;
 		val = *floatV;
+	}
+	~FloatTypeAndName_c() {
+		usedName_Constant.erase(n);
+		usedName_Constant.erase(nRW);
 	}
 };
 
@@ -209,7 +229,9 @@ struct BuiltImage_c : ObjectBuilder {
 	//I read data immedeatly since it is simple, fast, and I want to make a TODO: preview option of image once loaded
 
 	std::string Path = "";
+	
 	std::string Name = "";
+	std::string NameRW = "";
 
 	d4 data;
 
@@ -217,7 +239,7 @@ struct BuiltImage_c : ObjectBuilder {
 	int sizeX;
 	int sizeY;
 	int channels; 
-	bool ReadWrite = false;
+	bool ReadWrite = true;
 	bool IsPath;
 	bool UNORM_ELSE_FLOAT;
 	//d4 data;
@@ -237,8 +259,11 @@ struct BuiltImage_c : ObjectBuilder {
 
 		if (s == "") s = "TMP_TEX";
 		else Name = s;
+		
+		NameRW = Name+"_RW";
 
 		DealWithNameConflict(&usedNameCont, &Name, "TEX");
+		DealWithNameConflict(&usedNameCont, &NameRW, "TEX_RW");
 
 		sizeX = sizeX_tmp;
 		sizeY = sizeY_tmp;
@@ -291,38 +316,45 @@ struct BuiltModel_c : ObjectBuilder {
 
 };
 
-static std::set<std::string> usedName_Constant;
 
 struct BuiltConstant_c : ObjectBuilder {
 	std::string Name = "";
+	std::string NameRW = "";
 	TypeStorageMass vars;
+	//bool ReadWrite = false;
 
 	BuiltConstant_c(std::string s) {
 		Name = s;
+		NameRW = s+"_RW";
 		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
+		DealWithNameConflict(&usedNameCont, &NameRW, "STRUCT_RW");
 	}
 
 	void AddInt(std::string* s, int32_t* intV) {
 		std::string stmp = *s;
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "INT");
-		vars.IT.push_back(IntTypeAndName_c(s, intV));
+		DealWithNameConflict(&usedNameCont, &sRW, "INT_RW");
+		vars.IT.push_back(IntTypeAndName_c(s, &sRW, intV));
 	}
 	void AddUint(std::string* s, uint32_t* uintV) {
 		std::string stmp = *s;
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "UINT");
-		vars.UT.push_back(UintTypeAndName_c(s, uintV));
+		DealWithNameConflict(&usedNameCont, &sRW, "UINT_RW");
+		vars.UT.push_back(UintTypeAndName_c(s, &sRW, uintV));
 	}
 	void AddFloat(std::string* s, float* floatV) {
 		std::string stmp = *s;
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "FLOAT");
-		vars.FT.push_back(FloatTypeAndName_c(s, floatV));
+		DealWithNameConflict(&usedNameCont, &sRW, "FLOAT_RW");
+		vars.FT.push_back(FloatTypeAndName_c(s, &sRW, floatV));
 	}
 
 
 
-	bool ReadWrite = false;
-
-	bool IsPath = false;
+	
 	//TODO, make value setter in info tab - this is gonna be messyish
 
 	void BuildItem() {
@@ -331,7 +363,7 @@ struct BuiltConstant_c : ObjectBuilder {
 
 	~BuiltConstant_c() {
 		usedNameCont.erase(Name);
-		usedNameCont.erase(Name);
+		usedNameCont.erase(NameRW);
 	}
 };
 

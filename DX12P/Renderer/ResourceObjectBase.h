@@ -27,6 +27,8 @@ struct ResourceObjectBase {
 	virtual void LoadModelFromData(BuiltModel_c* bI) = 0;
 	virtual void LoadConstantFromData(BuiltConstant_c* bI) = 0;
 	virtual void LoadPredefinedFromData(BuiltPredefined_c* bI) = 0;
+	virtual void UpdatePredefinedFromData(BuiltPredefined_c* bI) = 0;
+
 	~ResourceObjectBase() {
 		ClearAllObjects();
 	}

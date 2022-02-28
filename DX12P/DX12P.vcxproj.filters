@@ -230,5 +230,8 @@
     <ClInclude Include="Window\Window_Struct.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\Type_Enum.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

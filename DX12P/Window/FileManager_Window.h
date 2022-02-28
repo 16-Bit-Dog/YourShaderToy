@@ -79,15 +79,15 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		{
 
 			ImGui::Text("Variables:");
-			ImGui::Text("Width"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Width");
-			ImGui::Text("Height"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Height");
-			ImGui::Text("MousePosX"); ImGui::SameLine(); ImGui::HelpMarker("Mouse Position X"); 
-			ImGui::Text("MousePosY"); ImGui::SameLine(); ImGui::HelpMarker("Mouse Position Y");
+			ImGui::Text("WINDOW_SIZE_X"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Width");
+			ImGui::Text("WINDOW_SIZE_Y"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Height");
+			ImGui::Text("MOUSE_POS_X"); ImGui::SameLine(); ImGui::HelpMarker("Mouse Position X"); 
+			ImGui::Text("MOUSE_POS_Y"); ImGui::SameLine(); ImGui::HelpMarker("Mouse Position Y");
 
-			ImGui::Text("MouseLeftState"); ImGui::SameLine(); ImGui::HelpMarker("Left Mouse click: \npress = 1\nclosed = 0");
-			ImGui::Text("MouseRightState"); ImGui::SameLine(); ImGui::HelpMarker("Right Mouse click: \npress = 1\nclosed = 0"); 
-			ImGui::Text("MouseMiddleState"); ImGui::SameLine(); ImGui::HelpMarker("Middle Mouse click: \npress = 1\nclosed = 0");
-			ImGui::Text("Time"); ImGui::SameLine(); ImGui::HelpMarker("Time since window creation");
+			ImGui::Text("LEFT_CLICK_STATE"); ImGui::SameLine(); ImGui::HelpMarker("Left Mouse click: \npress = 1\nclosed = 0");
+			ImGui::Text("RIGHT_CLICK_STATE"); ImGui::SameLine(); ImGui::HelpMarker("Right Mouse click: \npress = 1\nclosed = 0"); 
+			ImGui::Text("MIDDLE_CLICK_STATE"); ImGui::SameLine(); ImGui::HelpMarker("Middle Mouse click: \npress = 1\nclosed = 0");
+			ImGui::Text("NET_TIME"); ImGui::SameLine(); ImGui::HelpMarker("Time since window creation");
 
 		}
 		ImGui::Separator();
