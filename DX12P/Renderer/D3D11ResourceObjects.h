@@ -109,6 +109,8 @@ struct ImageObjectToRendererDX11 {
 
 struct StructObjectToRendererDX11 {
 	ComPtr<ID3D11Buffer> con;
+	
+	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object due to limits of DX11
 	ComPtr<ID3D11UnorderedAccessView> uav;
 
 	std::string Name;
@@ -131,6 +133,9 @@ struct StructObjectToRendererDX11 {
 
 		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size()  + ReferToData.FT.size();
 		int memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
+		
+		while (memSize % 16 != 0) memSize += 4;
+
 		float* Data = (float*)malloc(memSize);
 
 		typesInOrder.resize(ElementCount);
@@ -159,33 +164,44 @@ struct StructObjectToRendererDX11 {
 			Data[i + offset] = (ReferToData.FT[i].val);
 		}
 
+
+
+
 		D3D11_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, memSize);
+		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
 		bufDesc.Usage = D3D11_USAGE_DEFAULT;
 		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = sizeof(memSize);
-		bufDesc.StructureByteStride = sizeof(float);
-		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-
+		bufDesc.ByteWidth = memSize;
+		
 		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
 		defaultResourceData.pSysMem = Data;
 
 		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
 
+		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+		bufDesc.CPUAccessFlags = 0;
+		bufDesc.ByteWidth = memSize;
+		bufDesc.StructureByteStride = sizeof(float);
+		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
+
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		//UAVDesc.Texture2D
 		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-		UAVDesc.Format = DXGI_FORMAT_R32_TYPELESS; //
+		UAVDesc.Format = DXGI_FORMAT_UNKNOWN; //
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		UAVDesc.Buffer.FirstElement = 0;
 		UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
 
 		if (data->ReadWrite) {
-			MainDX11Objects::dxDevice->CreateUnorderedAccessView(con.Get(), &UAVDesc, &uav);
+			MainDX11Objects::dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
 			HasRW = data->ReadWrite;
 		}
 
+		delete Data;
 	}
 
 };

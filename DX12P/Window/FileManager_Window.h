@@ -394,7 +394,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::SameLine();
 			ImGui::Text(ConstantStore[i]->NameRW.c_str());
 
-			if (ImGui::CollapsingHeader(("Constant's Info:##" + sPad(i)).c_str(), NULL)) { 
+			if (ImGui::CollapsingHeader(("Constant's Info:##" + sPad(i)).c_str(), NULL)) {  
 				ShowUintIntFloat(i);
 			}
 
