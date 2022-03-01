@@ -21,7 +21,7 @@ struct IntTypeAndName_c {
 	IntTypeAndName_c(std::string* s, std::string* sRW, int32_t* intV) {
 		n = *s;
 		nRW = *sRW;
-		n = *intV;
+		val = *intV;
 	}
 	~IntTypeAndName_c() {
 		usedName_Constant.erase(n);
@@ -322,34 +322,36 @@ struct BuiltConstant_c : ObjectBuilder {
 	std::string NameRW = "";
 	TypeStorageMass vars;
 	//bool ReadWrite = false;
+	
+	bool ReadWrite = true;
 
 	BuiltConstant_c(std::string s) {
 		Name = s;
-		NameRW = s+"_RW";
 		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
+		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "STRUCT_RW");
 	}
 
 	void AddInt(std::string* s, int32_t* intV) {
 		std::string stmp = *s;
-		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "INT");
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &sRW, "INT_RW");
-		vars.IT.push_back(IntTypeAndName_c(s, &sRW, intV));
+		vars.IT.push_back(IntTypeAndName_c(&stmp, &sRW, intV));
 	}
 	void AddUint(std::string* s, uint32_t* uintV) {
 		std::string stmp = *s;
-		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "UINT");
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &sRW, "UINT_RW");
-		vars.UT.push_back(UintTypeAndName_c(s, &sRW, uintV));
+		vars.UT.push_back(UintTypeAndName_c(&stmp, &sRW, uintV));
 	}
 	void AddFloat(std::string* s, float* floatV) {
 		std::string stmp = *s;
-		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &stmp, "FLOAT");
+		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &sRW, "FLOAT_RW");
-		vars.FT.push_back(FloatTypeAndName_c(s, &sRW, floatV));
+		vars.FT.push_back(FloatTypeAndName_c(&stmp, &sRW, floatV));
 	}
 
 
@@ -368,7 +370,7 @@ struct BuiltConstant_c : ObjectBuilder {
 };
 
 bool IsNotAlphaAndUnderScore(unsigned char ch) {
-	return (!std::isalpha(ch) && ch != '_');
+	return (!std::isalnum(ch) && ch != '_');
 }
 
 void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict) {

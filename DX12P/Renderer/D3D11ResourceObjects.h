@@ -121,13 +121,71 @@ struct StructObjectToRendererDX11 {
 
 	TypeStorageMass ReferToData; //copy of type storage mass since you have compiled data here with names
 
+	bool HasRW = true;
+
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
 		Name = data->Name;
 		NameRW = data->NameRW;
 
 		ReferToData = data->vars; //copy
 
-		//TODO: load data and names
+		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size()  + ReferToData.FT.size();
+		int memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
+		float* Data = (float*)malloc(memSize);
+
+		typesInOrder.resize(ElementCount);
+		typesInOrderName.resize(ElementCount);
+		typesInOrderNameRW.resize(ElementCount);
+
+		int offset = 0;
+		for (int i = 0; i < ReferToData.IT.size(); i++) {
+			typesInOrder[i + offset] = INT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.IT[i].n;
+			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.IT[i].val); //stick raw bytes as float into Data
+		}
+		offset += ReferToData.IT.size();
+		for (int i = 0; i < ReferToData.UT.size(); i++) {
+			typesInOrder[i + offset] = UINT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.IT[i].n;
+			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.UT[i].val); //stick raw bytes as float into Data
+		}
+		offset += ReferToData.UT.size();
+		for (int i = 0; i < ReferToData.FT.size(); i++) {
+			typesInOrder[i + offset] = FLOAT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.IT[i].n;
+			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			Data[i + offset] = (ReferToData.FT[i].val);
+		}
+
+		D3D11_BUFFER_DESC bufDesc;
+		ZeroMemory(&bufDesc, memSize);
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+		bufDesc.ByteWidth = sizeof(memSize);
+		bufDesc.StructureByteStride = sizeof(float);
+		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
+		defaultResourceData.pSysMem = Data;
+
+		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+		//UAVDesc.Texture2D
+		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+		UAVDesc.Format = DXGI_FORMAT_R32_TYPELESS; //
+		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		UAVDesc.Buffer.FirstElement = 0;
+		UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
+
+		if (data->ReadWrite) {
+			MainDX11Objects::dxDevice->CreateUnorderedAccessView(con.Get(), &UAVDesc, &uav);
+			HasRW = data->ReadWrite;
+		}
+
 	}
 
 };
@@ -156,6 +214,7 @@ struct PredefinedToRendererDX11 {
 	ComPtr<ID3D11Buffer> Cdata;
 	std::string Name = "PROGRAM_CONSTANTS";
 	
+
 	PredefinedToRendererDX11(BuiltPredefined_c* data) {
 
 		D3D11_BUFFER_DESC bufDesc;
@@ -175,6 +234,10 @@ struct PredefinedToRendererDX11 {
 		//TODO: load data into const buffer under names stated previously
 	}
 
+	~PredefinedToRendererDX11() {
+//		SafeRelease(Cdata);
+	}
+
 	void update(BuiltPredefined_c* bI) {
 		MainDX11Objects::dxDeviceContext->UpdateSubresource(Cdata.Get(), 0, nullptr, bI->data, 0, 0);
 	}
@@ -186,18 +249,20 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::ROB = this;
 	}
 
-	PredefinedToRendererDX11* PredefinedData;
+	PredefinedToRendererDX11* PredefinedData = nullptr;
 	std::unordered_map<std::string /*name to identify image*/, ImageObjectToRendererDX11*/*data*/> ImageData; //use d4 to get and filter data
 	std::unordered_map<std::string /*name to identify model*/, ModelToRendererDX11*/*data*/> ModelData;
 	std::unordered_map<std::string /*name to identify struct*/, StructObjectToRendererDX11*/*data*/> ConstantData;
 
 	void ClearAllPredefined() {
-		delete[] PredefinedData;
+		if(PredefinedData != nullptr)
+		delete PredefinedData; //TODO: deal with delete later
+		PredefinedData = nullptr;
 	}
 	void ClearAllImages() {
 
 		for (auto& i : ImageData) {
-			delete[] i.second;
+			delete i.second;
 		}
 
 		ImageData.clear();
@@ -205,7 +270,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	void ClearAllModels() {
 
 		for (auto& i : ModelData) {
-			delete[] i.second;
+			delete i.second;
 		}
 
 		ModelData.clear();
@@ -213,7 +278,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	void ClearAllConstants() {
 
 		for (auto& i : ConstantData) {
-			delete[] i.second;
+			delete i.second;
 		}
 
 		ConstantData.clear();

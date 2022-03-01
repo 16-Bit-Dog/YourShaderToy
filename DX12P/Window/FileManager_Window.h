@@ -9,7 +9,7 @@
 #include "FileManagerResourceStruct.h"
 //TODO: delete from set in deconstructor the name usage, also add to set
 //TODO: make global name check for conflict struct, to make sure name is valid
-
+//TODO: add rw toggle for vars
 
 
 struct MASTER_FileManager : MASTER_Function_Inherit {
@@ -200,6 +200,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::Text("Name: ");
 			ImGui::SameLine();
 			ImGui::Text(ImageStore[i]->Name.c_str());
+			ImGui::Text("RWName: ");
+			ImGui::SameLine();
+			ImGui::Text(ImageStore[i]->NameRW.c_str());
 			ImGui::SameLine();
 			ImGui::Text("|");
 			ImGui::SameLine();
@@ -276,6 +279,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::Separator();
 			ImGui::Text("Name: ");
 			ImGui::SameLine();
+			ImGui::Text(ModelStore[i]->NameRW.c_str());
+			ImGui::Text("RWName: ");
+			ImGui::SameLine();
 			ImGui::Text(ModelStore[i]->Name.c_str());
 			ImGui::SameLine();
 			ImGui::Text("|");
@@ -346,7 +352,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void ShowIntData(int i) {
 		for (int ii = 0; ii < ConstantStore[i]->vars.IT.size(); ii++) {
-			ImGui::Text(("Name: " + ConstantStore[i]->vars.IT[ii].n).c_str());
+			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.IT[ii].n.c_str());
+			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.IT[ii].nRW.c_str());
 			ImGui::Text("Value: ");
 			ImGui::SameLine();
 			ImGui::InputInt(("##ConstantVarInputInt" + ConstantStore[i]->vars.IT[ii].n).c_str(), &ConstantStore[i]->vars.IT[ii].val);
@@ -354,15 +361,17 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void ShowUintData(int i) {
 		for (int ii = 0; ii < ConstantStore[i]->vars.UT.size(); ii++) {
-			ImGui::Text(("Name: " + ConstantStore[i]->vars.UT[ii].n).c_str());
+			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.UT[ii].n.c_str());
+			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.UT[ii].nRW.c_str());
 			ImGui::Text("Value: ");
 			ImGui::SameLine();
 			ImGui::InputScalar(("##ConstantVarInputInt" + ConstantStore[i]->vars.UT[ii].n).c_str(), ImGuiDataType_U32, &ConstantStore[i]->vars.UT[ii].val);
 		}
 	}
 	void ShowFloatData(int i) {
-		for (int ii = 0; ii < ConstantStore[i]->vars.UT.size(); ii++) {
-			ImGui::Text(("Name: " + ConstantStore[i]->vars.FT[ii].n).c_str());
+		for (int ii = 0; ii < ConstantStore[i]->vars.FT.size(); ii++) {
+			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.FT[ii].n.c_str());
+			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.FT[ii].nRW.c_str());
 			ImGui::Text("Value: ");
 			ImGui::SameLine();
 			ImGui::InputFloat(("##ConstantVarInputInt" + ConstantStore[i]->vars.FT[ii].n).c_str(), &ConstantStore[i]->vars.FT[ii].val);
@@ -381,8 +390,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::SameLine();
 			ImGui::Text(ConstantStore[i]->Name.c_str());
 			ImGui::SameLine();
-			ImGui::Text("|");
+			ImGui::Text("RWName: ");
 			ImGui::SameLine();
+			ImGui::Text(ConstantStore[i]->NameRW.c_str());
 
 			if (ImGui::CollapsingHeader(("Constant's Info:##" + sPad(i)).c_str(), NULL)) { 
 				ShowUintIntFloat(i);
@@ -403,7 +413,6 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				if (ImGui::Button(("Add Int##IntConstantModelStore" + sPad(i)).c_str())) {
 					AddConstantInt(&ToAddConstantMenuName, &ToAddConstantInt, i);
 				}
-				
 
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Uint##UintConstantModelStore" + sPad(i)).c_str())) {
