@@ -15,7 +15,7 @@ using namespace DirectX;
 
 
 struct MainDX11Objects : Renderable{
-    static MainDX11Objects obj;
+    inline static MainDX11Objects* obj;
 
     int BLOCK_SIZE = 8;
 

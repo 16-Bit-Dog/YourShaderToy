@@ -183,6 +183,7 @@
     <ClInclude Include="Renderer\3DCommons\3DCommon.h" />
     <ClInclude Include="Renderer\3DCommons\3DDX11Obj.h" />
     <ClInclude Include="Renderer\3DCommons\ofbxMini.h" />
+    <ClInclude Include="Renderer\3DCommons\StaticObjects.h" />
     <ClInclude Include="Renderer\D3D11ResourceObjects.h" />
     <ClInclude Include="Renderer\DX11H.h" />
     <ClInclude Include="Renderer\DX11IncludeMain.h" />

@@ -1,0 +1,10 @@
+add static model data:
+- cube
+- full screen tri
+- full screen quad
+
+
+make the text compiler auto add HLSL code based on my resource struct
+
+then code crawl or the TODOs I left in the code
+

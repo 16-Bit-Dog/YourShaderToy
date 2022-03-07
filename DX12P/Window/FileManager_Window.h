@@ -13,7 +13,7 @@
 
 
 struct MASTER_FileManager : MASTER_Function_Inherit {
-	static MASTER_FileManager obj;
+	inline static MASTER_FileManager* obj;
 
 	bool BuiltObjects = false; //TODO: built objects is seperate option than built code
 	//TODO: build code BUTTON and built object BUTTON, compile code done only after build object is done - auto does this.
@@ -29,7 +29,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	std::vector<BuiltConstant_c*> ConstantStore;
 
 	virtual void settingWindowSettingsMaker() {
-		SettingWindowFlag = MASTER_IM_GUI::obj.WindowDrawFlagBuilder(
+		SettingWindowFlag = MASTER_IM_GUI::obj->WindowDrawFlagBuilder(
 			false, false,
 			false, false, false, false,
 			false, false, false, false,
@@ -251,7 +251,6 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 		ImGui::Separator();
 	}
-
 
 	void AddModel() {
 		if (ImGui::BeginMenu("Add ##Model")) {

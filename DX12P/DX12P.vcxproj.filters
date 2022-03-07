@@ -233,5 +233,8 @@
     <ClInclude Include="Renderer\Type_Enum.h">
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\3DCommons\StaticObjects.h">
+      <Filter>Header Files\Renderer\3DCommons</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

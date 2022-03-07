@@ -7,7 +7,7 @@
 struct ResourceObjectBase;
 
 struct Renderable {
-	static Renderable* DXM;
+	inline static Renderable* DXM;
 
 	inline static ResourceObjectBase* ROB;
 

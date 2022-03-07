@@ -74,7 +74,7 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 
 		window = glfwCreateWindow(Width, Height, Stitle.c_str(), NULL, NULL);
 
-		if (GLFW_Window_C::MainWin.window == NULL)
+		if (GLFW_Window_C::MainWin->window == NULL)
 		{
 			std::cout << "Failed to create window" + Stitle << std::endl;
 			glfwTerminate();
@@ -143,7 +143,7 @@ void AllWin::LoopRunAllContext() {
 
 	glfwSwapInterval(1); //vsync
 
-	MASTER_IM_GUI::obj.SetAndCreateimGUIContext(WinList[0]->window);
+	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(WinList[0]->window);
 
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
@@ -172,6 +172,6 @@ void AllWin::LoopRunAllContext() {
 
 
 		}
-		MASTER_IM_GUI::obj.EndRender();
+		MASTER_IM_GUI::obj->EndRender();
 	}
 }

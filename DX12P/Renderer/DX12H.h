@@ -10,7 +10,11 @@
 using namespace DirectX;
 
 struct MainDX12Objects : Renderable{
-    static MainDX12Objects obj;
+    MainDX12Objects() {
+
+    }
+
+    inline static MainDX12Objects* obj;
 
     bool UseWarpDev = false;
    

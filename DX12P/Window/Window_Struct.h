@@ -23,7 +23,7 @@ struct MASTER_Objects;
 struct GroupData;
 
 struct GLFW_Window_C {
-	static GLFW_Window_C MainWin;
+	inline static GLFW_Window_C* MainWin;
 
 	std::vector<GroupData*> C_GUI_Win;//GroupData* - window group associated with GLFW Object windows to allow tab stacking -[0] is your current tab
 

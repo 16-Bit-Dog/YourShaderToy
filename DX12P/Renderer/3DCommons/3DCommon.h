@@ -10,6 +10,8 @@
 using namespace DirectX;
 
 
+
+
 struct VertexBoneData {
 	std::vector<float> IDs; //float for predictable shader pass
 	std::vector<float> weights;

@@ -3,7 +3,7 @@
 #include "Main_Window.h"
 
 struct MASTER_Editor : MASTER_Function_Inherit {
-	static MASTER_Editor obj;
+	inline static MASTER_Editor* obj;
 
 	std::map<int, std::string> AutoAddGlobals;
 	std::string Globals = "a";
@@ -21,7 +21,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 
 	virtual void settingWindowSettingsMaker() {
-		SettingWindowFlag = MASTER_IM_GUI::obj.WindowDrawFlagBuilder(
+		SettingWindowFlag = MASTER_IM_GUI::obj->WindowDrawFlagBuilder(
 			false, false,
 			false, false, false, false,
 			false, false, false, false,

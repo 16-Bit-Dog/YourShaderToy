@@ -5,12 +5,12 @@
 //TODO: hit compile option to fetch textures, build objects, ect
 
 struct MASTER_Pipeline : MASTER_Function_Inherit {
-	static MASTER_Pipeline obj;
+	inline static MASTER_Pipeline* obj;
 
 	std::vector<std::function<void()>> PipelineAddQueue;
 
 	virtual void settingWindowSettingsMaker() {
-		SettingWindowFlag = MASTER_IM_GUI::obj.WindowDrawFlagBuilder(
+		SettingWindowFlag = MASTER_IM_GUI::obj->WindowDrawFlagBuilder(
 			false, false,
 			false, false, false, false,
 			false, false, false, false,
@@ -34,7 +34,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		*/
 
 		ImGui::Text("Start->");
-		for (const auto& i : PipelineMain::obj.P) {
+		for (const auto& i : PipelineMain::obj->P) {
 			ImGui::Text((i.second->name + "->").c_str());
 		}
 		ImGui::Text("End");
@@ -53,7 +53,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		if (ImGui::Button(("+##"+s).c_str())) {
 			PipelineAddQueue.push_back([=]() {
-				PipelineMain::obj.AddNewPipelineToPosition(PosInsert); }
+				PipelineMain::obj->AddNewPipelineToPosition(PosInsert); }
 			);
 		}
 
@@ -65,16 +65,16 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		ImGui::Text("Remove Pipeline");
 		ImGui::SameLine();
-		if (ImGui::Button(("-##" + PipelineMain::obj.P[i]->padN).c_str())) {
-			PipelineMain::obj.P[i]->killP = true;
+		if (ImGui::Button(("-##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			PipelineMain::obj->P[i]->killP = true;
 		}
 	}
 
 	void DrawPipelineOrder(int i) {
-		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj.P[i]->padN).c_str())) {
-			for (auto& x : PipelineMain::obj.P) {
+		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			for (auto& x : PipelineMain::obj->P) {
 				if (ImGui::Button((x.second->name + " ").c_str())) {
-					PipelineMain::obj.Swap(x.first, i);
+					PipelineMain::obj->Swap(x.first, i);
 				}
 			}
 			ImGui::End();
@@ -88,9 +88,9 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Text("Name: ");
 		ImGui::SameLine();
 
-		ImGui::InputText(("##" + PipelineMain::obj.P[i]->padN).c_str(), &PipelineMain::obj.P[i]->name);
+		ImGui::InputText(("##" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->name);
 
-		if (PipelineMain::obj.P[i]->name == "") PipelineMain::obj.P[i]->name = " ";
+		if (PipelineMain::obj->P[i]->name == "") PipelineMain::obj->P[i]->name = " ";
 	}
 
 
@@ -106,13 +106,13 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			DrawPipelineDiagram();
 			ImGui::NewLine();
 			
-			if(PipelineMain::obj.P.count(0)==0) DrawPipelineAdd(0);
+			if(PipelineMain::obj->P.count(0)==0) DrawPipelineAdd(0);
 			
 			ImGui::Separator();
 			
 
 			
-			for (auto& i : PipelineMain::obj.P) {
+			for (auto& i : PipelineMain::obj->P) {
 				i.second->padN = sPad(i.second->Order);
 				ImGui::Text((i.second->name).c_str());
 				ImGui::SameLine();
@@ -129,7 +129,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			}
 			
 			PostAddPipelines();
-			PipelineMain::obj.CheckToKillPipe();
+			PipelineMain::obj->CheckToKillPipe();
 
 			
 

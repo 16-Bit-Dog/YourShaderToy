@@ -18,12 +18,12 @@ void CreateAndSetRendererBaseDX11() {
 }
 
 void SetDX11Renderer() {
-	Renderable::DXM = &MainDX11Objects::obj;
+	Renderable::DXM = MainDX11Objects::obj;
 	CreateAndSetRendererBaseDX11();
 }
 
 void SetDX12Renderer() {
-	Renderable::DXM = &MainDX12Objects::obj;
+	Renderable::DXM = MainDX12Objects::obj;
 	//SetFileManagerRenderable();
 
 }

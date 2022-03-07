@@ -255,6 +255,8 @@ struct DX11M3DR : M3DR{
 
 		AutoFillIndice(0);
 
+		VertexPostProcess();
+
 		LoadVertexIndiceData();
 
 		DefaultCBuf();

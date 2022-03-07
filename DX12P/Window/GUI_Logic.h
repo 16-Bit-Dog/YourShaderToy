@@ -23,27 +23,27 @@ struct GroupData;
 	void GroupData::LinkToSettings() {
 		WindowType = W_SETTING;
 
-		ToDraw = [this]() { MASTER_Setting::obj.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Setting::obj->BasicViewDraw(this); };
 	}
 	void GroupData::LinkToScene() {
 		WindowType = W_SCENE;
 
-		ToDraw = [this]() { MASTER_Scene::obj.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Scene::obj->BasicViewDraw(this); };
 	}
 	void GroupData::LinkToEditor() {
 		WindowType = W_EDITOR;
 
-		ToDraw = [this]() { MASTER_Editor::obj.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Editor::obj->BasicViewDraw(this); };
 	}
 	void GroupData::LinkToPipeline() {
 		WindowType = W_PIPELINE;
 
-		ToDraw = [this]() { MASTER_Pipeline::obj.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Pipeline::obj->BasicViewDraw(this); };
 	}
 	void GroupData::LinkToFileManager() {
 		WindowType = W_FILEMANAGER;
 
-		ToDraw = [this]() { MASTER_Pipeline::obj.BasicViewDraw(this); };
+		ToDraw = [this]() { MASTER_Pipeline::obj->BasicViewDraw(this); };
 	}
 	int GroupData::LinkBasedOnInt(int Input) {
 		if (WIN_TYPE::Win_Type_ID_Vector.count(Input)) {
@@ -79,10 +79,9 @@ struct GroupData;
 	}
 
 	void StartUpFillVecs() {
-		Add_New_Win_Type([](GroupData* GDV) { MASTER_Setting::obj.BasicViewDraw(GDV); }, "Settings");
-		Add_New_Win_Type([](GroupData* GDV) { MASTER_Scene::obj.BasicViewDraw(GDV); }, "Scene");
-		Add_New_Win_Type([](GroupData* GDV) { MASTER_Editor::obj.BasicViewDraw(GDV); }, "Editor");
-		Add_New_Win_Type([&](GroupData* GDV) { MASTER_Pipeline::obj.BasicViewDraw(GDV); }, "Pipeline");
-
-		Add_New_Win_Type([&](GroupData* GDV) { MASTER_FileManager::obj.BasicViewDraw(GDV); }, "File Manager");
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Setting::obj->BasicViewDraw(GDV); }, "Settings");
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Scene::obj->BasicViewDraw(GDV); }, "Scene");
+		Add_New_Win_Type([](GroupData* GDV) { MASTER_Editor::obj->BasicViewDraw(GDV); }, "Editor");
+		Add_New_Win_Type([&](GroupData* GDV) { MASTER_Pipeline::obj->BasicViewDraw(GDV); }, "Pipeline");
+		Add_New_Win_Type([&](GroupData* GDV) { MASTER_FileManager::obj->BasicViewDraw(GDV); }, "File Manager");
 	}

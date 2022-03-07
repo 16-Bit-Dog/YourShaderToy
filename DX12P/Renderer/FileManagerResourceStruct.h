@@ -300,9 +300,11 @@ struct BuiltModel_c : ObjectBuilder {
 		if (s == "") s = "TMP_MODEL";
 		else Name = s;
 
+		
+		DealWithNameConflict(&usedNameCont, &Name, "MODEL")
+			;
 		NameRW = Name + "_RW";
 
-		DealWithNameConflict(&usedNameCont, &Name, "MODEL");
 		DealWithNameConflict(&usedNameCont, &NameRW, "MODEL_RW");
 
 	}

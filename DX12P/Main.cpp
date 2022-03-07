@@ -13,20 +13,32 @@ struct MainDX12Objects;
 struct GLFW_Window_C;
 struct AllWindowDrawLoop;
 
-int Start() {
 
-	Renderable::DXM->RendererStartUpLogic();
-	return 0;
+void FillAllObjects() {
+
+	MainDX12Objects::obj = new MainDX12Objects();
+	MainDX11Objects::obj = new MainDX11Objects();
+	GLFW_Window_C::MainWin = new GLFW_Window_C();
+	MASTER_IM_GUI::obj = new MASTER_IM_GUI();
+	MASTER_Pipeline::obj = new MASTER_Pipeline();
+	MASTER_Scene::obj = new MASTER_Scene();
+	MASTER_Setting::obj = new MASTER_Setting();
+	MASTER_Editor::obj = new MASTER_Editor();
+	MASTER_FileManager::obj = new MASTER_FileManager();
+	PipelineMain::obj = new PipelineMain();
 }
 
+
 int runMain() {
-	while (!glfwWindowShouldClose(GLFW_Window_C::MainWin.window)) {
+	while (!glfwWindowShouldClose(GLFW_Window_C::MainWin->window)) {
 
 	} 
 	return 0;
 }
 
 int GLFWPreLogic() {
+
+
 	SetDX11Renderer(); //default DX11
 	
 	glfwInit();
@@ -37,7 +49,7 @@ int GLFWPreLogic() {
 
 	StartUpFillVecs(); // before first context do basic Setup
 
-	GLFW_Window_C::MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
+	GLFW_Window_C::MainWin->CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
 
 	AllWin::LoopRunAllContext();
 
@@ -45,5 +57,6 @@ int GLFWPreLogic() {
 }
 
 int main() {
+	FillAllObjects(); //runs first
 	GLFWPreLogic();
 }

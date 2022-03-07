@@ -79,7 +79,7 @@ struct GroupData {
 };
 
 struct MASTER_IM_GUI {
-	static MASTER_IM_GUI obj;
+	inline static MASTER_IM_GUI* obj;
 
 	ImGuiContext* GUIContext; // global for global use
 	bool RendererMade = false;

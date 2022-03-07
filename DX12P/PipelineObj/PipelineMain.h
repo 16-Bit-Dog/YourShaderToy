@@ -22,7 +22,7 @@ struct PipelineObj {
 };
 
 struct PipelineMain {
-	static PipelineMain obj;
+	inline static PipelineMain* obj;
 	
 	std::map<int, PipelineObj*> P;//P for Pipelines
 
