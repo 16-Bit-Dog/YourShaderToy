@@ -22,7 +22,6 @@ struct MASTER_Editor;
 struct MASTER_Objects;
 struct GroupData;
 
-GLFW_Window_C MainWin;
 
 struct AllWin {
 	inline static UINT CurrWindow = 0;
@@ -48,7 +47,7 @@ void GLFW_Window_C::CleanSwapChain() {
 }
 
 void GLFW_Window_C::FillDXMWithNewGLFW() {
-	DXM->MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), Width, Height);
+	Renderable::DXM->MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), Width, Height);
 }
 
 int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
@@ -75,7 +74,7 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 
 		window = glfwCreateWindow(Width, Height, Stitle.c_str(), NULL, NULL);
 
-		if (MainWin.window == NULL)
+		if (GLFW_Window_C::MainWin.window == NULL)
 		{
 			std::cout << "Failed to create window" + Stitle << std::endl;
 			glfwTerminate();
@@ -144,7 +143,7 @@ void AllWin::LoopRunAllContext() {
 
 	glfwSwapInterval(1); //vsync
 
-	MASTER_IM_GUI_obj.SetAndCreateimGUIContext(WinList[0]->window);
+	MASTER_IM_GUI::obj.SetAndCreateimGUIContext(WinList[0]->window);
 
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
@@ -159,7 +158,7 @@ void AllWin::LoopRunAllContext() {
 			WinList[i]->id = i;
 		}
 
-		DXM->ImGUINewFrameLogic();
+		Renderable::DXM->ImGUINewFrameLogic();
 
 		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
 
@@ -173,6 +172,6 @@ void AllWin::LoopRunAllContext() {
 
 
 		}
-		MASTER_IM_GUI_obj.EndRender();
+		MASTER_IM_GUI::obj.EndRender();
 	}
 }

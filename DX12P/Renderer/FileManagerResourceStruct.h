@@ -320,6 +320,7 @@ struct BuiltModel_c : ObjectBuilder {
 struct BuiltConstant_c : ObjectBuilder {
 	std::string Name = "";
 	std::string NameRW = "";
+	std::string StructName = "";
 	TypeStorageMass vars;
 	//bool ReadWrite = false;
 	
@@ -330,6 +331,8 @@ struct BuiltConstant_c : ObjectBuilder {
 		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
 		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "STRUCT_RW");
+		StructName = NameRW+"_S";
+		DealWithNameConflict(&usedNameCont, &StructName, "STRUCT_S");
 	}
 
 	void AddInt(std::string* s, int32_t* intV) {

@@ -1,9 +1,10 @@
 #include "Main_Window.h"
 
 struct MASTER_Scene : MASTER_Function_Inherit {
+	static MASTER_Scene obj;
 
 	virtual void settingWindowSettingsMaker() {
-		SettingWindowFlag = MASTER_IM_GUI_obj.WindowDrawFlagBuilder(
+		SettingWindowFlag = MASTER_IM_GUI::obj.WindowDrawFlagBuilder(
 			false, false,
 			false, false, false, false,
 			false, false, false, false,
@@ -25,4 +26,4 @@ struct MASTER_Scene : MASTER_Function_Inherit {
 		}
 	}
 
-}MASTER_Scene_m;
+};

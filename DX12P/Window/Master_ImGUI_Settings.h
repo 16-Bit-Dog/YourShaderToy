@@ -79,6 +79,8 @@ struct GroupData {
 };
 
 struct MASTER_IM_GUI {
+	static MASTER_IM_GUI obj;
+
 	ImGuiContext* GUIContext; // global for global use
 	bool RendererMade = false;
 	GLFWwindow* window;
@@ -135,7 +137,7 @@ struct MASTER_IM_GUI {
 			//
 
 
-			DXM->ImGUIInit();
+			Renderable::DXM->ImGUIInit();
 
 			ImGui_ImplGlfw_InitForOther(window, true);
 			RendererMade = true;
@@ -149,8 +151,8 @@ struct MASTER_IM_GUI {
 
 	void EndRender() {
 		ImGui::Render();
-		DXM->NewImGUIDat = true;
-		DXM->DrawLogic();
+		Renderable::DXM->NewImGUIDat = true;
+		Renderable::DXM->DrawLogic();
 	}
 
 
@@ -173,7 +175,7 @@ struct MASTER_IM_GUI {
 	//
 	//
 
-}MASTER_IM_GUI_obj;
+};
 std::string sPad(int num) {
 	std::string n = " ";
 	for (int i = 0; i < num; i++) n += " ";

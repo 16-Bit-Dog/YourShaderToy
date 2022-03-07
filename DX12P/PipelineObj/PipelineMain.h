@@ -22,6 +22,8 @@ struct PipelineObj {
 };
 
 struct PipelineMain {
+	static PipelineMain obj;
+	
 	std::map<int, PipelineObj*> P;//P for Pipelines
 
 	void RemovePipeline(int i) {
@@ -92,4 +94,4 @@ struct PipelineMain {
 	}
 	
 
-}PipeM;
+};

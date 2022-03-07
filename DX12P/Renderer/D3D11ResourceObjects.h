@@ -82,7 +82,7 @@ struct ImageObjectToRendererDX11 {
 		gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
 
 
-		MainDX11Objects::dxDevice->CreateTexture2D(
+		MainDX11Objects::obj.dxDevice->CreateTexture2D(
 			&gpuTexDesc,
 			&defaultResourceData,
 			&r);
@@ -94,11 +94,11 @@ struct ImageObjectToRendererDX11 {
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
 		if (data->ReadWrite) {
-			MainDX11Objects::dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
+			MainDX11Objects::obj.dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
 			HasRW = data->ReadWrite;
 		}
 
-		MainDX11Objects::dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
+		MainDX11Objects::obj.dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
 	}
 	~ImageObjectToRendererDX11() {
@@ -115,6 +115,7 @@ struct StructObjectToRendererDX11 {
 
 	std::string Name;
 	std::string NameRW;
+	std::string StructName;
 
 	std::vector<int> typesInOrder = { };
 	std::vector<std::string> typesInOrderName = { }; //TODO: remove and change to fill with constructor
@@ -128,13 +129,14 @@ struct StructObjectToRendererDX11 {
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
 		Name = data->Name;
 		NameRW = data->NameRW;
+		StructName = data->StructName;
 
 		ReferToData = data->vars; //copy
 
 		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size()  + ReferToData.FT.size();
 		int memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
-		
-		while (memSize % 16 != 0) memSize += 4;
+		int memSizePost = memSize;
+		while (memSizePost % 16 != 0) memSizePost += 4;
 
 		float* Data = (float*)malloc(memSize);
 
@@ -172,12 +174,12 @@ struct StructObjectToRendererDX11 {
 		bufDesc.Usage = D3D11_USAGE_DEFAULT;
 		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = memSize;
+		bufDesc.ByteWidth = memSizePost;
 		
 		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
 		defaultResourceData.pSysMem = Data;
 
-		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
+		MainDX11Objects::obj.dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
 
 		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
 		bufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -186,7 +188,7 @@ struct StructObjectToRendererDX11 {
 		bufDesc.ByteWidth = memSize;
 		bufDesc.StructureByteStride = sizeof(float);
 		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
+		MainDX11Objects::obj.dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		//UAVDesc.Texture2D
@@ -197,7 +199,7 @@ struct StructObjectToRendererDX11 {
 		UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
 
 		if (data->ReadWrite) {
-			MainDX11Objects::dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
+			MainDX11Objects::obj.dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
 			HasRW = data->ReadWrite;
 		}
 
@@ -243,7 +245,7 @@ struct PredefinedToRendererDX11 {
 		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
 		defaultResourceData.pSysMem = data->data;
 
-		MainDX11Objects::dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &Cdata);
+		MainDX11Objects::obj.dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &Cdata);
 
 
 		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
@@ -255,11 +257,12 @@ struct PredefinedToRendererDX11 {
 	}
 
 	void update(BuiltPredefined_c* bI) {
-		MainDX11Objects::dxDeviceContext->UpdateSubresource(Cdata.Get(), 0, nullptr, bI->data, 0, 0);
+		MainDX11Objects::obj.dxDeviceContext->UpdateSubresource(Cdata.Get(), 0, nullptr, bI->data, 0, 0);
 	}
 };
 
 struct ResourceObjectBaseDX11 : ResourceObjectBase {
+	static ResourceObjectBaseDX11* obj;
 
 	void SetResourceObjectBaseDX11() {
 		MainDX11Objects::ROB = this;

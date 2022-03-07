@@ -15,6 +15,7 @@ using namespace DirectX;
 
 
 struct MainDX11Objects : Renderable{
+    static MainDX11Objects obj;
 
     int BLOCK_SIZE = 8;
 
@@ -39,8 +40,8 @@ struct MainDX11Objects : Renderable{
 
     //Pipeline Objects
     
-    inline static ComPtr<ID3D11Device5> dxDevice = 0;
-    inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
+    ComPtr<ID3D11Device5> dxDevice = 0;
+    ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
     ComPtr<IDXGISwapChain1> dxSwapChain = nullptr;
 
     D3D11_DEPTH_STENCIL_VIEW_DESC dxDepthStencilDesc{

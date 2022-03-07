@@ -3,9 +3,10 @@
 #include "Main_Window.h"
 
 struct MASTER_Setting : MASTER_Function_Inherit {
+	static MASTER_Setting obj;
 
 	virtual void settingWindowSettingsMaker() {
-		SettingWindowFlag = MASTER_IM_GUI_obj.WindowDrawFlagBuilder(
+		SettingWindowFlag = MASTER_IM_GUI::obj.WindowDrawFlagBuilder(
 			false, false,
 			false, false, false, false,
 			false, false, false, false,
@@ -25,7 +26,7 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 
 			if (ImGui::ShowStyleSelector("Colors##Selector"))
-				MASTER_IM_GUI_obj.style = &style_T;
+				MASTER_IM_GUI::obj.style = &style_T;
 
 			if (ImGui::Button("Save Style Theme"))
 
@@ -35,8 +36,8 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			if (ImGui::Button("Revert Style"))
 				ImGui::StyleColorsDark();
-			MASTER_IM_GUI_obj.style = &ImGui::GetStyle();
-			MASTER_IM_GUI_obj.style->Colors[ImGuiCol_WindowBg].w = 1.0f;
+			MASTER_IM_GUI::obj.style = &ImGui::GetStyle();
+			MASTER_IM_GUI::obj.style->Colors[ImGuiCol_WindowBg].w = 1.0f;
 
 			ImGui::Separator();
 
@@ -66,9 +67,9 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 						if (!filter.PassFilter(name))
 							continue;
 						ImGui::PushID(i);
-						ImGui::ColorEdit4("##color", (float*)&MASTER_IM_GUI_obj.style->Colors[i], ImGuiColorEditFlags_AlphaBar);
+						ImGui::ColorEdit4("##color", (float*)&MASTER_IM_GUI::obj.style->Colors[i], ImGuiColorEditFlags_AlphaBar);
 
-						ImGui::SameLine(0.0f, MASTER_IM_GUI_obj.style->ItemInnerSpacing.x);
+						ImGui::SameLine(0.0f, MASTER_IM_GUI::obj.style->ItemInnerSpacing.x);
 						ImGui::TextUnformatted(name);
 						ImGui::PopID();
 					}
@@ -87,4 +88,4 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 	}
 
-}MASTER_Setting_m;
+};

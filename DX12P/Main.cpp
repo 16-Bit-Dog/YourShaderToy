@@ -15,12 +15,12 @@ struct AllWindowDrawLoop;
 
 int Start() {
 
-	DXM->RendererStartUpLogic();
+	Renderable::DXM->RendererStartUpLogic();
 	return 0;
 }
 
 int runMain() {
-	while (!glfwWindowShouldClose(MainWin.window)) {
+	while (!glfwWindowShouldClose(GLFW_Window_C::MainWin.window)) {
 
 	} 
 	return 0;
@@ -31,13 +31,13 @@ int GLFWPreLogic() {
 	
 	glfwInit();
 	
-	DXM->RendererStartUpLogic();
+	Renderable::DXM->RendererStartUpLogic();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	StartUpFillVecs(); // before first context do basic Setup
 
-	MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
+	GLFW_Window_C::MainWin.CreateWindowM(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT");
 
 	AllWin::LoopRunAllContext();
 
