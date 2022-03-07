@@ -286,6 +286,7 @@ struct BuiltModel_c : ObjectBuilder {
 	std::string Name = ""; //same as Buffer <-- when loaded 
 	std::string NameRW = ""; //same as UAV which is already made in 3DDXObj.h - when I fetch, 
 
+	int Type;
 	//TODO: preinclude cube and sphere file which includes as menu item if you click the option, and auto sets up in loader
 
 
@@ -293,7 +294,7 @@ struct BuiltModel_c : ObjectBuilder {
 		Renderable::ROB->LoadModelFromData(this);
 	}
 
-	BuiltModel_c(std::string p, std::string s) {
+	BuiltModel_c(std::string p, std::string s, int t) {
 		//TODO fill M3DR based on path in D3D11ResourceObjects.h, else stop trying to load and throw error saying "invalid" 
 		Path = p;
 
@@ -307,6 +308,7 @@ struct BuiltModel_c : ObjectBuilder {
 
 		DealWithNameConflict(&usedNameCont, &NameRW, "MODEL_RW");
 
+		Type = t;
 	}
 
 	~BuiltModel_c() {

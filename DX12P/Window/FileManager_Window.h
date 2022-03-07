@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <set>
 #include "FileManagerResourceStruct.h"
+#include "3dCommons/StaticObjects.h"
 //TODO: delete from set in deconstructor the name usage, also add to set
 //TODO: make global name check for conflict struct, to make sure name is valid
 //TODO: add rw toggle for vars
@@ -111,8 +112,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, data));
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
-	void AddModelToList(std::string Path, std::string Name) {
-		ModelStore.push_back(new BuiltModel_c(Path, Name));
+	void AddModelToList(std::string Path, std::string Name, int Type) {
+		ModelStore.push_back(new BuiltModel_c(Path, Name, Type));
 	}
 
 	void AddImage() {
@@ -154,6 +155,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	std::string ToAddImageName = "";//TODO: organize code and loose vars
 	std::string ToAddModelName = "";//TODO: organize code and loose vars
+	int ToAddModelType = -1;
 	void CheckImageFileSelectors() { //these are seperate from the model one and constant one since I may want special behavior like pre-and post filter
 		if (fImage.Display("ChooseFileDlgKey"))
 		{
@@ -173,7 +175,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		{
 			if (fModel.IsOk() == true)
 			{
-				AddModelToList(fModel.GetFilePathName(), ToAddModelName);// action
+				AddModelToList(fModel.GetFilePathName(), ToAddModelName, -1);// action
 			}
 			// close
 			fModel.Close();
@@ -256,8 +258,21 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		if (ImGui::BeginMenu("Add ##Model")) {
 			if (ImGui::BeginMenu("Find .FBX Model##Model")) {
 				ImGui::InputText("Name: ##AddModelName", &ToAddModelName, ImGuiInputTextFlags_CharsNoBlank);
-				if (ImGui::Button("Search For File##Model")) {
-					FileSelector(".fbx", &fModel, "Model");
+				ImGui::InputInt("Name: ##AddModelName", &ToAddModelType);
+				/*
+				StaticObjectPass
+				*/
+				bool addFR = ImGui::Button("Add File##Model");
+				ImGui::SameLine();
+				ImGui::HelpMarker(ToAddStaticObjectString);
+
+				if (addFR) {
+					if (ToAddModelType<0 || ToAddModelType>StaticObjectPass.size()-1) {
+						FileSelector(".fbx", &fModel, "Model");
+					}
+					else {
+						AddModelToList("", ToAddModelName, ToAddModelType);// action
+					}
 				}
 				ImGui::EndMenu();
 			}

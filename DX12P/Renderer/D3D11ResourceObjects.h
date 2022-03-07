@@ -16,6 +16,8 @@
 #include "3DCommons/StaticObjects.h"
 //DX11M3DR
 
+
+
 /*
 struct DX11_OBJ_RESOURCE_S {
 	inline static Renderable* DX11Obj;
@@ -221,7 +223,12 @@ struct ModelToRendererDX11 {
 		Name = data->Name;
 		NameRW = data->NameRW;
 
-		Model = DX11M3DR(data->Path);
+		if (data->Type == 0 || data->Type > StaticObjectPass.size() - 1) {
+			Model = DX11M3DR(data->Path);
+		}
+		else {
+			Model = DX11M3DR(StaticObjectPass[data->Type].second());
+		}
 #ifdef GET_OBJECT_STATIC
 		OutputStringToFileForCopyPata(&Model);
 #endif

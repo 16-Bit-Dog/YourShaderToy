@@ -245,13 +245,13 @@ struct DX11M3DR : M3DR{
 	}
 
 
-	DX11M3DR(std::vector<VNT> V) {
+	DX11M3DR(std::vector<VNT>* V, bool ClearPtr = true) {
 
 		RESIZE_VECTORS_OBJ_LOAD(1);
 
 		CreateArmatureCBuf();
 
-		modelDat[0] = V;
+		modelDat[0] = *V;
 
 		AutoFillIndice(0);
 
@@ -263,6 +263,8 @@ struct DX11M3DR : M3DR{
 		SetupBlendStateDefault();
 		DefaultSampler();
 		DefaultAllMatBuf();
+
+		if (ClearPtr) delete V;
 
 	}
 	DX11M3DR(std::string path = "") {
