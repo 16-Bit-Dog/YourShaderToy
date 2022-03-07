@@ -35,7 +35,7 @@ auto file maker to copy pasta into code
 */
 
 void OutputStringToFileForCopyPata(M3DR* obj) {
-	std::ofstream outfile("ModelStat.txt", trunc | std::ofstream::out);
+	std::ofstream outfile("ModelStat.txt", std::ofstream::trunc | std::ofstream::out);
 
 	std::vector<XMFLOAT3> PositionV = {
 	{ 0.0f, 0.0f, 0.0f },
