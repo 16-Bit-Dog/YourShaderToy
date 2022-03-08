@@ -12,7 +12,7 @@
 #include "Renderable.h"
 #include "Window_Struct.h"
 
-static std::set<std::string> usedName_Constant{ "PROGRAM_CONSTANTS", "" };
+static std::set<std::string> usedName_Constant{ "PROGRAM_CONSTANTS", "", "Vertex"};
 
 struct IntTypeAndName_c {
 	int32_t val = 0;
@@ -135,7 +135,7 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 */
 
 struct ObjectBuilder {
-
+	
 	inline static bool UNORM_ELSE_FLOAT_Driver;
 	inline static std::set<std::string> usedNameCont = {""};
 
@@ -183,7 +183,21 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 };
 
 struct BuiltPredefined_c : ObjectBuilder {
-	CONST_DATA_PASS_c* data = new CONST_DATA_PASS_c();;
+	CONST_DATA_PASS_c* data = new CONST_DATA_PASS_c();
+
+	std::vector<std::string>  namesU = {
+	"WINDOW_SIZE_X",
+	"WINDOW_SIZE_Y",
+	"MOUSE_POS_X",
+	"MOUSE_POS_Y",
+	"LEFT_CLICK_STATE",
+	"RIGHT_CLICK_STATE",
+	"MIDDLE_CLICK_STATE",
+	};
+	std::vector<std::string>  namesF = {
+	"NET_TIME"
+	};
+
 	//UINT32 WindowSizeX; -> //MainWin.Width;
 	//UINT32 WindowSizeY; -> //MainWin.Height;
 
@@ -195,15 +209,16 @@ struct BuiltPredefined_c : ObjectBuilder {
 	// UINT32 MiddleClick; -> //MainWin.MiddleClickState -> mouse_button_callback
 
 	//float time; -> time
+
+
 	BuiltPredefined_c() {
-		usedNameCont.insert("WINDOW_SIZE_X");
-		usedNameCont.insert("WINDOW_SIZE_Y");
-		usedNameCont.insert("MOUSE_POS_X");
-		usedNameCont.insert("MOUSE_POS_Y");
-		usedNameCont.insert("LEFT_CLICK_STATE");
-		usedNameCont.insert("RIGHT_CLICK_STATE");
-		usedNameCont.insert("MIDDLE_CLICK_STATE");
-		usedNameCont.insert("NET_TIME");
+		
+		for (auto& i : namesU) {
+			usedNameCont.insert(i);
+		}
+		for (auto& i : namesF) {
+			usedNameCont.insert(i);
+		}
 	}
 
 	void BuildItem() {
@@ -212,14 +227,13 @@ struct BuiltPredefined_c : ObjectBuilder {
 	}
 
 	~BuiltPredefined_c() {
-		usedNameCont.erase("WINDOW_SIZE_X");
-		usedNameCont.erase("WINDOW_SIZE_Y");
-		usedNameCont.erase("MOUSE_POS_X");
-		usedNameCont.erase("MOUSE_POS_Y");
-		usedNameCont.erase("LEFT_CLICK_STATE");
-		usedNameCont.erase("RIGHT_CLICK_STATE");
-		usedNameCont.erase("MIDDLE_CLICK_STATE");
-		usedNameCont.erase("NET_TIME");
+		for (auto& i : namesU) {
+			usedNameCont.erase(i);
+		}
+		for (auto& i : namesF) {
+			usedNameCont.erase(i);
+		}
+		delete data;
 	}
 
 };
@@ -232,7 +246,7 @@ struct BuiltImage_c : ObjectBuilder {
 	
 	std::string Name = "";
 	std::string NameRW = "";
-
+	
 	d4 data;
 
 	int bpp;
@@ -248,8 +262,10 @@ struct BuiltImage_c : ObjectBuilder {
 		Renderable::ROB->LoadImageFromData(this);
 	}
 
+
 	BuiltImage_c(std::string p, std::string s, bool IsPath, int sizeX_tmp, int sizeY_tmp, int channels_tmp, int bpp_tmp, bool UNORM_ELSE_FLOAT_tmp, d4* data_tmp) {
 		//set name
+		
 		data = *data_tmp;
 
 		UNORM_ELSE_FLOAT = UNORM_ELSE_FLOAT_tmp;
@@ -260,10 +276,11 @@ struct BuiltImage_c : ObjectBuilder {
 		if (s == "") s = "TMP_TEX";
 		else Name = s;
 		
-		NameRW = Name+"_RW";
-
+		
 		DealWithNameConflict(&usedNameCont, &Name, "TEX");
+		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "TEX_RW");
+
 
 		sizeX = sizeX_tmp;
 		sizeY = sizeY_tmp;
@@ -294,8 +311,10 @@ struct BuiltModel_c : ObjectBuilder {
 		Renderable::ROB->LoadModelFromData(this);
 	}
 
+
 	BuiltModel_c(std::string p, std::string s, int t) {
 		//TODO fill M3DR based on path in D3D11ResourceObjects.h, else stop trying to load and throw error saying "invalid" 
+		
 		Path = p;
 
 		if (s == "") s = "TMP_MODEL";
@@ -326,17 +345,28 @@ struct BuiltConstant_c : ObjectBuilder {
 	std::string NameRW = "";
 	std::string StructName = "";
 	TypeStorageMass vars;
+
+	std::string StructElementName = "";
+	std::string StructElementNameRW = "";
+
 	//bool ReadWrite = false;
 	
 	bool ReadWrite = true;
 
 	BuiltConstant_c(std::string s) {
+		
 		Name = s;
 		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
 		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "STRUCT_RW");
-		StructName = NameRW+"_S";
+		StructName = Name+"_S";
 		DealWithNameConflict(&usedNameCont, &StructName, "STRUCT_S");
+	
+		StructElementName = Name + "_rw";
+		StructElementNameRW = Name + "_s";
+		DealWithNameConflict(&usedNameCont, &StructElementName, "VAR_S");
+		DealWithNameConflict(&usedNameCont, &StructElementNameRW, "VAR_S");
+
 	}
 
 	void AddInt(std::string* s, int32_t* intV) {
@@ -370,9 +400,12 @@ struct BuiltConstant_c : ObjectBuilder {
 		Renderable::ROB->LoadConstantFromData(this);
 	}
 
+
 	~BuiltConstant_c() {
 		usedNameCont.erase(Name);
 		usedNameCont.erase(NameRW);
+		usedNameCont.erase(StructElementName);
+		usedNameCont.erase(StructElementNameRW);
 	}
 };
 

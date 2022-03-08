@@ -63,12 +63,43 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void CleanAllBuild() {
 		Renderable::DXM->ROB->ClearAllObjects();
 	}
+
+	void FillEditorTextDefaults() {
+		Renderable::DXM->ROB->AddItemTextDefault(&MASTER_Editor::obj->AutoAddGlobalsPredefined);
+	}
+	void FillEditorTextImages() {
+		for (int i = 0; i < ImageStore.size(); i++) {
+			Renderable::DXM->ROB->AddItemTextImages(&MASTER_Editor::obj->AutoAddGlobalsImages);
+		}
+	}
+	void FillEditorTextModels() {
+		for (int i = 0; i < ModelStore.size(); i++) {
+			Renderable::DXM->ROB->AddItemTextModels(&MASTER_Editor::obj->AutoAddGlobalsModels);
+		}
+	}
+	void FillEditorTextConstants() {
+		for (int i = 0; i < ConstantStore.size(); i++) {
+			Renderable::DXM->ROB->AddItemTextConstants(&MASTER_Editor::obj->AutoAddGlobalsConstants);
+		}
+	}
+	void FillEditor() {
+		MASTER_Editor::obj->AutoAddGlobalsPredefined.clear();
+		MASTER_Editor::obj->AutoAddGlobalsImages.clear();
+		MASTER_Editor::obj->AutoAddGlobalsModels.clear();
+		MASTER_Editor::obj->AutoAddGlobalsConstants.clear();
+
+		FillEditorTextDefaults();
+		FillEditorTextImages();
+		FillEditorTextModels();
+		FillEditorTextConstants();
+	}
 	void BuildAllObjectsItem() {
 		CleanAllBuild();
 		BuildAllDefaults();
 		BuildAllImages();
 		BuildAllModels();
 		BuildAllConstants();
+		FillEditor();
 		//iterate through all items, run "clear mem" - THEN - run object builder from path
 	}//TODO
 	void DrawBuildAllObjects() {

@@ -1,5 +1,4 @@
 add static model data:
-- cube
 - full screen tri
 - full screen quad
 

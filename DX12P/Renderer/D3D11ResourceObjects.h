@@ -1,5 +1,5 @@
 
-#define GET_OBJECT_STATIC
+//#define GET_OBJECT_STATIC
 
 
 #ifndef DX11_H_RESOURCE_OBJ
@@ -36,9 +36,65 @@ struct DX11_OBJ_RESOURCE_S {
 
 //TODO: texture loaded clamp, mirror, ect. and sampling options
 
+struct RegisterMaps {
+	inline static std::set<int> UAV_R;
+	inline static std::set<int> SRV_R;
+	inline static std::set<int> CB_R;
+
+	int uav_num = -1; //TODO: set all uav and srv and cb nums with func
+	int srv_num = -1; //TODO: set all uav and srv and cb nums with func
+	int cb_num = -1;
+
+	std::string CBName() {
+		return std::to_string(cb_num);
+	}
+	std::string SRVName() {
+		return std::to_string(srv_num);
+	}
+	std::string UAVName() {
+		return std::to_string(uav_num);
+	}
 
 
-struct ImageObjectToRendererDX11 {
+	int AddUAVNum() {
+		for (int i = 0; i < UAV_R.size()+1; i++) {
+			if (UAV_R.count(i) == 0) {
+				UAV_R.insert(i);
+				uav_num = i;
+				return i;
+			}
+		}
+	}
+	int AddSRVNum() {
+		for (int i = 0; i < SRV_R.size() + 1; i++) {
+			if (SRV_R.count(i) == 0) {
+				SRV_R.insert(i);
+				srv_num = i;
+				return i;
+			}
+		}
+	}
+	int AddCBNum() {
+		for (int i = 0; i < CB_R.size() + 1; i++) {
+			if (CB_R.count(i) == 0) {
+				CB_R.insert(i);
+				cb_num = i;
+				return i;
+			}
+		}
+	}
+	void RemoveUAVNum() {
+		UAV_R.erase(uav_num);
+	}
+	void RemoveSRVNum() {
+		SRV_R.erase(srv_num);
+	}
+	void RemoveCBNum() {
+		CB_R.erase(cb_num);
+	}
+};
+
+struct ImageObjectToRendererDX11 : RegisterMaps{
 
 	ComPtr<ID3D11ShaderResourceView> srv;
 	ComPtr<ID3D11UnorderedAccessView> uav;
@@ -47,10 +103,14 @@ struct ImageObjectToRendererDX11 {
 	DXGI_FORMAT format;
 
 	std::string name;
+	
 	std::string nameRW;
-
+	
 
 	ImageObjectToRendererDX11(BuiltImage_c* data) {
+		AddUAVNum();
+		AddSRVNum();
+
 		nameRW = data->NameRW;
 		name = data->Name;
 
@@ -108,12 +168,14 @@ struct ImageObjectToRendererDX11 {
 		//send data to SRV and UAV
 	}
 	~ImageObjectToRendererDX11() {
-		
+		RemoveSRVNum();
+		RemoveUAVNum();
+
 	}
 };
 
 
-struct StructObjectToRendererDX11 {
+struct StructObjectToRendererDX11 : RegisterMaps{
 	ComPtr<ID3D11Buffer> con;
 	
 	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object due to limits of DX11
@@ -122,10 +184,12 @@ struct StructObjectToRendererDX11 {
 	std::string Name;
 	std::string NameRW;
 	std::string StructName;
+	std::string StructElementName = "s";
+	std::string StructElementNameRW = "s";
 
 	std::vector<int> typesInOrder = { };
 	std::vector<std::string> typesInOrderName = { }; //TODO: remove and change to fill with constructor
-	std::vector<std::string> typesInOrderNameRW = { }; //TODO: remove and change to fill with constructor
+	//std::vector<std::string> typesInOrderNameRW = { }; //TODO: remove and change to fill with constructor
 
 
 	TypeStorageMass ReferToData; //copy of type storage mass since you have compiled data here with names
@@ -133,9 +197,14 @@ struct StructObjectToRendererDX11 {
 	bool HasRW = true;
 
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
+		AddUAVNum();
+		AddCBNum();
+
 		Name = data->Name;
 		NameRW = data->NameRW;
 		StructName = data->StructName;
+		StructElementName = data->StructElementName;
+		StructElementNameRW = data->StructElementNameRW;
 
 		ReferToData = data->vars; //copy
 
@@ -148,27 +217,27 @@ struct StructObjectToRendererDX11 {
 
 		typesInOrder.resize(ElementCount);
 		typesInOrderName.resize(ElementCount);
-		typesInOrderNameRW.resize(ElementCount);
+		//typesInOrderNameRW.resize(ElementCount);
 
 		int offset = 0;
 		for (int i = 0; i < ReferToData.IT.size(); i++) {
 			typesInOrder[i + offset] = INT_OBJ;
 			typesInOrderName[i + offset] = ReferToData.IT[i].n;
-			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
 			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.IT[i].val); //stick raw bytes as float into Data
 		}
 		offset += ReferToData.IT.size();
 		for (int i = 0; i < ReferToData.UT.size(); i++) {
 			typesInOrder[i + offset] = UINT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.IT[i].n;
-			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			typesInOrderName[i + offset] = ReferToData.UT[i].n;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
 			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.UT[i].val); //stick raw bytes as float into Data
 		}
 		offset += ReferToData.UT.size();
 		for (int i = 0; i < ReferToData.FT.size(); i++) {
 			typesInOrder[i + offset] = FLOAT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.IT[i].n;
-			typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			typesInOrderName[i + offset] = ReferToData.FT[i].n;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
 			Data[i + offset] = (ReferToData.FT[i].val);
 		}
 
@@ -212,14 +281,23 @@ struct StructObjectToRendererDX11 {
 		delete Data;
 	}
 
+	~StructObjectToRendererDX11() {
+		RemoveUAVNum();
+		RemoveCBNum();
+
+	}
+	
 };
 
-struct ModelToRendererDX11 {
+struct ModelToRendererDX11 : RegisterMaps{
 	DX11M3DR Model;
 	std::string Name;
 	std::string NameRW;
 
 	ModelToRendererDX11(BuiltModel_c* data) {
+		AddUAVNum();
+		AddSRVNum();
+
 		Name = data->Name;
 		NameRW = data->NameRW;
 
@@ -233,9 +311,13 @@ struct ModelToRendererDX11 {
 		OutputStringToFileForCopyPata(&Model);
 #endif
 	}
+	~ModelToRendererDX11() {
+		RemoveSRVNum();
+		RemoveUAVNum();
+	}
 };
 
-struct PredefinedToRendererDX11 {
+struct PredefinedToRendererDX11 : RegisterMaps{
 	std::vector<int> typesInOrder = { UINT_OBJ, UINT_OBJ, UINT_OBJ, UINT_OBJ,
 		UINT_OBJ, UINT_OBJ, UINT_OBJ,
 		FLOAT_OBJ };
@@ -248,6 +330,7 @@ struct PredefinedToRendererDX11 {
 	
 
 	PredefinedToRendererDX11(BuiltPredefined_c* data) {
+		AddCBNum();
 
 		D3D11_BUFFER_DESC bufDesc;
 		ZeroMemory(&bufDesc, sizeof(bufDesc));
@@ -267,7 +350,7 @@ struct PredefinedToRendererDX11 {
 	}
 
 	~PredefinedToRendererDX11() {
-//		SafeRelease(Cdata);
+		RemoveCBNum();
 	}
 
 	void update(BuiltPredefined_c* bI) {
@@ -286,6 +369,68 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	std::unordered_map<std::string /*name to identify image*/, ImageObjectToRendererDX11*/*data*/> ImageData; //use d4 to get and filter data
 	std::unordered_map<std::string /*name to identify model*/, ModelToRendererDX11*/*data*/> ModelData;
 	std::unordered_map<std::string /*name to identify struct*/, StructObjectToRendererDX11*/*data*/> ConstantData;
+
+	void AddItemTextDefault(std::vector<std::string>* v) {
+
+		v->push_back("cbuffer " + PredefinedData->Name + ": register(b"+PredefinedData->CBName()+") { \n");
+		for (int i = 0; i < PredefinedData->typesInOrderName.size(); i++) {
+			if (PredefinedData->typesInOrder[i] == INT_OBJ) {
+				v->push_back("int "+ PredefinedData->typesInOrderName[i] +";\n");
+			}
+			else if (PredefinedData->typesInOrder[i] == UINT_OBJ) {
+				v->push_back("uint " + PredefinedData->typesInOrderName[i] + ";\n");
+			}
+			else if (PredefinedData->typesInOrder[i] == FLOAT_OBJ) {
+				v->push_back("float " + PredefinedData->typesInOrderName[i] + ";\n");
+			}
+		}
+
+
+	}
+	void AddItemTextImages(std::vector<std::string>*  v) {
+
+		for (auto& x : ImageData) {
+			v->push_back("Texture2D " + x.second->name + " : register(t" + x.second->SRVName() + ");\n");
+			v->push_back("RWTexture2D<float4> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
+		}
+	}
+	void AddItemTextModels(std::vector<std::string>* v) {
+
+		//nothig, since these are the VetexShaderInput -- set these as input using name in Pipeline Input - TODO:
+
+	}
+	void AddItemTextConstants(std::vector<std::string>* v) {
+
+		for (auto& x : ConstantData) {
+			//draw structs:
+			v->push_back("struct " + x.second->StructName + "{\n");
+			for (int y = 0; y < x.second->typesInOrder.size();y++) {
+				if (x.second->typesInOrder[y] == INT_OBJ) {
+					v->push_back("int " + x.second->typesInOrderName[y] + ";\n");
+				}
+				else if (x.second->typesInOrder[y] == UINT_OBJ) {
+					v->push_back("uint " + x.second->typesInOrderName[y] + ";\n");
+				}
+				else if (x.second->typesInOrder[y] == FLOAT_OBJ) {
+					v->push_back("float " + x.second->typesInOrderName[y] + ";\n");
+				}
+			}
+			v->push_back("};\n");
+			//
+			
+			//constant buf
+			v->push_back("cbuffer " + x.second->Name + ": register(b" + x.second->CBName() + ") { \n");
+			v->push_back(x.second->StructName + " " + x.second->StructElementName+";\n");
+			v->push_back("};\n");
+			//
+
+			//uav buf
+			v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ") { \n");
+			//TODO: add RW Object name
+		}
+
+	}
+
 
 	void ClearAllPredefined() {
 		if(PredefinedData != nullptr)

@@ -5,7 +5,11 @@
 struct MASTER_Editor : MASTER_Function_Inherit {
 	inline static MASTER_Editor* obj;
 
-	std::map<int, std::string> AutoAddGlobals;
+	std::vector<std::string> AutoAddGlobalsPredefined;
+	std::vector<std::string> AutoAddGlobalsImages;
+	std::vector<std::string> AutoAddGlobalsModels;
+	std::vector<std::string> AutoAddGlobalsConstants;
+
 	std::string Globals = "a";
 	std::string VsString = "a";
 	std::string PsString = "a";
@@ -85,9 +89,24 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			ImGui::Text("float3 tangent : TANGENT;");
 			ImGui::Text("float3 uv : TEXCOORD;");
 			ImGui::Text("};");
-			for (auto i : AutoAddGlobals) {
-				ImGui::Text(i.second.c_str());
+
+			ImGui::NewLine();
+			for (auto& i : AutoAddGlobalsPredefined) {
+				ImGui::Text(i.c_str());
 			}
+			ImGui::NewLine();
+			for (auto& i : AutoAddGlobalsImages) {
+				ImGui::Text(i.c_str());
+			}
+			ImGui::NewLine();
+//			for (auto i : AutoAddGlobalsModels) {
+//				ImGui::Text(i.c_str());
+//			}
+			for (auto& i : AutoAddGlobalsConstants) {
+				ImGui::Text(i.c_str());
+			}
+			ImGui::NewLine();
+
 			ImGui::Text("//");
 			ImGui::InputTextMultilineQuick("T0", &Globals, &TextType);
 			ImGui::Text("////");

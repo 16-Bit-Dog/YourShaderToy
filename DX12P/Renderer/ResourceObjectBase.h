@@ -13,6 +13,11 @@ struct DX11M3DR;
 
 struct ResourceObjectBase {
 
+	virtual void AddItemTextDefault(std::vector<std::string>* v) = 0;
+	virtual void AddItemTextImages(std::vector<std::string>* v) = 0;
+	virtual void AddItemTextModels(std::vector<std::string>* v) = 0;
+	virtual void AddItemTextConstants(std::vector<std::string>* v) = 0;
+
 	virtual void ClearAllPredefined() = 0;
 	virtual void ClearAllImages() = 0;
 	virtual void ClearAllModels() = 0;
