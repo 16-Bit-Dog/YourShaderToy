@@ -2,20 +2,35 @@
 #ifndef DX11_H
 #define DX11_H
 
-#include "DX11ShaderFuncs.h"
+//#include "DX11ShaderFuncs.h"
 #include "Renderable.h"
 //#include "D3D11ResourceObjects.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx11.h>
-#include "3DCommons/3DDX11Obj.h"
-
-
+#include "3DDX11Obj.h"
+#include "PipelineObj.h"
+#include <functional>
 using namespace DirectX;
 
+struct PipelineObjectIntermediateStateDX11 {
+    
+    bool On = true;
+    ComPtr <ID3D11VertexShader> VDat = nullptr;
+    ComPtr <ID3D11PixelShader> PDat = nullptr;
+    PipelineObj* PObj;
+    //TODO: add compute shader stuff -- std::vector 
+    std::function<void()> ToRunLogic;
+
+};
 
 struct MainDX11Objects : Renderable{
+
+    std::vector<PipelineObjectIntermediateStateDX11*> CompiledCode; //use this ordered to pass through code states
+
     inline static MainDX11Objects* obj;
+
+    ComPtr<ID3D11InputLayout> dxIL;
 
     int BLOCK_SIZE = 8;
 
@@ -70,15 +85,31 @@ struct MainDX11Objects : Renderable{
 
         if (ClearDepth) dxDeviceContext->ClearDepthStencilView(dxDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
     }
+
+    void DrawOnMainWindow() {
+        dxDeviceContext->OMSetRenderTargets(1, &dxRenderTargetView, NULL);
+        if (ClearRTV == true) {
+            ClearBuffer({ 0.0f,0.5f,0.0f,1.0f }, true);
+        }
+
+        for (auto& i : CompiledCode) {
+            if(i->On) i->ToRunLogic();
+        }
+
+    }
+
+    void DrawOnSideWindow() {
+        //TODO: make scene draw view work
+    }
+
     void DrawLogic(bool sync = true) override {
 
         if (NewImGUIDat) {
             ImGui::Render();
         }
-        dxDeviceContext->OMSetRenderTargets(1, &dxRenderTargetView, NULL);
-        if (ClearRTV == true) {
-            ClearBuffer({ 0.0f,0.5f,0.0f,1.0f }, true);
-        }
+
+        DrawOnMainWindow();
+        DrawOnSideWindow(); //TODO: draw on Scene view with special movment
         ClearRTV = true;
 
         if (NewImGUIDat) {

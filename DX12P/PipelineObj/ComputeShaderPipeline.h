@@ -1,9 +1,25 @@
 #pragma once
 #include "string"
-#include "PipelineObj.h"
-//TODO: fix interact with name and create from inside pipeline state new pipeline
-//TODO: make toggle work
 
+
+//TODO: fix interact with name and create from inside pipeline state new pipeline
+
+//uint64_t SCap = 0;
+
+struct PipelineObj {
+	bool On = true;
+	std::string name;
+	int Order = -1;
+	bool killP = false;
+	std::string padN = " ";
+//	uint64_t c = 0;
+	PipelineObj(int i = -1) {
+		name = std::to_string(i) + " Pipeline";
+		Order = i;
+//		c = SCap;
+//		SCap += 1;
+	}
+};
 
 struct PipelineMain {
 	inline static PipelineMain* obj;

@@ -247,6 +247,8 @@ struct BuiltImage_c : ObjectBuilder {
 	std::string Name = "";
 	std::string NameRW = "";
 	
+	std::string SamplerName = "";
+
 	d4 data;
 
 	int bpp;
@@ -280,7 +282,8 @@ struct BuiltImage_c : ObjectBuilder {
 		DealWithNameConflict(&usedNameCont, &Name, "TEX");
 		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "TEX_RW");
-
+		SamplerName = Name + "_SAMPLE";
+		DealWithNameConflict(&usedNameCont, &SamplerName, "_SAMPLE");
 
 		sizeX = sizeX_tmp;
 		sizeY = sizeY_tmp;

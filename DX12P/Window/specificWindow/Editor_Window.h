@@ -10,18 +10,18 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::vector<std::string> AutoAddGlobalsModels;
 	std::vector<std::string> AutoAddGlobalsConstants;
 
-	std::string Globals = "a";
-	std::string VsString = "a";
-	std::string PsString = "a";
-	std::string HsString = "a";
-	std::string DsString = "a";
-	std::string GsString = "a";
-	std::string CsString = "a";
-	std::string MeshsString = "a";
-	std::string AmpsString = "a";
-	std::string RayGensString = "a";
-	std::string MisssString = "a";
-	std::string HitsString = "a";
+	std::string Globals = "";
+	std::string VsString = "";
+	std::string PsString = "";
+	std::string HsString = "";
+	std::string DsString = "";
+	std::string GsString = "";
+	std::string CsString = "";
+	std::string MeshsString = "";
+	std::string AmpsString = "";
+	std::string RayGensString = "";
+	std::string MisssString = "";
+	std::string HitsString = "";
 
 
 	virtual void settingWindowSettingsMaker() {
@@ -37,6 +37,66 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		settingWindowSettingsMaker();
 	}
 
+	std::string GetStringWithNoGlobals() {
+
+		std::string s = std::string(
+			"////Globals\n"
+			"//Auto_Added_Globals\n"
+			"struct Vertex{\n"
+			"float3 position : POSITION;\n"
+			"float3 normal : NORMAL;\n"
+			"float3 binormal : BINORMAL;\n"
+			"float3 tangent : TANGENT;\n"
+			"float3 uv : TEXCOORD;\n"
+			"};\n"
+		);
+
+		for (auto& i : AutoAddGlobalsPredefined) {
+			s += i;
+		}
+		for (auto& i : AutoAddGlobalsImages) {
+			s += i;
+		}
+		for (auto& i : AutoAddGlobalsConstants) {
+			s += i;
+		}
+
+		return std::move(s);
+
+	}
+
+	std::string GetStringWithGlobalsText() {
+
+
+		std::string s = GetStringWithNoGlobals();
+		s += Globals;
+		return std::move(s);
+
+	}
+
+	void DrawGlobalsText() {
+
+		std::string s = GetStringWithNoGlobals();
+		ImGui::Text(s.c_str());
+		ImGui::Text("//");
+		ImGui::InputTextMultilineQuick("T0", &Globals, &TextType);
+		ImGui::Text("////");
+	}
+
+	void DrawVertexShaderText() {
+
+		ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
+		HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
+		ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
+
+	}
+
+	void DrawPixelShaderText() {
+
+		ImGui::Text("//PixelShaders");
+		ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
+
+	}
 
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Editor:")) {
@@ -80,45 +140,16 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			ImGui::Separator();
 			ImGui::Separator();
 
-			ImGui::Text("////Globals");
-			ImGui::Text("//Auto_Added_Globals");
-			ImGui::Text("struct Vertex{");
-			ImGui::Text("float3 position : POSITION;");
-			ImGui::Text("float3 normal : NORMAL;");
-			ImGui::Text("float3 binormal : BINORMAL;");
-			ImGui::Text("float3 tangent : TANGENT;");
-			ImGui::Text("float3 uv : TEXCOORD;");
-			ImGui::Text("};");
-
-			ImGui::NewLine();
-			for (auto& i : AutoAddGlobalsPredefined) {
-				ImGui::Text(i.c_str());
-			}
-			ImGui::NewLine();
-			for (auto& i : AutoAddGlobalsImages) {
-				ImGui::Text(i.c_str());
-			}
-			ImGui::NewLine();
-//			for (auto i : AutoAddGlobalsModels) {
-//				ImGui::Text(i.c_str());
-//			}
-			for (auto& i : AutoAddGlobalsConstants) {
-				ImGui::Text(i.c_str());
-			}
-			ImGui::NewLine();
-
-			ImGui::Text("//");
-			ImGui::InputTextMultilineQuick("T0", &Globals, &TextType);
-			ImGui::Text("////");
+			DrawGlobalsText();
 
 			ImGui::Separator();
 			ImGui::Separator();
 
 			ImGui::Text("////Mandatory for output Shaders");
-			ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
-			ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
-			ImGui::Text("//PixelShaders");
-			ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
+			
+			DrawVertexShaderText();
+			DrawPixelShaderText();
+
 			ImGui::Text("////");
 
 			ImGui::Separator();
@@ -126,9 +157,9 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("////Tesslation Shader content");
 			ImGui::Text("//HullShaders - TODO");
-			ImGui::InputTextMultilineQuick("T3", &HsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T3", &HsString, &TextType);
 			ImGui::Text("//DomainShaders - TODO");
-			ImGui::InputTextMultilineQuick("T4", &DsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T4", &DsString, &TextType);
 			ImGui::Text("////");
 
 			ImGui::Separator();
@@ -136,7 +167,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("////GeometryShader Content");
 			ImGui::Text("//GeometryShaders - TODO");
-			ImGui::InputTextMultilineQuick("T5", &GsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T5", &GsString, &TextType);
 			ImGui::Text("////");
 
 			ImGui::Separator();
@@ -144,7 +175,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("////ComputeShader Content - TODO");
 			ImGui::Text("//ComputeShaders - TODO");
-			ImGui::InputTextMultilineQuick("T6", &CsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T6", &CsString, &TextType);
 			ImGui::Text("////");
 
 			ImGui::Separator();
@@ -154,7 +185,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			ImGui::Text("//MeshShaders - TODO");
 			ImGui::InputTextMultilineQuick("T7", &MeshsString, &TextType);
 			ImGui::Text("//AmplificationShaders - TODO");
-			ImGui::InputTextMultilineQuick("T8", &AmpsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T8", &AmpsString, &TextType);
 			ImGui::Text("////");
 
 			ImGui::Separator();
@@ -162,11 +193,11 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("////Ray-tracing Shader Content - TODO");
 			ImGui::Text("//RayGen Shaders - TODO");
-			ImGui::InputTextMultilineQuick("T9", &RayGensString, &TextType);
+			ImGui::InputTextMultilineQuick("##T9", &RayGensString, &TextType);
 			ImGui::Text("//Miss Shaders - TODO");
-			ImGui::InputTextMultilineQuick("T10", &MisssString, &TextType);
+			ImGui::InputTextMultilineQuick("##T10", &MisssString, &TextType);
 			ImGui::Text("//Hit Shaders - TODO");
-			ImGui::InputTextMultilineQuick("T11", &HitsString, &TextType);
+			ImGui::InputTextMultilineQuick("##T11", &HitsString, &TextType);
 			ImGui::Text("////");
 
 			ImGui::Separator();

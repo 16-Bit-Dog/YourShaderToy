@@ -1,9 +1,10 @@
+TODO NEXT: make default working vertex and pixel shaders
+
+then add scene view draw for camrea movement
+
+then code crawl or the TODOs I left in the code
+
 add static model data:
 - full screen tri
 - full screen quad
-
-
-make the text compiler auto add HLSL code based on my resource struct
-
-then code crawl or the TODOs I left in the code
 

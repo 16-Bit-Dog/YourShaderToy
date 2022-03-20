@@ -7,11 +7,15 @@
 struct ResourceObjectBase;
 
 struct Renderable {
+	bool CompiledData = false;
+	bool CompiledCode = false;
+
 	inline static Renderable* DXM;
 
 	inline static ResourceObjectBase* ROB;
 
 	bool NewImGUIDat = false;
+
 
 	virtual void ImGUINewFrameLogic() = 0;
 

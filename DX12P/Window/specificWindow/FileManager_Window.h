@@ -100,6 +100,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		BuildAllModels();
 		BuildAllConstants();
 		FillEditor();
+		Renderable::DXM->CompiledData = true;
+		Renderable::DXM->ROB->PreBindAllResources();
 		//iterate through all items, run "clear mem" - THEN - run object builder from path
 	}//TODO
 	void DrawBuildAllObjects() {
@@ -215,7 +217,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 
 
-	bool RemoveImage(int i) {
+	bool RemoveImage(const int& i) {
 		ImGui::Text("Remove");
 		ImGui::SameLine();
 		if (ImGui::Button(("-##ImageRemove" + sPad(i)).c_str())) {
@@ -224,7 +226,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 		return true; // did notdelete
 	}
-	void ToggleReadWrite(int i) {
+	void ToggleReadWrite(const int& i) {
 		ImGui::SameLine();
 		ImGui::Checkbox(("R/W Toggle##ImageRemove" + sPad(i)).c_str(), &ImageStore[i]->ReadWrite);
 	}
@@ -237,6 +239,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::Text("RWName: ");
 			ImGui::SameLine();
 			ImGui::Text(ImageStore[i]->NameRW.c_str());
+			ImGui::Text("Sampler: ");
+			ImGui::SameLine();
+			ImGui::Text(ImageStore[i]->SamplerName.c_str());
 			ImGui::SameLine();
 			ImGui::Text("|");
 			ImGui::SameLine();
@@ -311,7 +316,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::EndMenu();
 		}
 	}
-	bool RemoveModel(int i) {
+	bool RemoveModel(const int& i) {
 		ImGui::Text("Remove");
 		ImGui::SameLine();
 		if (ImGui::Button(("-##ModelRemove" + sPad(i)).c_str())) {
@@ -359,13 +364,13 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	int32_t ToAddConstantInt = 0;
 	uint32_t ToAddConstantUint = 0;
 	float ToAddConstantFloat = 0.0f;
-	void AddConstantInt(std::string* s, int32_t* intV, int i) {
+	void AddConstantInt(std::string* s, int32_t* intV, const int& i) {
 		ConstantStore[i]->AddInt(s, intV);
 	}
-	void AddConstantUint(std::string* s, uint32_t* uintV, int i) {
+	void AddConstantUint(std::string* s, uint32_t* uintV, const int& i) {
 		ConstantStore[i]->AddUint(s, uintV);
 	}
-	void AddConstantFloat(std::string* s,float* floatV, int i) {
+	void AddConstantFloat(std::string* s,float* floatV, const int& i) {
 		ConstantStore[i]->AddFloat(s, floatV);
 	}
 
@@ -387,7 +392,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::EndMenu();
 		}
 	}
-	bool RemoveConstant(int i) {
+	bool RemoveConstant(const int& i) {
 		ImGui::Text("Remove");
 		ImGui::SameLine();
 		if (ImGui::Button(("-##ImageRemove" + sPad(i)).c_str())) {
@@ -396,7 +401,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 		return true; // did notdelete
 	}
-	void ShowIntData(int i) {
+	void ShowIntData(const int& i) {
 		for (int ii = 0; ii < ConstantStore[i]->vars.IT.size(); ii++) {
 			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.IT[ii].n.c_str());
 			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.IT[ii].nRW.c_str());
@@ -405,7 +410,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::InputInt(("##ConstantVarInputInt" + ConstantStore[i]->vars.IT[ii].n).c_str(), &ConstantStore[i]->vars.IT[ii].val);
 		}
 	}
-	void ShowUintData(int i) {
+	void ShowUintData(const int& i) {
 		for (int ii = 0; ii < ConstantStore[i]->vars.UT.size(); ii++) {
 			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.UT[ii].n.c_str());
 			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.UT[ii].nRW.c_str());
@@ -414,7 +419,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::InputScalar(("##ConstantVarInputInt" + ConstantStore[i]->vars.UT[ii].n).c_str(), ImGuiDataType_U32, &ConstantStore[i]->vars.UT[ii].val);
 		}
 	}
-	void ShowFloatData(int i) {
+	void ShowFloatData(const int& i) {
 		for (int ii = 0; ii < ConstantStore[i]->vars.FT.size(); ii++) {
 			ImGui::Text("Name: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.FT[ii].n.c_str());
 			ImGui::Text("RWName: "); ImGui::SameLine(); ImGui::Text(ConstantStore[i]->vars.FT[ii].nRW.c_str());
@@ -423,7 +428,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::InputFloat(("##ConstantVarInputInt" + ConstantStore[i]->vars.FT[ii].n).c_str(), &ConstantStore[i]->vars.FT[ii].val);
 		}
 	}
-	void ShowUintIntFloat(int i) {
+	void ShowUintIntFloat(const int& i) {
 		ShowIntData(i);
 		ShowUintData(i);
 		ShowFloatData(i);

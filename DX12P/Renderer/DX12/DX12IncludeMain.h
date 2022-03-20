@@ -10,7 +10,7 @@ using namespace Microsoft::WRL;
 
 // DirectX 12 specific headers.
 #include <d3d12.h>
-#include <../Special_DX_Headers/d3dx12.h> //very good helper struct for DX12 - MSDN just refuses to teach raw stuff like D3D12_CPU_DESCRIPTOR_HANDLE prob due to it being a bad idea
+#include "d3dx12.h" //very good helper struct for DX12 - MSDN just refuses to teach raw stuff like D3D12_CPU_DESCRIPTOR_HANDLE prob due to it being a bad idea
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>

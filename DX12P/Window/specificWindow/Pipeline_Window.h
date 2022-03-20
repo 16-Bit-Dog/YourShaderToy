@@ -1,8 +1,14 @@
 #pragma once
 #include "Main_Window.h"
 #include <functional>
-
+#include "FileManager_Window.h"
 //TODO: hit compile option to fetch textures, build objects, ect
+
+
+/*
+TODO: add default working vertex and pixel shader code
+
+*/
 
 struct MASTER_Pipeline : MASTER_Function_Inherit {
 	inline static MASTER_Pipeline* obj;
@@ -33,6 +39,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		shows how program is running
 		*/
 
+		if (ImGui::Button("Pipeline & Code Compile##StartCodeCompile")) {
+			Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);
+			Renderable::DXM->CompiledCode = true;
+		}
+
 		ImGui::Text("Start->");
 		for (const auto& i : PipelineMain::obj->P) {
 			ImGui::Text((i.second->name + "->").c_str());
@@ -48,7 +59,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		New Pipeline [+]  //button
 		*/
 
-		ImGui::Text("Add Pipeline");
+		ImGui::Text("Add Pipeline Here");
 		ImGui::SameLine();
 
 		if (ImGui::Button(("+##"+s).c_str())) {
@@ -58,19 +69,19 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		}
 
 	}
-	void DrawPipelineSub(int i) {
+	void DrawPipelineSub(const int& i) {
 		/*
 		New Pipeline [-]  //button
 		*/
 
-		ImGui::Text("Remove Pipeline");
+		ImGui::Text("Remove This Pipeline");
 		ImGui::SameLine();
 		if (ImGui::Button(("-##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			PipelineMain::obj->P[i]->killP = true;
 		}
 	}
 
-	void DrawPipelineOrder(int i) {
+	void DrawPipelineOrder(const int& i) {
 		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			for (auto& x : PipelineMain::obj->P) {
 				if (ImGui::Button((x.second->name + " ").c_str())) {
@@ -84,7 +95,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 //		}
 	}
 
-	void DrawPipelineName(int i) {
+	void DrawPipelineName(const int& i) {
 		ImGui::Text("Name: ");
 		ImGui::SameLine();
 
@@ -98,6 +109,33 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		for (int i = 0; i < PipelineAddQueue.size(); i++)
 			PipelineAddQueue[i]();
 		PipelineAddQueue.clear();
+	}
+
+	void DrawPipelineComputeOnlyToggle(const int& i) {
+		ImGui::Checkbox(("Compute Only##bool" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->ComputeOnlyToggle);
+	}
+
+	void DrawPipelineIfTrueComputeOnlyToggle(const int& i) {
+		//TODO: draw only compute shader stuff alone
+	}
+	void DrawPipelineIfFalseComputeOnlyToggle(const int& i) {
+		PipelineMain::obj->P[i]->Vertex.Input();
+		if (ImGui::BeginMenu(("SelectModel:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			for (auto& x : MASTER_FileManager::obj->ModelStore) {
+				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->padN).c_str())) {
+
+					Renderable::DXM->ROB->SetDataToPipelineVertex(x, PipelineMain::obj->P[i]->Vertex);
+
+				}
+			}
+		}
+		ImGui::Spacing();
+		PipelineMain::obj->P[i]->Pixel.Input();
+
+	}
+
+	void DrawPipelineOnToggle(const int& i) {
+		ImGui::Checkbox(("Use Pipeline##bool" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->On);
 	}
 
 	virtual void BasicViewDraw(GroupData* GD) {
@@ -123,6 +161,10 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 					DrawPipelineSub(i.first);
 					DrawPipelineOrder(i.first);
 					DrawPipelineName(i.first);
+					DrawPipelineOnToggle(i.first);
+					DrawPipelineComputeOnlyToggle(i.first);
+					DrawPipelineIfTrueComputeOnlyToggle(i.first);
+					DrawPipelineIfFalseComputeOnlyToggle(i.first);
 				
 				}
 				ImGui::Separator();

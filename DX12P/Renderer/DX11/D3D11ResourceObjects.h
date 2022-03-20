@@ -8,12 +8,15 @@
 #include "ResourceObjectBase.h"
 #include "DX11IncludeMain.h"
 #include "FileManagerResourceStruct.h"
-#include "3DCommons/3DDX11Obj.h"
+#include "3DDX11Obj.h"
 #include "RenderableManager.h"
 #include "DX11H.h"
+#include "DX11ShaderFuncs.h"
 #include "Renderable.h"
 #include "Type_Enum.h"
-#include "3DCommons/StaticObjects.h"
+#include "StaticObjectsDX11.h"
+#include "Editor_Window.h"
+
 //DX11M3DR
 
 
@@ -40,10 +43,12 @@ struct RegisterMaps {
 	inline static std::set<int> UAV_R;
 	inline static std::set<int> SRV_R;
 	inline static std::set<int> CB_R;
+	inline static std::set<int> S_R;
 
 	int uav_num = -1; //TODO: set all uav and srv and cb nums with func
 	int srv_num = -1; //TODO: set all uav and srv and cb nums with func
 	int cb_num = -1;
+	int sampler_num = -1;
 
 	std::string CBName() {
 		return std::to_string(cb_num);
@@ -53,6 +58,9 @@ struct RegisterMaps {
 	}
 	std::string UAVName() {
 		return std::to_string(uav_num);
+	}
+	std::string SamplerName() {
+		return std::to_string(sampler_num);
 	}
 
 
@@ -83,6 +91,16 @@ struct RegisterMaps {
 			}
 		}
 	}
+	
+	int AddSNum() {
+		for (int i = 0; i < S_R.size() + 1; i++) {
+			if (S_R.count(i) == 0) {
+				S_R.insert(i);
+				sampler_num = i;
+				return i;
+			}
+		}
+	}
 	void RemoveUAVNum() {
 		UAV_R.erase(uav_num);
 	}
@@ -92,12 +110,16 @@ struct RegisterMaps {
 	void RemoveCBNum() {
 		CB_R.erase(cb_num);
 	}
+	void RemoveSNum() {
+		S_R.erase(sampler_num);
+	}
 };
 
 struct ImageObjectToRendererDX11 : RegisterMaps{
 
 	ComPtr<ID3D11ShaderResourceView> srv;
 	ComPtr<ID3D11UnorderedAccessView> uav;
+	ComPtr<ID3D11SamplerState> Samp;
 	bool HasRW = false;
 
 	DXGI_FORMAT format;
@@ -106,12 +128,15 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 	
 	std::string nameRW;
 	
+	std::string samplerName;
 
 	ImageObjectToRendererDX11(BuiltImage_c* data) {
 		AddUAVNum();
 		AddSRVNum();
-
+		AddSNum();
+		//TODO: sampler options
 		nameRW = data->NameRW;
+		samplerName = data->SamplerName;
 		name = data->Name;
 
 		ComPtr<ID3D11Texture2D> r;
@@ -166,11 +191,28 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 
 		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
+
+		D3D11_SAMPLER_DESC samp_desc;
+
+		samp_desc.Filter = D3D11_FILTER{ D3D11_FILTER_ANISOTROPIC };
+		samp_desc.AddressU = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
+		samp_desc.AddressV = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
+		samp_desc.AddressW = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
+		samp_desc.MipLODBias = 0;
+		samp_desc.MaxAnisotropy = 8;
+		samp_desc.ComparisonFunc = D3D11_COMPARISON_FUNC{ D3D11_COMPARISON_LESS };
+		samp_desc.MinLOD = 1;
+		samp_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		MainDX11Objects::obj->dxDevice->CreateSamplerState(&samp_desc, &Samp);
+
 	}
 	~ImageObjectToRendererDX11() {
 		RemoveSRVNum();
 		RemoveUAVNum();
-
+		RemoveSNum();
+		
+		//SafeRelease TODO: check if I need to clean up anything
 	}
 };
 
@@ -358,7 +400,10 @@ struct PredefinedToRendererDX11 : RegisterMaps{
 	}
 };
 
+
+
 struct ResourceObjectBaseDX11 : ResourceObjectBase {
+
 	inline static ResourceObjectBaseDX11* obj;
 
 	void SetResourceObjectBaseDX11() {
@@ -369,6 +414,79 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	std::unordered_map<std::string /*name to identify image*/, ImageObjectToRendererDX11*/*data*/> ImageData; //use d4 to get and filter data
 	std::unordered_map<std::string /*name to identify model*/, ModelToRendererDX11*/*data*/> ModelData;
 	std::unordered_map<std::string /*name to identify struct*/, StructObjectToRendererDX11*/*data*/> ConstantData;
+
+	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
+
+		if (ModelData.count(data->Name) > 0) {
+
+			ModelToRendererDX11* md_tmp = ModelData[data->Name];
+
+			vp.Vdata.resize(md_tmp->Model.VBuf.size());
+			vp.Idata.resize(md_tmp->Model.IBuf.size());
+			vp.Icount.resize(md_tmp->Model.Indice.size());
+
+			for (int x = 0; x < ModelData[data->Name]->Model.VBuf.size(); x++) {
+				vp.Vdata[x] = (void**)&ModelData[data->Name]->Model.VBuf[x];
+			}
+
+			for (int x = 0; x < ModelData[data->Name]->Model.IBuf.size(); x++) {
+				vp.Idata[x] = (void**)&ModelData[data->Name]->Model.IBuf[x];
+				vp.Icount[x] = ModelData[data->Name]->Model.Indice[x].size();
+			}
+			vp.VertexStride = ModelData[data->Name]->Model.VertexStride;
+		}
+	}
+
+	void PreBindImageData(ImageObjectToRendererDX11* ID) {
+	//	ID->UAV_R
+	//	ID->uav
+
+		//MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers();
+		MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(ID->srv_num, 1, &ID->srv);
+		MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(ID->sampler_num, 1, &ID->Samp);
+
+		//MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers();
+		MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(ID->srv_num, 1, &ID->srv);
+		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(ID->sampler_num, 1, &ID->Samp);
+//		MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources();
+//		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers();
+	}
+	void PreBindAllImageData() {
+		for (auto& i : ImageData) {
+			PreBindImageData(i.second);
+		}
+	}
+	void PreBindModelData(ModelToRendererDX11* MD) {
+
+	}
+	void PreBindAllModelData() {
+		for (auto& i : ModelData) {
+			PreBindModelData(i.second);
+		}
+	}
+	void PreBindConstantData(StructObjectToRendererDX11* ID) {
+
+	}
+	void PreBindAllConstantData() {
+		for (auto& i : ConstantData) {
+			PreBindConstantData(i.second);
+		}
+	}
+	void PreBindDefault() {
+
+	}
+	//TODO: add individual compile buttons and checkmark for if up to date data
+	void PreBindAllResources() {
+		
+
+		MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
+		MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+
+		//TODO: add sampler
+
+	}
+
 
 	void AddItemTextDefault(std::vector<std::string>* v) {
 
@@ -392,6 +510,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		for (auto& x : ImageData) {
 			v->push_back("Texture2D " + x.second->name + " : register(t" + x.second->SRVName() + ");\n");
 			v->push_back("RWTexture2D<float4> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
+			v->push_back("sampler " + x.second->samplerName + " : register(s" + x.second->SamplerName() + "); \n");
 		}
 	}
 	void AddItemTextModels(std::vector<std::string>* v) {
@@ -399,6 +518,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		//nothig, since these are the VetexShaderInput -- set these as input using name in Pipeline Input - TODO:
 
 	}
+
 	void AddItemTextConstants(std::vector<std::string>* v) {
 
 		for (auto& x : ConstantData) {
@@ -481,6 +601,77 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void UpdatePredefinedFromData(BuiltPredefined_c* bI) {
 		PredefinedData->update(bI);
+	}
+
+
+	
+	int CompileNewPipelineObject(const std::pair<const int, PipelineObj*>& Pobj) {
+		PipelineObjectIntermediateStateDX11* Compiled = new PipelineObjectIntermediateStateDX11();
+		
+		Compiled->PObj = Pobj.second;
+
+		if (Pobj.second->On == false) { Compiled->On = false; return -1; }
+
+		//TODO: set ptr to linked model
+
+		SafeRelease(Compiled->VDat);
+		SafeRelease(Compiled->PDat);
+
+		std::string Globals = MASTER_Editor::obj->GetStringWithGlobalsText();
+		std::string VGlobals = Globals + MASTER_Editor::obj->VsString;
+		std::string PGlobals = Globals + MASTER_Editor::obj->PsString;
+
+
+
+		Compiled->VDat = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.Get());
+		if (Compiled->VDat == nullptr) { Compiled->On = false; }
+
+		Compiled->PDat = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.Get());
+		if (Compiled->PDat == nullptr) { Compiled->On = false; }
+
+
+
+		if (Compiled->On == true) {
+			Compiled->ToRunLogic = [&]() {
+				//TODO, make run logic, then make code output in order
+
+				MainDX11Objects::obj->dxDeviceContext->VSSetShader(Compiled->VDat.Get(), NULL, NULL);
+				MainDX11Objects::obj->dxDeviceContext->PSSetShader(Compiled->PDat.Get(), NULL, NULL);
+
+				if (Compiled->PObj->Vertex.Vdata.size() != 0) {
+					for (int i = 0; i < Compiled->PObj->Vertex.Vdata.size(); i++) {
+						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)Compiled->PObj->Vertex.Vdata[i], &Compiled->PObj->Vertex.VertexStride, 0);
+						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*Compiled->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
+						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(Compiled->PObj->Vertex.Icount[i], 0, 0);
+					}
+				}
+				else {
+					//run if no vertex data loaded default cube
+					StaticDX11Object::obj->MakeCube();
+					MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, &StaticDX11Object::obj->CUBE->VBuf[0], &StaticDX11Object::obj->CUBE->VertexStride, 0);
+					MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0], DXGI_FORMAT_R32_UINT, 0);
+					MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
+
+				}
+
+
+			};
+		}
+
+		MainDX11Objects::obj->CompiledCode.push_back(Compiled);
+	}
+
+	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
+		MainDX11Objects::obj->CompiledCode.clear();
+		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
+
+		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects
+
+			CompileNewPipelineObject(i);
+
+		}
+
+
 	}
 
 };

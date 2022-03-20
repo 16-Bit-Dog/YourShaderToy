@@ -20,6 +20,7 @@
 #include <objidl.h>
 #include <wincodec.h>
 #include <algorithm>
+#include <DX11ShaderFuncs.h>
 //#include <gdiplus.h>
 //using namespace Gdiplus;
 //#pragma comment (lib,"Gdiplus.lib")

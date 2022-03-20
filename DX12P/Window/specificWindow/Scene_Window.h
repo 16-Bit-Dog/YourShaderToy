@@ -18,7 +18,7 @@ struct MASTER_Scene : MASTER_Function_Inherit {
 
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Scene:")) {
-
+			//TODO: make free fly cam
 
 
 

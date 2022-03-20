@@ -52,8 +52,8 @@
     <Filter Include="Header Files\imgui\Dialog">
       <UniqueIdentifier>{2b44162c-9687-4c30-9bc4-31dcd369fca3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Renderer\GlobalRenderManager">
-      <UniqueIdentifier>{d5b844e1-0835-48be-9aed-e9c430cf628f}</UniqueIdentifier>
+    <Filter Include="Header Files\Renderer\GlobalResourceAndRenderable">
+      <UniqueIdentifier>{25b28ef3-76d0-464d-8857-0457dc9b4c69}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -131,62 +131,20 @@
     <ClInclude Include="imGUI\imgui_impl_dx11.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\DX12H.h">
-      <Filter>Header Files\Renderer\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Special_DX_Headers\d3dx12.h">
-      <Filter>Header Files\Renderer\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\DX11H.h">
-      <Filter>Header Files\Renderer\DX11</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h">
       <Filter>Header Files\Renderer\ShaderFuncs</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Renderable.h">
-      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DXSafeInclude.h">
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\DX11IncludeMain.h">
-      <Filter>Header Files\Renderer\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\DX12IncludeMain.h">
-      <Filter>Header Files\Renderer\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h">
       <Filter>Header Files\Renderer\ShaderFuncs</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Pipeline_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Scene_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Settings_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Editor_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\RenderableManager.h">
-      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\3DCommons\ofbxMini.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\3DCommons\3DCommon.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\3DCommons\3DDX11Obj.h">
-      <Filter>Header Files\Renderer\3DCommons</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Main_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Master_ImGUI_Settings.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
     </ClInclude>
     <ClInclude Include="PipelineObj\PipelineMain.h">
       <Filter>Header Files\PipelineObjects</Filter>
@@ -212,21 +170,6 @@
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h">
       <Filter>Header Files\imgui\Dialog</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\D3D11ResourceObjects.h">
-      <Filter>Header Files\Renderer\DX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\FileManager_Window.h">
-      <Filter>Header Files\Window\specificWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ResourceObjectBase.h">
-      <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\FileManagerResourceStruct.h">
-      <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\GlobalRendererManager\GlobalRendererContent.h">
-      <Filter>Header Files\Renderer\GlobalRenderManager</Filter>
-    </ClInclude>
     <ClInclude Include="Window\Window_Struct.h">
       <Filter>Header Files\Window</Filter>
     </ClInclude>
@@ -235,6 +178,78 @@
     </ClInclude>
     <ClInclude Include="Renderer\3DCommons\StaticObjects.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\ComputeShaderPipeline.h">
+      <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\PixelShaderPipeline.h">
+      <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\VertexShaderPipeline.h">
+      <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\PipelineBase.h">
+      <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\Renderable.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\RenderableManager.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\ResourceObjectBase.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\FileManagerResourceStruct.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11\3DDX11Obj.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11\D3D11ResourceObjects.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11\DX11H.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11\DX11IncludeMain.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX11\StaticObjectsDX11.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12\d3dx12.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12\DX12H.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12\DX12IncludeMain.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Pipeline_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Scene_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Settings_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Editor_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\FileManager_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Main_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\specificWindow\Master_ImGUI_Settings.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineObj\PipelineObj.h">
+      <Filter>Header Files\PipelineObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

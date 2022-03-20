@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -179,31 +179,38 @@
     <ClInclude Include="LuaSingle\forward.hpp" />
     <ClInclude Include="LuaSingle\sol.hpp" />
     <ClInclude Include="LuaWork\LuaObj.h" />
+    <ClInclude Include="PipelineObj\ComputeShaderPipeline.h" />
+    <ClInclude Include="PipelineObj\PipelineBase.h" />
     <ClInclude Include="PipelineObj\PipelineMain.h" />
+    <ClInclude Include="PipelineObj\PipelineObj.h" />
+    <ClInclude Include="PipelineObj\PixelShaderPipeline.h" />
+    <ClInclude Include="PipelineObj\VertexShaderPipeline.h" />
     <ClInclude Include="Renderer\3DCommons\3DCommon.h" />
-    <ClInclude Include="Renderer\3DCommons\3DDX11Obj.h" />
     <ClInclude Include="Renderer\3DCommons\ofbxMini.h" />
     <ClInclude Include="Renderer\3DCommons\StaticObjects.h" />
-    <ClInclude Include="Renderer\D3D11ResourceObjects.h" />
-    <ClInclude Include="Renderer\DX11H.h" />
-    <ClInclude Include="Renderer\DX11IncludeMain.h" />
-    <ClInclude Include="Renderer\DX12IncludeMain.h" />
+    <ClInclude Include="Renderer\DX11\3DDX11Obj.h" />
+    <ClInclude Include="Renderer\DX11\D3D11ResourceObjects.h" />
+    <ClInclude Include="Renderer\DX11\DX11H.h" />
+    <ClInclude Include="Renderer\DX11\DX11IncludeMain.h" />
+    <ClInclude Include="Renderer\DX11\StaticObjectsDX11.h" />
+    <ClInclude Include="Renderer\DX12\d3dx12.h" />
+    <ClInclude Include="Renderer\DX12\DX12H.h" />
+    <ClInclude Include="Renderer\DX12\DX12IncludeMain.h" />
     <ClInclude Include="Renderer\DXSafeInclude.h" />
-    <ClInclude Include="Renderer\FileManagerResourceStruct.h" />
-    <ClInclude Include="Renderer\GlobalRendererManager\GlobalRendererContent.h" />
-    <ClInclude Include="Renderer\Renderable.h" />
-    <ClInclude Include="Renderer\RenderableManager.h" />
-    <ClInclude Include="Renderer\ResourceObjectBase.h" />
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\FileManagerResourceStruct.h" />
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\Renderable.h" />
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\RenderableManager.h" />
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\ResourceObjectBase.h" />
     <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h" />
     <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h" />
     <ClInclude Include="Renderer\Type_Enum.h" />
-    <ClInclude Include="Window\Editor_Window.h" />
-    <ClInclude Include="Window\FileManager_Window.h" />
-    <ClInclude Include="Window\Main_Window.h" />
-    <ClInclude Include="Window\Master_ImGUI_Settings.h" />
-    <ClInclude Include="Window\Pipeline_Window.h" />
-    <ClInclude Include="Window\Scene_Window.h" />
-    <ClInclude Include="Window\Settings_Window.h" />
+    <ClInclude Include="Window\specificWindow\Editor_Window.h" />
+    <ClInclude Include="Window\specificWindow\FileManager_Window.h" />
+    <ClInclude Include="Window\specificWindow\Main_Window.h" />
+    <ClInclude Include="Window\specificWindow\Master_ImGUI_Settings.h" />
+    <ClInclude Include="Window\specificWindow\Pipeline_Window.h" />
+    <ClInclude Include="Window\specificWindow\Scene_Window.h" />
+    <ClInclude Include="Window\specificWindow\Settings_Window.h" />
     <ClInclude Include="Window\Window_Struct.h" />
     <ClInclude Include="Window\Window_Type.h" />
     <ClInclude Include="Window\GUI_Logic.h" />
@@ -215,8 +222,6 @@
     <ClInclude Include="imGUI\imstb_rectpack.h" />
     <ClInclude Include="imGUI\imstb_textedit.h" />
     <ClInclude Include="imGUI\imstb_truetype.h" />
-    <ClInclude Include="Renderer\DX12H.h" />
-    <ClInclude Include="Special_DX_Headers\d3dx12.h" />
     <ClInclude Include="Window\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

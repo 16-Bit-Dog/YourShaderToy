@@ -191,4 +191,6 @@ static std::vector<  std::pair< std::string, std::function<std::vector<VNT>*()> 
 //	{"Plane", ReturnPlane},
 //	{"Fullscreen-Tri", ReturnFullScreenTri},
 };
+
+
 static const char* ToAddStaticObjectString = "-1 is add through.fbx file selector\n0 is add Cube";//\n1 is add Plane\n2 is add FullScreen-Tri";

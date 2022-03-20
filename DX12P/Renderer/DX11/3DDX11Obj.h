@@ -4,12 +4,15 @@
 #define DX11OBJ_LOADER
 
 #include "DX11IncludeMain.h"
-#include "3DCommon.h"
+#include "3DCommons/3DCommon.h"
 //#include "RenderableManager.h"
 
 //TODO: load texture with WCI loader
 
-struct MaterialData { //seperate struct to send to resource
+
+
+struct DX11M3DR : M3DR{
+	struct MaterialData { //seperate struct to send to resource
 
 	/*
 
@@ -25,40 +28,40 @@ struct MaterialData { //seperate struct to send to resource
 
 	*/
 
-	XMFLOAT4 Emissive = { 0,0,0,1 };
-	XMFLOAT4 BaseColor = { 1,1,1,1 }; //uses if no texture - emulates a texture of 1 color only
-	XMFLOAT4 Ambient = { 1,1,1,1 };
-	XMFLOAT4 Diffuse = { 0.1,0.1,0.1,1 };
-	XMFLOAT4 Specular = { 0.1,0.1,0.1,1 };
-	XMFLOAT4 Reflectance = { 1.0f,1.0f,1.0f,1.0f };
+		XMFLOAT4 Emissive = { 0,0,0,1 };
+		XMFLOAT4 BaseColor = { 1,1,1,1 }; //uses if no texture - emulates a texture of 1 color only
+		XMFLOAT4 Ambient = { 1,1,1,1 };
+		XMFLOAT4 Diffuse = { 0.1,0.1,0.1,1 };
+		XMFLOAT4 Specular = { 0.1,0.1,0.1,1 };
+		XMFLOAT4 Reflectance = { 1.0f,1.0f,1.0f,1.0f };
 
-	float Opacity = 1.0f;
-	float SpecularStr = { 128 };
-	float IndexOfRefraction = 0;
-	INT32 TexOn[8] = { 0,0,0,0,0,0,0,0 };
-	float BumpIntensity = 0.0f;
+		float Opacity = 1.0f;
+		float SpecularStr = { 128 };
+		float IndexOfRefraction = 0;
+		INT32 TexOn[8] = { 0,0,0,0,0,0,0,0 };
+		float BumpIntensity = 0.0f;
 
-	float SpecularScale = 1.0f;
-	float AlphaThreshold = 0.0f;
-	UINT Lit = false;
-	float pad;
-};
-struct MaterialDX11 {
-	
-	bool UpdateMat = false;
+		float SpecularScale = 1.0f;
+		float AlphaThreshold = 0.0f;
+		UINT Lit = false;
+		float pad;
+	};
+	struct MaterialDX11 {
 
-	ID3D11ShaderResourceView* TexSRV[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		bool UpdateMat = false;
 
-	ID3D11Texture2D* TexR[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		ID3D11ShaderResourceView* TexSRV[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
 
-	MaterialData MatData;
+		ID3D11Texture2D* TexR[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
 
-	ID3D11Buffer* MatDataBuf;
+		MaterialData MatData;
 
-};
+		ID3D11Buffer* MatDataBuf;
 
-struct DX11M3DR : M3DR{
-	
+	};
+
+	UINT VertexStride = 0;
+
 	inline static ComPtr<ID3D11Device5> dxDevice;
 	inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext;
 
@@ -240,12 +243,13 @@ struct DX11M3DR : M3DR{
 		blendVal.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		blendVal.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		SafeRelease(BlendState);
 		dxDevice->CreateBlendState(&blendVal, &BlendState);
 	}
 
 
 	DX11M3DR(std::vector<VNT>* V, bool ClearPtr = true) {
+
+		VertexStride = sizeof(VNT);
 
 		RESIZE_VECTORS_OBJ_LOAD(1);
 
@@ -269,6 +273,9 @@ struct DX11M3DR : M3DR{
 	}
 	DX11M3DR(std::string path = "") {
 		//SetupTexLinkResource();
+
+		VertexStride = sizeof(VNT);
+
 		SetupBlendStateDefault();
 		if (path != "") {
 			LoadFBXFileWithVertex(path);
