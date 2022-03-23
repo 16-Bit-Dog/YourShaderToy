@@ -16,7 +16,7 @@
 struct MASTER_FileManager : MASTER_Function_Inherit {
 	inline static MASTER_FileManager* obj;
 
-	bool BuiltObjects = false; //TODO: built objects is seperate option than built code
+	bool BuiltPredefined = false; //TODO: built objects is seperate option than built code
 	//TODO: build code BUTTON and built object BUTTON, compile code done only after build object is done - auto does this.
 
 	ImGuiFileDialog fImage;
@@ -44,6 +44,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	void BuildAllDefaults() {
 		PredefinedStore->BuildItem();
+	}
+	void UpdateDefaults() {
+		PredefinedStore->UpdateItem();
 	}
 	void BuildAllImages() {
 		for (int i = 0; i < ImageStore.size(); i++) {
@@ -95,7 +98,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void BuildAllObjectsItem() {
 		CleanAllBuild();
-		BuildAllDefaults();
+//		BuildAllDefaults();
 		BuildAllImages();
 		BuildAllModels();
 		BuildAllConstants();
@@ -493,8 +496,22 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		ImGui::Separator();
 	}
 
+	void PredefinedUpdaterAuto() {
+		if (BuiltPredefined == false) {
+			BuildAllDefaults();
+			BuiltPredefined = true;
+		}
+		else {
+			UpdateDefaults();
+		}
+	}
+
+
 	virtual void BasicViewDraw(GroupData* GD) {
+		
 		if (DrawBasicWindow(this, GD, "File Manager:")) {
+
+			
 
 			DrawBuildAllObjects();
 			ImGui::Separator();

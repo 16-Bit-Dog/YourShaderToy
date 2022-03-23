@@ -54,15 +54,15 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 
 
-	void DrawPipelineAdd(int PosInsert, std::string s = "") {
+	void DrawPipelineAdd(int PosInsert, std::string s = "", std::string Phrase = "Add Pipeline Before") {
 		/*
 		New Pipeline [+]  //button
 		*/
 
-		ImGui::Text("Add Pipeline Here");
+		ImGui::Text(Phrase.c_str());
 		ImGui::SameLine();
 
-		if (ImGui::Button(("+##"+s).c_str())) {
+		if (ImGui::Button(("+##[NewPipeline]"+s).c_str())) {
 			PipelineAddQueue.push_back([=]() {
 				PipelineMain::obj->AddNewPipelineToPosition(PosInsert); }
 			);
@@ -76,7 +76,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		ImGui::Text("Remove This Pipeline");
 		ImGui::SameLine();
-		if (ImGui::Button(("-##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::Button(("-##Remove This Pipeline" + PipelineMain::obj->P[i]->padN).c_str())) {
 			PipelineMain::obj->P[i]->killP = true;
 		}
 	}
@@ -120,7 +120,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	}
 	void DrawPipelineIfFalseComputeOnlyToggle(const int& i) {
 		PipelineMain::obj->P[i]->Vertex.Input();
-		if (ImGui::BeginMenu(("SelectModel:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		ImGui::Text("     "); ImGui::SameLine();
+		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			for (auto& x : MASTER_FileManager::obj->ModelStore) {
 				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->padN).c_str())) {
 
@@ -128,6 +129,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 				}
 			}
+			ImGui::EndMenu();
 		}
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
@@ -144,7 +146,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			DrawPipelineDiagram();
 			ImGui::NewLine();
 			
-			if(PipelineMain::obj->P.count(0)==0) DrawPipelineAdd(0);
+			/*if (PipelineMain::obj->P.count(0) == 0)*/
+			DrawPipelineAdd(0);
 			
 			ImGui::Separator();
 			
@@ -157,7 +160,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 				if (ImGui::CollapsingHeader(("##"+i.second->padN).c_str(), NULL))
 				{
 
-					DrawPipelineAdd(i.first, i.second->padN);
+					DrawPipelineAdd(i.first, i.second->padN+"B");
+					ImGui::NewLine();
 					DrawPipelineSub(i.first);
 					DrawPipelineOrder(i.first);
 					DrawPipelineName(i.first);
@@ -165,7 +169,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 					DrawPipelineComputeOnlyToggle(i.first);
 					DrawPipelineIfTrueComputeOnlyToggle(i.first);
 					DrawPipelineIfFalseComputeOnlyToggle(i.first);
-				
+					ImGui::NewLine();
+					DrawPipelineAdd(i.first+1, i.second->padN+"A", "Add Pipeline After");
 				}
 				ImGui::Separator();
 			}

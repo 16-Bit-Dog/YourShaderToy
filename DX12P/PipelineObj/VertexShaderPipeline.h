@@ -14,7 +14,7 @@ struct VertexShaderPipeline : BasePipeline {
 
 	VertexShaderPipeline() {
 		ShaderTypeName = "Vertex";
-		this->name = name + "PUT_FUNCTION_NAME_HERE";
+		this->name = name + "SimpleVS";
 	}
 	
 };

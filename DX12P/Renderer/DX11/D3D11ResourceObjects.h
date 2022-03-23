@@ -386,7 +386,6 @@ struct PredefinedToRendererDX11 : RegisterMaps{
 
 		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &Cdata);
 
-
 		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
 		//TODO: load data into const buffer under names stated previously
 	}
@@ -473,16 +472,17 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 	void PreBindDefault() {
+		MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 
+		MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 	}
 	//TODO: add individual compile buttons and checkmark for if up to date data
 	void PreBindAllResources() {
-		
 
-		MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
-		MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-
+		PreBindAllImageData();
+		PreBindAllModelData();
+		PreBindAllConstantData();
+		PreBindDefault();
 		//TODO: add sampler
 
 	}
@@ -582,7 +582,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		ConstantData.clear();
 	}
 	void ClearAllObjects() {
-		ClearAllPredefined();
+		//ClearAllPredefined();
 		ClearAllImages();
 		ClearAllModels();
 		ClearAllConstants();
@@ -604,18 +604,48 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 
 
-	
-	int CompileNewPipelineObject(const std::pair<const int, PipelineObj*>& Pobj) {
-		PipelineObjectIntermediateStateDX11* Compiled = new PipelineObjectIntermediateStateDX11();
-		
-		Compiled->PObj = Pobj.second;
+	inline static UINT OffsetDef = 0;
 
-		if (Pobj.second->On == false) { Compiled->On = false; return -1; }
+
+	void RunLogic(PipelineObjectIntermediateStateDX11** item) {
+		//TODO, make run logic, then make code output in order
+
+		MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat.Get(), NULL, NULL);
+		MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat.Get(), NULL, NULL);
+
+		if ((*item)->PObj->Vertex.Vdata.size() != 0) {
+			for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
+				MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, 0);
+				MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*(*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
+				MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
+			}
+		}
+		else {
+			//run if no vertex data loaded default cube
+			StaticDX11Object::obj->MakeCube();
+			MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, StaticDX11Object::obj->CUBE->VBuf[0].GetAddressOf(), &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
+			MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
+			MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
+
+		}
+	}
+
+	int CompileNewPipelineObject(const std::pair<const int, PipelineObj*>& Pobj) {
+
+		PreBindAllResources();
+
+		MainDX11Objects::obj->CompiledCode.push_back(new PipelineObjectIntermediateStateDX11());
+		PipelineObjectIntermediateStateDX11** item = &MainDX11Objects::obj->CompiledCode[MainDX11Objects::obj->CompiledCode.size() - 1];
+
+		
+		(*item)->PObj = Pobj.second;
+
+		if (Pobj.second->On == false) { (*item)->On = false; return -1; }
 
 		//TODO: set ptr to linked model
 
-		SafeRelease(Compiled->VDat);
-		SafeRelease(Compiled->PDat);
+		SafeRelease((*item)->VDat);
+		SafeRelease((*item)->PDat);
 
 		std::string Globals = MASTER_Editor::obj->GetStringWithGlobalsText();
 		std::string VGlobals = Globals + MASTER_Editor::obj->VsString;
@@ -623,42 +653,17 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 
 
-		Compiled->VDat = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.Get());
-		if (Compiled->VDat == nullptr) { Compiled->On = false; }
+		(*item)->VDat = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		if ((*item)->VDat == nullptr) { (*item)->On = false; }
 
-		Compiled->PDat = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.Get());
-		if (Compiled->PDat == nullptr) { Compiled->On = false; }
+		(*item)->PDat = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		if ((*item)->PDat == nullptr) { (*item)->On = false; }
 
-
-
-		if (Compiled->On == true) {
-			Compiled->ToRunLogic = [&]() {
-				//TODO, make run logic, then make code output in order
-
-				MainDX11Objects::obj->dxDeviceContext->VSSetShader(Compiled->VDat.Get(), NULL, NULL);
-				MainDX11Objects::obj->dxDeviceContext->PSSetShader(Compiled->PDat.Get(), NULL, NULL);
-
-				if (Compiled->PObj->Vertex.Vdata.size() != 0) {
-					for (int i = 0; i < Compiled->PObj->Vertex.Vdata.size(); i++) {
-						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)Compiled->PObj->Vertex.Vdata[i], &Compiled->PObj->Vertex.VertexStride, 0);
-						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*Compiled->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
-						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(Compiled->PObj->Vertex.Icount[i], 0, 0);
-					}
-				}
-				else {
-					//run if no vertex data loaded default cube
-					StaticDX11Object::obj->MakeCube();
-					MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, &StaticDX11Object::obj->CUBE->VBuf[0], &StaticDX11Object::obj->CUBE->VertexStride, 0);
-					MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0], DXGI_FORMAT_R32_UINT, 0);
-					MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
-
-				}
-
-
+		if ((*item)->On == true) {
+			(*item)->ToRunLogic = [&]() {
+				RunLogic(&MainDX11Objects::obj->CompiledCode[MainDX11Objects::obj->CompiledCode.size()-1]);
 			};
 		}
-
-		MainDX11Objects::obj->CompiledCode.push_back(Compiled);
 	}
 
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {

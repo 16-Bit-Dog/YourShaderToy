@@ -9,6 +9,7 @@ struct ResourceObjectBase;
 struct Renderable {
 	bool CompiledData = false;
 	bool CompiledCode = false;
+	bool ClearDepthEveryPass = true;
 
 	inline static Renderable* DXM;
 

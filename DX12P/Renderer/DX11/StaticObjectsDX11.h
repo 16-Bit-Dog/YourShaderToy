@@ -10,6 +10,7 @@ struct StaticDX11Object{
 	void MakeCube() {
 		if (MadeCube == false) {
 			CUBE = new DX11M3DR(StaticObjectPass[0].second());
+			MadeCube = true;
 		}
 	}
 

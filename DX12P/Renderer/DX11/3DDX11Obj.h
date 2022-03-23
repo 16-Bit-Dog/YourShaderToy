@@ -50,13 +50,13 @@ struct DX11M3DR : M3DR{
 
 		bool UpdateMat = false;
 
-		ID3D11ShaderResourceView* TexSRV[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		ComPtr<ID3D11ShaderResourceView> TexSRV[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
 
-		ID3D11Texture2D* TexR[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		ComPtr<ID3D11Texture2D> TexR[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
 
 		MaterialData MatData;
 
-		ID3D11Buffer* MatDataBuf;
+		ComPtr<ID3D11Buffer> MatDataBuf;
 
 	};
 
@@ -71,15 +71,15 @@ struct DX11M3DR : M3DR{
 	}
 
 	std::vector<MaterialDX11> Mat = {};
-	ID3D11SamplerState* Sampler = NULL;
-	ID3D11BlendState* BlendState = NULL;
+	ComPtr<ID3D11SamplerState> Sampler = NULL;
+	ComPtr<ID3D11BlendState> BlendState = NULL;
 
-	ID3D11Buffer* CBuf;
-	ID3D11Buffer* ArmatureCBuf;
+	ComPtr<ID3D11Buffer> CBuf;
+	ComPtr<ID3D11Buffer> ArmatureCBuf;
 
-	std::vector < ID3D11Buffer* > VBuf;
-	std::vector < ID3D11UnorderedAccessView* > VBufUAV;
-	std::vector < ID3D11Buffer* > IBuf;
+	std::vector < ComPtr<ID3D11Buffer> > VBuf;
+	std::vector < ComPtr<ID3D11UnorderedAccessView> > VBufUAV;
+	std::vector < ComPtr<ID3D11Buffer> > IBuf;
 
 
 	void CreateArmatureCBuf() {
@@ -100,7 +100,7 @@ struct DX11M3DR : M3DR{
 		dxDevice->CreateBuffer(&bufDesc, nullptr, &ArmatureCBuf);
 
 		if (BoneDataTLMA.size() != 0) {
-			dxDeviceContext->UpdateSubresource(ArmatureCBuf, 0, nullptr, &BoneDataTLMA[0], 0, 0);
+			dxDeviceContext->UpdateSubresource(ArmatureCBuf.Get(), 0, nullptr, &BoneDataTLMA[0], 0, 0);
 		}
 		else {
 
@@ -116,7 +116,7 @@ struct DX11M3DR : M3DR{
 
 		dxDevice->CreateBuffer(&bufDesc, nullptr, &Mat[i].MatDataBuf);
 
-		dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf, 0, nullptr, &Mat[i].MatData, 0, 0);
+		dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf.Get(), 0, nullptr, &Mat[i].MatData, 0, 0);
 	}
 
 	void DefaultAllMatBuf() {
@@ -128,6 +128,9 @@ struct DX11M3DR : M3DR{
 	void LoadVertexIndiceData() //also reloads vertex data
 	{
 
+		VBuf.resize(modelDat.size());
+		IBuf.resize(modelDat.size());
+		VBufUAV.resize(modelDat.size());
 
 		for (int i = 0; i < VBuf.size(); i++) {
 			//	if (VBuf != nullptr) {
@@ -210,7 +213,7 @@ struct DX11M3DR : M3DR{
 
 		dxDevice->CreateBuffer(&bufDesc, nullptr, &CBuf);
 
-		dxDeviceContext->UpdateSubresource(CBuf, 0, nullptr, &ObjTune, 0, 0);
+		dxDeviceContext->UpdateSubresource(CBuf.Get(), 0, nullptr, &ObjTune, 0, 0);
 	}
 	void DefaultSampler() {
 		D3D11_SAMPLER_DESC tmpSampleDesc;

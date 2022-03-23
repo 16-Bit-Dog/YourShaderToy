@@ -4,7 +4,12 @@
 #include "imgui_stdlib.h"
 //TODO: click compile compiles all code and order of data pass
 
+
 struct BasePipeline {
+	inline static uint64_t globalCont;
+
+	uint64_t control = 0;
+	
 	bool On = true;
 	std::string name = "";
 
@@ -13,7 +18,8 @@ struct BasePipeline {
 	std::string ErrorMessage_s = "";
 
 	BasePipeline() {
-
+		control = globalCont;
+		globalCont += 1;
 	}
 
 	void ErrorMessage() {
@@ -23,7 +29,8 @@ struct BasePipeline {
 	}
 	
 	void Input() {
-		ImGui::InputText((ShaderTypeName+" Function Name: ").c_str(), &name, ImGuiInputTextFlags_CharsNoBlank);
+		ImGui::Text((ShaderTypeName + " Function Name: ").c_str());
+		ImGui::InputText(("##"+ ShaderTypeName+ std::string(control, ' ')).c_str(), &name, ImGuiInputTextFlags_CharsNoBlank);
 		ErrorMessage();
 	}
 

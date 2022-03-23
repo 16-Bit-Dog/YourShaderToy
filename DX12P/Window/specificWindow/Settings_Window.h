@@ -24,6 +24,7 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			ImGuiStyle style_T;
 
+			ImGui::Checkbox("##ClearDepthEveryPass Check", &Renderable::DXM->ClearDepthEveryPass);
 
 			if (ImGui::ShowStyleSelector("Colors##Selector"))
 				MASTER_IM_GUI::obj->style = &style_T;

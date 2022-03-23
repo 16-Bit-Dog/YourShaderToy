@@ -1,4 +1,7 @@
+fix const and errors that came up
 TODO NEXT: make default working vertex and pixel shaders
+
+add MVP matrix and camrea controls for seperate loading and scene view (embedded in globals, and force takes constant 0 spot)
 
 then add scene view draw for camrea movement
 

@@ -147,7 +147,6 @@ void AllWin::LoopRunAllContext() {
 
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
-
 		for (int i = 0; i < WinList.size(); i++) {
 			if (glfwWindowShouldClose(WinList[i]->window)) {
 				KillWindowObj(WinList[i]);
@@ -166,7 +165,9 @@ void AllWin::LoopRunAllContext() {
 
 			glfwMakeContextCurrent(WinList[i]->window);
 			glfwPollEvents();
-
+			if (i == 0) {
+				MASTER_FileManager::obj->PredefinedUpdaterAuto();
+			}
 
 			WinList[i]->RunWindowLogic();
 

@@ -135,10 +135,10 @@ struct ShaderCDX11 {
 
 
     template< class ShaderClass >
-    ShaderClass* CreateShader(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout* dxIL); //generic shader creation
+    ShaderClass* CreateShader(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout** dxIL); //generic shader creation
 
     template<>
-    ID3D11VertexShader* CreateShader<ID3D11VertexShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout* dxIL) //vertex shader - shader type
+    ID3D11VertexShader* CreateShader<ID3D11VertexShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout** dxIL) //vertex shader - shader type
     {
         ID3D11VertexShader* pVertexShader = nullptr;
 
@@ -151,19 +151,22 @@ struct ShaderCDX11 {
         D3D11_INPUT_ELEMENT_DESC dxVertexLayoutDesc[] =
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-
+            { "BLENDID", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-        SafeRelease(dxIL); //stop mem leak if overwrite previously used layout
+        //SafeRelease(dxIL); //stop mem leak if overwrite previously used layout
 
         hr = dxDevice->CreateInputLayout( //make input layout - global change to input Layout
             dxVertexLayoutDesc, //vertex shader - input assembler data
             _countof(dxVertexLayoutDesc), //number of elements
             pShaderBlob->GetBufferPointer(),  //vertex shader buffer
             pShaderBlob->GetBufferSize(), //vetex shader blob size 
-            &dxIL); //input layout to output to
+            dxIL); //input layout to output to
 
         if (FAILED(hr))
         {
@@ -174,7 +177,7 @@ struct ShaderCDX11 {
     }
     ////////////////////////////////
     template<>
-    ID3D11PixelShader* CreateShader<ID3D11PixelShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout* dxIL)
+    ID3D11PixelShader* CreateShader<ID3D11PixelShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout** dxIL)
     {
         ID3D11PixelShader* pPixelShader = nullptr;
         auto hr = dxDevice->CreatePixelShader(pShaderBlob->GetBufferPointer(), pShaderBlob->GetBufferSize(), pClassLinkage, &pPixelShader); //pixel shader version of the vertex shader above
@@ -188,7 +191,7 @@ struct ShaderCDX11 {
 
     //////////////////////////////// these are kinda place holders for loading shaders (need acsess to device in dx11 - plus you won't do it any other way...
     template<>
-    ID3D11ComputeShader* CreateShader<ID3D11ComputeShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout* dxIL)
+    ID3D11ComputeShader* CreateShader<ID3D11ComputeShader>(ID3DBlob* pShaderBlob, ID3D11ClassLinkage* pClassLinkage, ID3D11Device5* dxDevice, ID3D11InputLayout** dxIL)
     {
         ID3D11ComputeShader* pComputeShader = nullptr;
         auto hr = dxDevice->CreateComputeShader(pShaderBlob->GetBufferPointer(), pShaderBlob->GetBufferSize(), pClassLinkage, &pComputeShader); //pixel shader version of the vertex shader above
@@ -203,7 +206,7 @@ struct ShaderCDX11 {
 
 
     template< class ShaderClass >
-    ShaderClass* LoadShader(const std::string* shaderInfo, const std::string& entryPoint, const std::string& _profile, std::string* Error, ID3D11Device5* dxDevice, ID3D11InputLayout* dxIL) //LoadShader class
+    ShaderClass* LoadShader(const std::string* shaderInfo, const std::string& entryPoint, const std::string& _profile, std::string* Error, ID3D11Device5* dxDevice, ID3D11InputLayout** dxIL) //LoadShader class
     {
         ID3DBlob* pShaderBlob = nullptr;
         ID3DBlob* pErrorBlob = nullptr;

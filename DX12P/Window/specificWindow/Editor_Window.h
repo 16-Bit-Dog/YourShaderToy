@@ -11,8 +11,30 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::vector<std::string> AutoAddGlobalsConstants;
 
 	std::string Globals = "";
-	std::string VsString = "";
-	std::string PsString = "";
+	std::string VsString = std::string(
+
+		"VertexOut SimpleVS(Vertex IN){\n"
+		"VertexOut OUT;\n"
+		"OUT.position = float4(IN.position,1.0f);\n"
+		"OUT.color = float4(IN.uv.x,IN.uv.y,(IN.uv.x+IN.uv.y)/2.0f,1.0f);\n"
+		"OUT.PositionWS = float4(IN.position,1.0f);\n"
+		"OUT.uv = IN.uv;\n"
+		"return OUT;\n"
+		"}\n"
+
+	);
+	std::string PsString = std::string(
+
+		"float4 SimplePS(VertexOut IN) : SV_TARGET{\n"
+		"float4 Color;\n"
+		"Color.r = IN.color.x;\n"
+		"Color.g = IN.color.y;\n"
+		"Color.b = IN.color.z;\n"
+		"Color.w = IN.color.a;\n"
+		"return Color;\n"
+		"}\n"
+
+	);
 	std::string HsString = "";
 	std::string DsString = "";
 	std::string GsString = "";
@@ -47,7 +69,16 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			"float3 normal : NORMAL;\n"
 			"float3 binormal : BINORMAL;\n"
 			"float3 tangent : TANGENT;\n"
-			"float3 uv : TEXCOORD;\n"
+			"float2 uv : TEXCOORD;\n"
+			"int4 bID : BLENDID;\n"
+			"float4 bW : BLENDWEIGHT;\n"
+			"};\n"
+		
+			"struct VertexOut{\n"
+			"float4 position : SV_POSITION;\n"
+			"float4 color: COLOR;\n"
+			"float2 uv : TEXCOORD0;\n"
+			"float4 PositionWS : TEXCOORD1;\n"
 			"};\n"
 		);
 

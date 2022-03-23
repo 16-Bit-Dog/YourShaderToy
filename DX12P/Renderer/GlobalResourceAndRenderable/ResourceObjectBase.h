@@ -29,7 +29,7 @@ struct ResourceObjectBase {
 	virtual void ClearAllModels() = 0;
 	virtual void ClearAllConstants() = 0;
 	virtual void ClearAllObjects() {
-		ClearAllPredefined();
+	//	ClearAllPredefined();
 		ClearAllImages();
 		ClearAllModels();
 		ClearAllConstants();

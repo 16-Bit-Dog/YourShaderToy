@@ -221,6 +221,11 @@ struct BuiltPredefined_c : ObjectBuilder {
 		}
 	}
 
+	void UpdateItem() {
+		data->update();
+		Renderable::ROB->UpdatePredefinedFromData(this);
+	}
+
 	void BuildItem() {
 		data->update();
 		Renderable::ROB->LoadPredefinedFromData(this);
