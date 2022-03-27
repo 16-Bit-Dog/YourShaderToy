@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable;$(ProjectDir)/CameraManager</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Renderer;$(ProjectDir)/GLFW;$(ProjectDir)/imGUI;$(ProjectDir)/Window;$(ProjectDir)/Renderer/ShaderFunc;$(ProjectDir)/imGUI/ImGUIFileDialog;$(ProjectDir)/LuaSingle;$(ProjectDir)/PipelineObj;$(ProjectDir)/LuaSingle/lua/src;$(ProjectDir)/LuaWork;$(ProjectDir)/ImageLib;$(ProjectDir)/Renderer/DX11;$(ProjectDir)/Window/specificWindow;$(ProjectDir)/Renderer/DX12;$(ProjectDir)/Renderer/GlobalResourceAndRenderable;$(ProjectDir)/CameraManager</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -170,6 +170,8 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CameraManager\CamManager.h" />
+    <ClInclude Include="CameraManager\CamManagerD3D11.h" />
     <ClInclude Include="ImageLib\stb_image.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h" />

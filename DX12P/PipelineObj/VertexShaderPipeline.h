@@ -11,6 +11,8 @@ struct VertexShaderPipeline : BasePipeline {
 	std::vector<void**> Idata;
 	std::vector<int> Icount;
 	UINT VertexStride = 0;
+	UINT FaceToRender = 2;
+	bool Wireframe = false;
 
 	VertexShaderPipeline() {
 		ShaderTypeName = "Vertex";

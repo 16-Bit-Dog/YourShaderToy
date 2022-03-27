@@ -376,6 +376,11 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void AddConstantFloat(std::string* s,float* floatV, const int& i) {
 		ConstantStore[i]->AddFloat(s, floatV);
 	}
+/*	void AddConstantMatrix(std::string* s, float* matV[4][4], const int& i) {
+		ConstantStore[i]->AddMatrix(s, matV);
+	}*/
+
+	
 
 	void AddConstantStruct(std::string s) {
 		ConstantStore.push_back(new BuiltConstant_c(s));
@@ -479,7 +484,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Float##ConstantModelStore" + sPad(i)).c_str())) {
-					AddConstantFloat(&ToAddConstantMenuName, &ToAddConstantFloat, i);
+					AddConstantFloat(&ToAddConstantMenuName, 0, i);
 				}
 
 				ImGui::EndMenu();

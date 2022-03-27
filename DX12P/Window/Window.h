@@ -139,6 +139,22 @@ void KillWindowObj(GLFW_Window_C* winObj) {
 	winObj->KillWindow();
 }
 
+void CheckAndModifyCam() {
+	//TODO: drag mouse turns angle of cam
+	if(glfwGetKey(GLFW_Window_C::MainWin->window, GLFW_KEY_W)) {
+		Renderable::DXM->CAM->moveBackForward = Renderable::DXM->CAM->ShiftForwardAmount;
+	}
+	if (glfwGetKey(GLFW_Window_C::MainWin->window, GLFW_KEY_D)) {
+		Renderable::DXM->CAM->moveLeftRight = Renderable::DXM->CAM->ShiftSideAmount;
+	}
+	if (glfwGetKey(GLFW_Window_C::MainWin->window, GLFW_KEY_A)) {
+		Renderable::DXM->CAM->moveLeftRight = -Renderable::DXM->CAM->ShiftSideAmount;
+	}
+	if (glfwGetKey(GLFW_Window_C::MainWin->window, GLFW_KEY_S)) {
+		Renderable::DXM->CAM->moveBackForward = -Renderable::DXM->CAM->ShiftForwardAmount;
+	}
+}
+
 void AllWin::LoopRunAllContext() {
 
 	glfwSwapInterval(1); //vsync
@@ -166,7 +182,9 @@ void AllWin::LoopRunAllContext() {
 			glfwMakeContextCurrent(WinList[i]->window);
 			glfwPollEvents();
 			if (i == 0) {
+				CheckAndModifyCam();
 				MASTER_FileManager::obj->PredefinedUpdaterAuto();
+				Renderable::DXM->CAM->UpdateCheck();
 			}
 
 			WinList[i]->RunWindowLogic();

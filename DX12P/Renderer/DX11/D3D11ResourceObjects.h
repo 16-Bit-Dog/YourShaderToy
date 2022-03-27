@@ -42,7 +42,7 @@ struct DX11_OBJ_RESOURCE_S {
 struct RegisterMaps {
 	inline static std::set<int> UAV_R;
 	inline static std::set<int> SRV_R;
-	inline static std::set<int> CB_R;
+	inline static std::set<int> CB_R {0,1,2,3, 4,5}; //for default matrixes
 	inline static std::set<int> S_R;
 
 	int uav_num = -1; //TODO: set all uav and srv and cb nums with func
@@ -435,6 +435,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			vp.VertexStride = ModelData[data->Name]->Model.VertexStride;
 		}
 	}
+	void SetPipelineFaceRender(VertexShaderPipeline& vp, UINT FaceToRender) {
+		vp.FaceToRender = FaceToRender;
+	}
 
 	void PreBindImageData(ImageObjectToRendererDX11* ID) {
 	//	ID->UAV_R
@@ -493,16 +496,15 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		v->push_back("cbuffer " + PredefinedData->Name + ": register(b"+PredefinedData->CBName()+") { \n");
 		for (int i = 0; i < PredefinedData->typesInOrderName.size(); i++) {
 			if (PredefinedData->typesInOrder[i] == INT_OBJ) {
-				v->push_back("int "+ PredefinedData->typesInOrderName[i] +";\n");
+				v->push_back("	int "+ PredefinedData->typesInOrderName[i] +";\n");
 			}
 			else if (PredefinedData->typesInOrder[i] == UINT_OBJ) {
-				v->push_back("uint " + PredefinedData->typesInOrderName[i] + ";\n");
+				v->push_back("	uint " + PredefinedData->typesInOrderName[i] + ";\n");
 			}
 			else if (PredefinedData->typesInOrder[i] == FLOAT_OBJ) {
-				v->push_back("float " + PredefinedData->typesInOrderName[i] + ";\n");
+				v->push_back("	float " + PredefinedData->typesInOrderName[i] + ";\n");
 			}
 		}
-
 
 	}
 	void AddItemTextImages(std::vector<std::string>*  v) {
@@ -526,13 +528,13 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			v->push_back("struct " + x.second->StructName + "{\n");
 			for (int y = 0; y < x.second->typesInOrder.size();y++) {
 				if (x.second->typesInOrder[y] == INT_OBJ) {
-					v->push_back("int " + x.second->typesInOrderName[y] + ";\n");
+					v->push_back("	int " + x.second->typesInOrderName[y] + ";\n");
 				}
 				else if (x.second->typesInOrder[y] == UINT_OBJ) {
-					v->push_back("uint " + x.second->typesInOrderName[y] + ";\n");
+					v->push_back("	uint " + x.second->typesInOrderName[y] + ";\n");
 				}
 				else if (x.second->typesInOrder[y] == FLOAT_OBJ) {
-					v->push_back("float " + x.second->typesInOrderName[y] + ";\n");
+					v->push_back("	float " + x.second->typesInOrderName[y] + ";\n");
 				}
 			}
 			v->push_back("};\n");
@@ -608,24 +610,48 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 
 	void RunLogic(PipelineObjectIntermediateStateDX11** item) {
-		//TODO, make run logic, then make code output in order
 
-		MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat.Get(), NULL, NULL);
-		MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat.Get(), NULL, NULL);
+		//TODO, make run logic, then make code output in order
+		if (MainDX11Objects::obj->TestForOptimize.RasterObject != MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get()) {
+			MainDX11Objects::obj->dxDeviceContext->RSSetState(MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get());
+			MainDX11Objects::obj->TestForOptimize.RasterObject = MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get();
+		}
+
+		if (MainDX11Objects::obj->TestForOptimize.VertexShader != (*item)->VDat.Get()) {
+			MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat.Get(), NULL, NULL);
+			MainDX11Objects::obj->TestForOptimize.VertexShader = (*item)->VDat.Get();
+		}
+
+		if (MainDX11Objects::obj->TestForOptimize.PixelShader != (*item)->PDat.Get()) {
+			MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat.Get(), NULL, NULL);
+			MainDX11Objects::obj->TestForOptimize.PixelShader = (*item)->PDat.Get();
+		}
 
 		if ((*item)->PObj->Vertex.Vdata.size() != 0) {
+
 			for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
-				MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, 0);
-				MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*(*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
-				MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
+
+				if (MainDX11Objects::obj->TestForOptimize.Model != (*item)->PObj->Vertex.Vdata[i]) {
+					MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, 0);
+					MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*(*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
+					MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
+				
+					MainDX11Objects::obj->TestForOptimize.Model = (*item)->PObj->Vertex.Vdata[i];
+				}
 			}
+
 		}
 		else {
-			//run if no vertex data loaded default cube
+			//run if no vertex data load default cube
 			StaticDX11Object::obj->MakeCube();
-			MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, StaticDX11Object::obj->CUBE->VBuf[0].GetAddressOf(), &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
-			MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
-			MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
+			void** tmpAddress = (void**)StaticDX11Object::obj->CUBE->VBuf[0].GetAddressOf();
+			if (MainDX11Objects::obj->TestForOptimize.Model != tmpAddress) {
+				MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**) tmpAddress, &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
+				MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
+				MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
+
+				MainDX11Objects::obj->TestForOptimize.Model = tmpAddress;
+			}
 
 		}
 	}

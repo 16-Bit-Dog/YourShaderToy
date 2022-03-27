@@ -46,6 +46,7 @@ struct GLFW_Window_C {
 
 	inline static double time;
 
+
 	std::string title;
 
 

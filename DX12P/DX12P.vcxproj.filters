@@ -55,6 +55,9 @@
     <Filter Include="Header Files\Renderer\GlobalResourceAndRenderable">
       <UniqueIdentifier>{25b28ef3-76d0-464d-8857-0457dc9b4c69}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\CamManager">
+      <UniqueIdentifier>{c8e7eb9c-0b25-4dfe-8dde-52da5eff5d50}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -250,6 +253,12 @@
     </ClInclude>
     <ClInclude Include="PipelineObj\PipelineObj.h">
       <Filter>Header Files\PipelineObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraManager\CamManager.h">
+      <Filter>Header Files\CamManager</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraManager\CamManagerD3D11.h">
+      <Filter>Header Files\CamManager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

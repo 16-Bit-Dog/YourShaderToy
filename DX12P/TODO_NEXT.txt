@@ -1,5 +1,20 @@
-fix const and errors that came up
+DO: DepthStencilObjects - DepthObject check, and ENUM inside Renderable
+
+add depth test and 3 face render styles
+
+TODO: add state tracking and optimization to such like shader in use, raster func being used, ect.
+
+add how much you shift option
+
+add depth test stuff option and blend state
+
+add matrix constant
+
+finish adding camrea --- also default and not default setup for const buffer reserve
+
 TODO NEXT: make default working vertex and pixel shaders
+
+TODO: Add Matrix type for constant <-- and make it easy to setup
 
 add MVP matrix and camrea controls for seperate loading and scene view (embedded in globals, and force takes constant 0 spot)
 

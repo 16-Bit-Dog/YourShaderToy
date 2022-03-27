@@ -26,6 +26,9 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			ImGui::Checkbox("##ClearDepthEveryPass Check", &Renderable::DXM->ClearDepthEveryPass);
 
+			ImGui::InputFloat("Cam Forward Shift##Cam Forward Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftForwardAmount, 0.005, 0.01);
+			ImGui::InputFloat("Cam Side Shift##Cam Side Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftSideAmount, 0.005, 0.01);
+				
 			if (ImGui::ShowStyleSelector("Colors##Selector"))
 				MASTER_IM_GUI::obj->style = &style_T;
 

@@ -3,8 +3,21 @@
 #include <../GLFW/glfw3.h>
 #include <../GLFW/glfw3native.h>
 #include "ResourceObjectBase.h"
+#include "CamManager.h"
 
 struct ResourceObjectBase;
+
+enum RASTER_TYPE {
+	ALL_SOLID = 0,
+	ALL_WIRE = 1,
+	BACK_SOLID = 2,
+	BACK_WIRE = 3,
+	FRONT_SOLID = 4,
+	FRONT_WIRE = 5
+};
+enum DEPTH_STENCIL_TYPE {
+
+};
 
 struct Renderable {
 	bool CompiledData = false;
@@ -14,6 +27,8 @@ struct Renderable {
 	inline static Renderable* DXM;
 
 	inline static ResourceObjectBase* ROB;
+
+	inline static CameraManager* CAM;
 
 	bool NewImGUIDat = false;
 

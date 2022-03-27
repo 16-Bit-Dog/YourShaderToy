@@ -118,19 +118,51 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void DrawPipelineIfTrueComputeOnlyToggle(const int& i) {
 		//TODO: draw only compute shader stuff alone
 	}
-	void DrawPipelineIfFalseComputeOnlyToggle(const int& i) {
-		PipelineMain::obj->P[i]->Vertex.Input();
+
+	void DrawSelectModel(const int& i) {
 		ImGui::Text("     "); ImGui::SameLine();
 		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			for (auto& x : MASTER_FileManager::obj->ModelStore) {
 				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->padN).c_str())) {
-
 					Renderable::DXM->ROB->SetDataToPipelineVertex(x, PipelineMain::obj->P[i]->Vertex);
-
 				}
 			}
 			ImGui::EndMenu();
 		}
+	}
+	void DrawFaceToRenderSelect(const int& i) {
+		ImGui::Text("     "); ImGui::SameLine();
+		ImGui::Checkbox(("Use Wireframe" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.Wireframe);
+		if (ImGui::BeginMenu(("Select Face To Render:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			bool AllFace = false;
+			bool BackFace = false;
+			bool FrontFace = false;
+			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::ALL_SOLID) { ImGui::Bullet(); ImGui::Text(""); }
+			else AllFace = ImGui::Button(("Both Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
+			if (AllFace) {
+				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::ALL_SOLID);
+			}
+
+			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::BACK_SOLID) { ImGui::Bullet(); ImGui::Text(""); }
+			else BackFace = ImGui::Button(("Back Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
+			if (BackFace) {
+				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::BACK_SOLID);
+			}
+
+			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::FRONT_SOLID) { ImGui::Bullet(); ImGui::Text("");}
+			else FrontFace = ImGui::Button(("Front Faces##Select Button C" + PipelineMain::obj->P[i]->padN).c_str());
+			if (FrontFace) {
+				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::FRONT_SOLID);
+			}
+			ImGui::EndMenu();
+		}
+	}
+	void DrawPipelineIfFalseComputeOnlyToggle(const int& i) {
+		PipelineMain::obj->P[i]->Vertex.Input();
+
+		DrawSelectModel(i);
+		DrawFaceToRenderSelect(i);
+		
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
 

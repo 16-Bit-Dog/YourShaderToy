@@ -15,7 +15,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 		"VertexOut SimpleVS(Vertex IN){\n"
 		"VertexOut OUT;\n"
-		"OUT.position = float4(IN.position,1.0f);\n"
+		"OUT.position = mul(mul(WorldMatrix,mul(ProjectionMatrix, ViewMatrix)),float4(IN.position,1.0f));\n"
 		"OUT.color = float4(IN.uv.x,IN.uv.y,(IN.uv.x+IN.uv.y)/2.0f,1.0f);\n"
 		"OUT.PositionWS = float4(IN.position,1.0f);\n"
 		"OUT.uv = IN.uv;\n"
@@ -61,25 +61,46 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 	std::string GetStringWithNoGlobals() {
 
-		std::string s = std::string(
+		std::string s = std::string( //defaults
 			"////Globals\n"
 			"//Auto_Added_Globals\n"
 			"struct Vertex{\n"
-			"float3 position : POSITION;\n"
-			"float3 normal : NORMAL;\n"
-			"float3 binormal : BINORMAL;\n"
-			"float3 tangent : TANGENT;\n"
-			"float2 uv : TEXCOORD;\n"
-			"int4 bID : BLENDID;\n"
-			"float4 bW : BLENDWEIGHT;\n"
+			"	float3 position : POSITION;\n"
+			"	float3 normal : NORMAL;\n"
+			"	float3 binormal : BINORMAL;\n"
+			"	float3 tangent : TANGENT;\n"
+			"	float2 uv : TEXCOORD;\n"
+			"	int4 bID : BLENDID;\n"
+			"	float4 bW : BLENDWEIGHT;\n"
 			"};\n"
 		
 			"struct VertexOut{\n"
-			"float4 position : SV_POSITION;\n"
-			"float4 color: COLOR;\n"
-			"float2 uv : TEXCOORD0;\n"
-			"float4 PositionWS : TEXCOORD1;\n"
+			"	float4 position : SV_POSITION;\n"
+			"	float4 color: COLOR;\n"
+			"	float2 uv : TEXCOORD0;\n"
+			"	float4 PositionWS : TEXCOORD1;\n"
 			"};\n"
+
+			"cbuffer DefaultWorldMatrixS : register(b0){\n"
+			"	Matrix DefaultWorldMatrix;\n"
+			"};\n"
+			"cbuffer DefaultViewMatrixS : register(b1){\n"
+			"	Matrix DefaultViewMatrix;\n"
+			"};\n"
+			"cbuffer DefaultProjectionMatrixS : register(b2){\n"
+			"	Matrix DefaultProjectionMatrix;\n"
+			"};\n"
+			"cbuffer WorldMatrixS : register(b3){\n"
+			"	Matrix WorldMatrix;\n"
+			"};\n"
+			"cbuffer ViewMatrixS : register(b4){\n"
+			"	Matrix ViewMatrix;\n"
+			"};\n"
+			"cbuffer ProjectionMatrixS : register(b5){\n"
+			"	Matrix ProjectionMatrix;\n"
+			"};\n"
+			
+			
 		);
 
 		for (auto& i : AutoAddGlobalsPredefined) {

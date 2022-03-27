@@ -41,7 +41,8 @@ struct ResourceObjectBase {
 	virtual void UpdatePredefinedFromData(BuiltPredefined_c* bI) = 0;
 
 	virtual void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) = 0;
-
+	virtual void SetPipelineFaceRender(VertexShaderPipeline& vp, UINT FaceToRender) = 0;
+	
 	~ResourceObjectBase() {
 		ClearAllObjects();
 	}

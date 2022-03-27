@@ -12,8 +12,30 @@
 #include "Renderable.h"
 #include "Window_Struct.h"
 
-static std::set<std::string> usedName_Constant{ "PROGRAM_CONSTANTS", "", "Vertex"};
+static std::set<std::string> usedNameCont{ "PROGRAM_CONSTANTS", "", "Vertex",
 
+"ProjectionMatrixS", "ViewMatrixS", "WorldMatrixS",
+"ProjectionMatrix", "ViewMatrix", "WorldMatrix",
+ 
+"DefaultProjectionMatrixS", "DefaultViewMatrixS", "DefaultWorldMatrixS",
+"DefaultProjectionMatrix", "DefaultViewMatrix", "DefaultWorldMatrix"
+};
+
+/*
+struct MatrixTypeAndName_c {
+	XMFLOAT4X4 val;
+	std::string n;
+	std::string nRW;
+	MatrixTypeAndName_c(std::string* s, std::string* sRW, float* MatV[4][]) {
+		n = *s;
+		nRW = *sRW;
+		val = *MatV;
+	}
+	~MatrixTypeAndName_c() {
+		usedNameCont.erase(n);
+		usedNameCont.erase(nRW);
+	}
+};*/
 struct IntTypeAndName_c {
 	int32_t val = 0;
 	std::string n;
@@ -24,8 +46,8 @@ struct IntTypeAndName_c {
 		val = *intV;
 	}
 	~IntTypeAndName_c() {
-		usedName_Constant.erase(n);
-		usedName_Constant.erase(nRW);
+		usedNameCont.erase(n);
+		usedNameCont.erase(nRW);
 	}
 };
 struct UintTypeAndName_c {
@@ -38,8 +60,8 @@ struct UintTypeAndName_c {
 		val = *uintV;
 	}
 	~UintTypeAndName_c() {
-		usedName_Constant.erase(n);
-		usedName_Constant.erase(nRW);
+		usedNameCont.erase(n);
+		usedNameCont.erase(nRW);
 	}
 };
 struct FloatTypeAndName_c {
@@ -52,8 +74,8 @@ struct FloatTypeAndName_c {
 		val = *floatV;
 	}
 	~FloatTypeAndName_c() {
-		usedName_Constant.erase(n);
-		usedName_Constant.erase(nRW);
+		usedNameCont.erase(n);
+		usedNameCont.erase(nRW);
 	}
 };
 
@@ -61,6 +83,7 @@ struct TypeStorageMass {
 	std::vector< IntTypeAndName_c > IT;
 	std::vector< UintTypeAndName_c > UT;
 	std::vector< FloatTypeAndName_c > FT;
+//	std::vector< MatrixTypeAndName_c > MT;
 };
 
 struct d4 {
@@ -137,8 +160,7 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 struct ObjectBuilder {
 	
 	inline static bool UNORM_ELSE_FLOAT_Driver;
-	inline static std::set<std::string> usedNameCont = {""};
-
+	
 	virtual void BuildItem() = 0;
 
 };
@@ -398,8 +420,18 @@ struct BuiltConstant_c : ObjectBuilder {
 		DealWithNameConflict(&usedNameCont, &sRW, "FLOAT_RW");
 		vars.FT.push_back(FloatTypeAndName_c(&stmp, &sRW, floatV));
 	}
-
-
+/*	void AddMatrix(std::string* s, float* matV[4][4]) {
+		XMMATRIX tmp;
+		for (int i = 0; i < 4; i++) {
+			tmp.r[i] = XMVectorSet(*matV[i][0], *matV[i][1], *matV[i][2], *matV[i][3]);
+		}
+		std::string stmp = *s;
+		DealWithNameConflict(&usedNameCont, &stmp, "MATRIX");
+		std::string sRW = stmp + "_RW";
+		DealWithNameConflict(&usedNameCont, &sRW, "MATRIX_RW");
+		vars.MT.push_back(MatrixTypeAndName_c(&stmp, &sRW, &tmp));
+	}
+*/
 
 	
 	//TODO, make value setter in info tab - this is gonna be messyish

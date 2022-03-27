@@ -10,6 +10,7 @@
 #include <../imGUI/imgui_impl_dx11.h>
 #include "3DDX11Obj.h"
 #include "PipelineObj.h"
+#include "CamManagerD3D11.h"
 #include <functional>
 using namespace DirectX;
 
@@ -25,6 +26,28 @@ struct PipelineObjectIntermediateStateDX11 {
 };
 
 struct MainDX11Objects : Renderable{
+
+    struct InUseTest {
+        ID3D11RasterizerState* RasterObject = nullptr;
+        ID3D11DepthStencilState* DepthObject = nullptr;
+
+        ID3D11VertexShader* VertexShader = nullptr;
+        ID3D11PixelShader* PixelShader = nullptr;
+        
+        void** Model = nullptr;
+
+        void SetNull() {
+            RasterObject = nullptr;
+            VertexShader = nullptr;
+            PixelShader = nullptr;
+            Model = nullptr;
+        }
+    };
+    InUseTest TestForOptimize;
+
+    std::unordered_map<int, ComPtr<ID3D11RasterizerState>> RasterObjects;
+
+    CameraManagerD3D11* CAM_S;
 
     std::vector<PipelineObjectIntermediateStateDX11*> CompiledCode; //use this ordered to pass through code states
 
@@ -63,13 +86,10 @@ struct MainDX11Objects : Renderable{
     DXGI_FORMAT_D32_FLOAT,D3D11_DSV_DIMENSION_TEXTURE2D
     };
 
-    ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; //TODO make com ptr
+    ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; 
     ComPtr<ID3D11Texture2D> dxDepthStencilBuffer = nullptr;
     ComPtr<ID3D11DepthStencilView> dxDepthStencilView = nullptr;
     ComPtr<ID3D11DepthStencilState> dxDepthStencilStateDefault = nullptr;
-
-    ComPtr<ID3D11RasterizerState> dxRasterizerStateF = nullptr;
-    ComPtr<ID3D11RasterizerState> dxRasterizerStateW = nullptr;
 
     D3D11_VIEWPORT dxViewport; //TODO create view port per scene view and draw after for scene view
 
@@ -79,6 +99,65 @@ struct MainDX11Objects : Renderable{
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDescW; //reuse for when recreating swap chain and parts to resize screen params
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainDescF;
+
+    void MakeRasters() {
+        D3D11_RASTERIZER_DESC rasterizerDesc;
+        ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+
+        rasterizerDesc.AntialiasedLineEnable = FALSE;
+        rasterizerDesc.CullMode = D3D11_CULL_NONE;
+        rasterizerDesc.DepthBias = 0.0f;
+        rasterizerDesc.DepthBiasClamp = 0.0f;
+        rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+        rasterizerDesc.DepthClipEnable = false;
+        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        rasterizerDesc.FrontCounterClockwise = FALSE;
+        rasterizerDesc.MultisampleEnable = FALSE;
+        rasterizerDesc.ScissorEnable = FALSE;
+
+        RasterObjects[RASTER_TYPE::ALL_SOLID] = nullptr;
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::ALL_SOLID]);
+
+        RasterObjects[RASTER_TYPE::BACK_SOLID] = nullptr;
+        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::BACK_SOLID]);
+
+        RasterObjects[RASTER_TYPE::FRONT_SOLID] = nullptr;
+        rasterizerDesc.CullMode = D3D11_CULL_FRONT;
+
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::FRONT_SOLID]);
+
+        //
+        rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+        RasterObjects[RASTER_TYPE::ALL_WIRE] = nullptr;
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::ALL_WIRE]);
+
+        RasterObjects[RASTER_TYPE::BACK_WIRE] = nullptr;
+        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::BACK_WIRE]);
+
+        RasterObjects[RASTER_TYPE::FRONT_WIRE] = nullptr;
+        rasterizerDesc.CullMode = D3D11_CULL_FRONT;
+
+        dxDevice->CreateRasterizerState(
+            &rasterizerDesc,
+            &RasterObjects[RASTER_TYPE::FRONT_WIRE]);
+    }
+
+
+
     void ClearBuffer(bool clearColorT = true, XMFLOAT4 p = { 0.0f,0.5f,0.0f,1.0f }) {
         if (clearColorT) {
             float ClearColor[4] = { float(p.x), float(p.y), float(p.z), float(p.w) };
@@ -91,12 +170,16 @@ struct MainDX11Objects : Renderable{
 
     void DrawOnMainWindow() {
         dxDeviceContext->RSSetViewports(1, &dxViewport);
-        //GetAddressOf() works around default behavior of &
         dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
         dxDeviceContext->OMSetDepthStencilState(dxDepthStencilStateDefault.Get(), 0); //TODO add dynamic control of depth stencil state per draw and UINT tracker to stop rebinding
         MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
         MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        
+
+        ID3D11Buffer* tmpB[6] = {CAM_S->DefWorldMatrix.Get(), CAM_S->DefViewMatrix.Get(), CAM_S->DefProjMatrix.Get(), CAM_S->WorldMatrix.Get(), CAM_S->ViewMatrix.Get(), CAM_S->ProjMatrix.Get() };
+        MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(0, 6, tmpB);
+        MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(0, 6, tmpB);
+        TestForOptimize.SetNull();
+
         ClearBuffer(ClearRTV);
         ClearBufferDepth(ClearDepthEveryPass);
 
@@ -247,30 +330,7 @@ struct MainDX11Objects : Renderable{
 
         dxDevice->CreateDepthStencilState(&depthStencilStateDesc, &dxDepthStencilStateDefault);
 
-        D3D11_RASTERIZER_DESC rasterizerDesc;
-        ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-
-        rasterizerDesc.AntialiasedLineEnable = FALSE;
-        rasterizerDesc.CullMode = D3D11_CULL_FRONT;
-        rasterizerDesc.DepthBias = 0;
-        rasterizerDesc.DepthBiasClamp = 0.0f;
-        rasterizerDesc.DepthClipEnable = false;
-        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-        rasterizerDesc.FrontCounterClockwise = FALSE;
-        rasterizerDesc.MultisampleEnable = FALSE;
-        rasterizerDesc.ScissorEnable = FALSE;
-        rasterizerDesc.SlopeScaledDepthBias = 0.0f;
-
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &dxRasterizerStateF);
-
-        rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &dxRasterizerStateW);
-
+        MakeRasters();
 #ifdef DX11OBJ_LOADER
         DX11M3DR::SET_DX_CONTENT(dxDevice, dxDeviceContext);
 #endif
@@ -334,9 +394,9 @@ struct MainDX11Objects : Renderable{
     
    
     void RendererStartUpLogic() override{
-        
         NewDX11Object();
-
+        CAM_S = new CameraManagerD3D11(dxDevice.Get(), dxDeviceContext.Get(), &dxViewport);
+        CAM = CAM_S;
     }
 
 
