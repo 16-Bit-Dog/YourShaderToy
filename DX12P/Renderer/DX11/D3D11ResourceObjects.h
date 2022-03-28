@@ -403,6 +403,8 @@ struct PredefinedToRendererDX11 : RegisterMaps{
 
 struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
+	
+
 	inline static ResourceObjectBaseDX11* obj;
 
 	void SetResourceObjectBaseDX11() {
@@ -617,14 +619,21 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			MainDX11Objects::obj->TestForOptimize.RasterObject = MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get();
 		}
 
-		if (MainDX11Objects::obj->TestForOptimize.VertexShader != (*item)->VDat.Get()) {
-			MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat.Get(), NULL, NULL);
-			MainDX11Objects::obj->TestForOptimize.VertexShader = (*item)->VDat.Get();
+		MainDX11Objects::obj->MakeDepthStencil((*item)->PObj->Vertex.StencilToMake); //try to make if not existing yet
+		ID3D11DepthStencilState** dss = MainDX11Objects::obj->DepthStencilObjects[(*item)->PObj->Vertex.StencilToMake].GetAddressOf();
+		if (MainDX11Objects::obj->TestForOptimize.DepthStencilObject != *dss) {
+			MainDX11Objects::obj->dxDeviceContext->OMGetDepthStencilState(dss, &MainDX11Objects::obj->REF_FOR_DEPTH_STENCIL);
+			MainDX11Objects::obj->TestForOptimize.DepthStencilObject = *dss;
 		}
 
-		if (MainDX11Objects::obj->TestForOptimize.PixelShader != (*item)->PDat.Get()) {
-			MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat.Get(), NULL, NULL);
-			MainDX11Objects::obj->TestForOptimize.PixelShader = (*item)->PDat.Get();
+		if (MainDX11Objects::obj->TestForOptimize.VertexShader != (*item)->VDat) {
+			MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat, NULL, NULL);
+			MainDX11Objects::obj->TestForOptimize.VertexShader = (*item)->VDat;
+		}
+
+		if (MainDX11Objects::obj->TestForOptimize.PixelShader != (*item)->PDat) {
+			MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat, NULL, NULL);
+			MainDX11Objects::obj->TestForOptimize.PixelShader = (*item)->PDat;
 		}
 
 		if ((*item)->PObj->Vertex.Vdata.size() != 0) {
@@ -663,27 +672,29 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::obj->CompiledCode.push_back(new PipelineObjectIntermediateStateDX11());
 		PipelineObjectIntermediateStateDX11** item = &MainDX11Objects::obj->CompiledCode[MainDX11Objects::obj->CompiledCode.size() - 1];
 
-		
 		(*item)->PObj = Pobj.second;
+		(*item)->VName = Pobj.second->Vertex.name;
+		(*item)->PName = Pobj.second->Pixel.name;
 
 		if (Pobj.second->On == false) { (*item)->On = false; return -1; }
-
-		//TODO: set ptr to linked model
-
-		SafeRelease((*item)->VDat);
-		SafeRelease((*item)->PDat);
 
 		std::string Globals = MASTER_Editor::obj->GetStringWithGlobalsText();
 		std::string VGlobals = Globals + MASTER_Editor::obj->VsString;
 		std::string PGlobals = Globals + MASTER_Editor::obj->PsString;
 
 
-
-		(*item)->VDat = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
-		if ((*item)->VDat == nullptr) { (*item)->On = false; }
-
-		(*item)->PDat = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		if (PipelineObjectIntermediateStateDX11::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX11::PixelShaderMap.end()){
+			PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName] = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		}
+		(*item)->PDat = PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName].Get();
 		if ((*item)->PDat == nullptr) { (*item)->On = false; }
+
+		if (PipelineObjectIntermediateStateDX11::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX11::VertexShaderMap.end()) {
+			PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName] = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		}
+		(*item)->VDat = PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName].Get();
+
+		if ((*item)->VDat == nullptr) { (*item)->On = false; }
 
 		if ((*item)->On == true) {
 			(*item)->ToRunLogic = [&]() {
@@ -692,8 +703,20 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 
+
+	void ClearShaderCache() {
+		for (const auto& i : PipelineObjectIntermediateStateDX11::PixelShaderMap) {
+			if (i.second != nullptr) i.second->Release();
+		}
+		for (const auto& i : PipelineObjectIntermediateStateDX11::VertexShaderMap) {
+			if (i.second != nullptr) i.second->Release();
+		}	
+		PipelineObjectIntermediateStateDX11::PixelShaderMap.clear();
+		PipelineObjectIntermediateStateDX11::VertexShaderMap.clear();
+	}
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
 		MainDX11Objects::obj->CompiledCode.clear();
+		ClearShaderCache();
 		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
 
 		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects

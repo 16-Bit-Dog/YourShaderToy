@@ -15,10 +15,15 @@
 using namespace DirectX;
 
 struct PipelineObjectIntermediateStateDX11 {
-    
+    inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
+    inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
+
     bool On = true;
-    ComPtr <ID3D11VertexShader> VDat = nullptr;
-    ComPtr <ID3D11PixelShader> PDat = nullptr;
+    std::string VName = "";
+    ID3D11VertexShader* VDat = nullptr;
+
+    std::string PName = "";
+    ID3D11PixelShader* PDat = nullptr;
     PipelineObj* PObj;
     //TODO: add compute shader stuff -- std::vector 
     std::function<void()> ToRunLogic;
@@ -29,7 +34,7 @@ struct MainDX11Objects : Renderable{
 
     struct InUseTest {
         ID3D11RasterizerState* RasterObject = nullptr;
-        ID3D11DepthStencilState* DepthObject = nullptr;
+        ID3D11DepthStencilState* DepthStencilObject = nullptr;
 
         ID3D11VertexShader* VertexShader = nullptr;
         ID3D11PixelShader* PixelShader = nullptr;
@@ -46,7 +51,8 @@ struct MainDX11Objects : Renderable{
     InUseTest TestForOptimize;
 
     std::unordered_map<int, ComPtr<ID3D11RasterizerState>> RasterObjects;
-
+    std::unordered_map<StencilTypeMapMadeData, ComPtr<ID3D11DepthStencilState>, StencilTypeMapMadeData_hash> DepthStencilObjects;
+    
     CameraManagerD3D11* CAM_S;
 
     std::vector<PipelineObjectIntermediateStateDX11*> CompiledCode; //use this ordered to pass through code states
@@ -100,6 +106,42 @@ struct MainDX11Objects : Renderable{
     DXGI_SWAP_CHAIN_DESC1 swapChainDescW; //reuse for when recreating swap chain and parts to resize screen params
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainDescF;
 
+    void MakeDepthStencil(StencilTypeMapMadeData& StencilToMake) {
+        if (DepthStencilObjects.find(StencilToMake) == DepthStencilObjects.end()) {
+            D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc;
+            ZeroMemory(&depthStencilStateDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+
+            depthStencilStateDesc.DepthEnable = StencilToMake.EnableDepth; //this is a bad idea
+            depthStencilStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK(StencilToMake.DepthWriteMask);
+            depthStencilStateDesc.DepthFunc = D3D11_COMPARISON_FUNC(StencilToMake.DepthComp);
+            depthStencilStateDesc.StencilEnable = StencilToMake.EnableStencil; //for now don't want it TODO: add stencil enable for faces properly later
+
+            depthStencilStateDesc.StencilReadMask = StencilToMake.WhereToReadFromStencil;
+            depthStencilStateDesc.StencilWriteMask = StencilToMake.WhereToWriteToStencil;
+            // Stencil operations if pixel is front-facing.
+
+            depthStencilStateDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilFailOp);
+            depthStencilStateDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilDepthFailOp);
+            depthStencilStateDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilPassOp);
+            depthStencilStateDesc.FrontFace.StencilFunc = D3D11_COMPARISON_FUNC(StencilToMake.FrontTriComp);
+
+            // Stencil operations if pixel is back-facing.
+            depthStencilStateDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilFailOp);
+            depthStencilStateDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilDepthFailOp);
+            depthStencilStateDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilPassOp);
+            depthStencilStateDesc.BackFace.StencilFunc = D3D11_COMPARISON_FUNC(StencilToMake.BackTriComp);
+            /*
+
+            depthStencilStateDesc.DepthEnable = TRUE; //this is a bad idea
+            depthStencilStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+            depthStencilStateDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+            depthStencilStateDesc.StencilEnable = FALSE; //for now don't want it
+
+            */
+
+            dxDevice->CreateDepthStencilState(&depthStencilStateDesc, &DepthStencilObjects[StencilToMake]);
+        }
+    }
     void MakeRasters() {
         D3D11_RASTERIZER_DESC rasterizerDesc;
         ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
@@ -171,7 +213,7 @@ struct MainDX11Objects : Renderable{
     void DrawOnMainWindow() {
         dxDeviceContext->RSSetViewports(1, &dxViewport);
         dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
-        dxDeviceContext->OMSetDepthStencilState(dxDepthStencilStateDefault.Get(), 0); //TODO add dynamic control of depth stencil state per draw and UINT tracker to stop rebinding
+        //dxDeviceContext->OMSetDepthStencilState(dxDepthStencilStateDefault.Get(), 0); //TODO add dynamic control of depth stencil state per draw and UINT tracker to stop rebinding
         MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
         MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 

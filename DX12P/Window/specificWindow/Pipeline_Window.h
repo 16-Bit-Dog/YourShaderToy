@@ -157,12 +157,107 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			ImGui::EndMenu();
 		}
 	}
+
+	void CompFuncControlInt(std::string name, int* Comp) {
+		ImGui::InputInt(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("Function to pass new pixel data:"
+			"\n1 = never pass"
+			"\n2 = pass if less"
+			"\n3 = pass if equal"
+			"\n4 = pass if less/equal"
+			"\n5 = pass if greater"
+			"\n6 = pass if not-equal"
+			"\n7 = pass if greater/equal"
+			"\n8 = pass if always"
+		);
+		if (*Comp < 1) {
+			(*Comp) = 1;
+		}
+		else if (*Comp > 8) {
+			(*Comp) = 8;
+		}
+	}
+
+	void MaskForStencilUINT8(std::string name, int* Comp) {
+		ImGui::InputInt(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("Range to sample:"
+			"\n1 = never pass"
+			"\n2 = pass if less"
+			"\n3 = pass if equal"
+			"\n4 = pass if less/equal"
+			"\n5 = pass if greater"
+			"\n6 = pass if not-equal"
+			"\n7 = pass if greater/equal"
+			"\n8 = pass if always"
+		);
+		if (*Comp < 0) {
+			(*Comp) = 0;
+		}
+		else if (*Comp > 255) {
+			(*Comp) = 255;
+		}
+	}
+
+	void PassFailOpStencil(std::string name, int* Comp) {
+		ImGui::InputInt(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("What To Do With Data:"
+			"\n1 = Don't Change Stencil Data"
+			"\n2 = Set Stencil Data to 0"
+			"\n3 = Set Stencil Data to Reference"
+			"\n4 = Add 1 to Stencil Data - CLAMP value"
+			"\n5 = Sub 1 to Stencil Data - CLAMP value"
+			"\n6 = Invert Stencil Data"
+			"\n7 = Add 1 to Stencil Data - WRAP value"
+			"\n8 = Sub 1 to Stencil Data - WRAP value"
+		);
+		if (*Comp < 1) {
+			(*Comp) = 1;
+		}
+		else if (*Comp > 8) {
+			(*Comp) = 8;
+		}
+	}
+
+	void DrawCompFunctionSelect(const int& i) {
+		ImGui::Text("     "); ImGui::SameLine();
+		ImGui::Checkbox(("Use Depth Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableDepth);
+		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant depth & \nenable writing to depth buffer");
+
+		ImGui::Text("     "); ImGui::SameLine();
+		ImGui::Checkbox(("Use Stencil Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableStencil);
+		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
+
+		ImGui::Text("     "); ImGui::SameLine();
+		if (ImGui::BeginMenu(("Select Values:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			
+			ImGui::Checkbox(("Depth Write Mask"+PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthWriteMask);
+			ImGui::SameLine(); ImGui::HelpMarker("no check = don't write to depth buffer\ncheck = write to depth buffer");
+			CompFuncControlInt(("Depth Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthComp); // use this func to control tri fragment test
+			
+			MaskForStencilUINT8(("Stencil Read Mask" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToReadFromStencil);
+			MaskForStencilUINT8(("Stencil Write Mask" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToWriteToStencil);
+
+			PassFailOpStencil(("FRONT: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilFailOp);
+			PassFailOpStencil(("FRONT: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilDepthFailOp);
+			PassFailOpStencil(("FRONT: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilPassOp);
+			CompFuncControlInt(("FRONT: Tri Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontTriComp); // use this func to control tri fragment test
+			
+			PassFailOpStencil(("BACK: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilFailOp);
+			PassFailOpStencil(("BACK: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilDepthFailOp);
+			PassFailOpStencil(("BACK: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilPassOp);
+			CompFuncControlInt(("BACK: Tri Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackTriComp); // use this func to control tri fragment test
+			
+			
+			ImGui::EndMenu();
+		}
+	}
+	
 	void DrawPipelineIfFalseComputeOnlyToggle(const int& i) {
 		PipelineMain::obj->P[i]->Vertex.Input();
 
 		DrawSelectModel(i);
 		DrawFaceToRenderSelect(i);
-		
+		DrawCompFunctionSelect(i);
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
 
@@ -199,8 +294,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 					DrawPipelineName(i.first);
 					DrawPipelineOnToggle(i.first);
 					DrawPipelineComputeOnlyToggle(i.first);
-					DrawPipelineIfTrueComputeOnlyToggle(i.first);
-					DrawPipelineIfFalseComputeOnlyToggle(i.first);
+					if(PipelineMain::obj->P[i.first]->ComputeOnlyToggle) DrawPipelineIfTrueComputeOnlyToggle(i.first);
+					else DrawPipelineIfFalseComputeOnlyToggle(i.first);
 					ImGui::NewLine();
 					DrawPipelineAdd(i.first+1, i.second->padN+"A", "Add Pipeline After");
 				}

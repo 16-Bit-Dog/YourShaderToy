@@ -24,17 +24,17 @@ struct CameraManager : CamVirtualSetup {
 	XMMATRIX dxWorldMatrix;
 	XMMATRIX dxViewMatrix;
 	XMMATRIX dxProjectionMatrix;
-
 	XMMATRIX camRotationMatrix;
-	XMVECTOR DefaultForward;
-	XMVECTOR DefaultRight;
-	XMVECTOR DefaultUp;
-	XMVECTOR camForward;
-	XMVECTOR camRight;
-	XMVECTOR camUp;
-	XMVECTOR camVertical;
-	XMVECTOR camTarget;
-	XMVECTOR camPosition;
+
+	XMVECTOR DefaultForward = XMVectorZero();
+	XMVECTOR DefaultRight = XMVectorZero();
+	XMVECTOR DefaultUp = XMVectorZero();
+	XMVECTOR camForward = XMVectorZero();
+	XMVECTOR camRight = XMVectorZero();
+	XMVECTOR camUp = XMVectorZero();
+	XMVECTOR camVertical = XMVectorZero();
+	XMVECTOR camTarget = XMVectorZero();
+	XMVECTOR camPosition = XMVectorZero();
 
 	bool UpdateCamForce = true;
 	

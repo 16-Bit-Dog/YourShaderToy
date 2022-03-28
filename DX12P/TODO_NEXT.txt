@@ -1,4 +1,15 @@
+
 DO: DepthStencilObjects - DepthObject check, and ENUM inside Renderable
+
+ADD dynamic depth test...
+
+add dynamic blend state like enum prob?
+
+THEN DOCUMENT AND COMMENT AND MAKE CODE FULLY CLEAN AND EXPLAINED
+
+depthStencilStateDesc.StencilEnable = 0; //for now don't want it TODO: add stencil enable for faces properly later
+        
+default bind model textures --- since always same --- only need 1. also allow setting tex SRV inside Pipeline settings
 
 add depth test and 3 face render styles
 
