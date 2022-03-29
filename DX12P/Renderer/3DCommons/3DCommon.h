@@ -11,7 +11,7 @@ using namespace DirectX;
 
 
 
-
+//vertex per bone data
 struct VertexBoneData {
 	std::vector<float> IDs; //float for predictable shader pass
 	std::vector<float> weights;
@@ -21,9 +21,9 @@ struct VertexBoneData {
 		weights.reserve(5);
 	}
 };
+
+//bone ID 
 struct TopBoneIDs {
-
-
 	int32_t id[4] = { 0,0,0,0 };
 
 	void ZeroID() {
@@ -33,6 +33,7 @@ struct TopBoneIDs {
 	}
 };
 
+//Bone weight
 struct TopBoneWeight {
 	float w[4] = { 0,0,0,0 };
 
@@ -43,6 +44,7 @@ struct TopBoneWeight {
 	}
 };
 
+//Vertex
 struct VNT
 {
 	XMFLOAT3 Position;
@@ -54,11 +56,13 @@ struct VNT
 	TopBoneWeight tbw; //float 4
 };
 
+//bone joint manager struct
 struct Joint {
 	int32_t id; // index/ID of bone
 	std::string name;
 	const ofbx::Object* Bone;
 
+	//transformation, rotation, scale bone node
 	std::vector <const ofbx::AnimationCurveNode*> tNode;
 	std::vector <const ofbx::AnimationCurveNode*> rNode;
 	std::vector <const ofbx::AnimationCurveNode*> sNode;
@@ -75,7 +79,7 @@ struct Joint {
 
 	
 	void GetInvBindT(XMMATRIX parentBindT) {
-
+		//get inverse bind transform matrix from recursive calc
 		XMMATRIX BT = parentBindT * LBT;
 
 		BP = BT;
@@ -89,7 +93,7 @@ struct Joint {
 };
 
 
-
+//ofbx to XM matrix stuff
 XMFLOAT4X4 ofbxMatToXM(ofbx::Matrix* TMPtm) {
 	return XMFLOAT4X4(static_cast<float>(TMPtm->m[0]), static_cast<float>(TMPtm->m[1]), static_cast<float>(TMPtm->m[2]), static_cast<float>(TMPtm->m[3]), static_cast<float>(TMPtm->m[4]), static_cast<float>(TMPtm->m[5]), static_cast<float>(TMPtm->m[6]), static_cast<float>(TMPtm->m[7]), static_cast<float>(TMPtm->m[8]), static_cast<float>(TMPtm->m[9]), static_cast<float>(TMPtm->m[10]), static_cast<float>(TMPtm->m[11]), static_cast<float>(TMPtm->m[12]), static_cast<float>(TMPtm->m[13]), static_cast<float>(TMPtm->m[14]), static_cast<float>(TMPtm->m[15]));
 }
@@ -97,7 +101,10 @@ ofbx::Matrix XMToofbxMat(XMFLOAT4X4* TMPtm) {
 	return { TMPtm->m[0][0],TMPtm->m[0][1],TMPtm->m[0][2],TMPtm->m[0][3],TMPtm->m[1][0],TMPtm->m[1][1],TMPtm->m[1][2],TMPtm->m[1][3] ,TMPtm->m[2][0],TMPtm->m[2][1],TMPtm->m[2][2],TMPtm->m[2][3] ,TMPtm->m[3][0],TMPtm->m[3][1],TMPtm->m[3][2],TMPtm->m[3][3] };
 
 }
+//
 
+
+//object modification of treansform manager
 struct ObjTuneStatReg { //TODO: make scale and translate work in shader - make obj visible
 	std::array<float, 3> Translate = { 0.0f,0.0f,0.0f }; //not using xm float, so sad... :(
 	float pad1 = 0.0f;
@@ -108,26 +115,29 @@ struct ObjTuneStatReg { //TODO: make scale and translate work in shader - make o
 
 
 struct M3DR { //model Resource data only 
+	/*
+	abstract general 
+	*/
 	
 	bool UpdateVDat = false;
 	bool UpdateAnimDat = false;
 
-	ObjTuneStatReg ObjTune;
-	std::vector < std::vector<VNT> > modelDat;
-	std::vector<Joint> Bones;
-	const ofbx::Object* rootObj;
-	std::vector<XMFLOAT4X4> BoneDataTLMA; //adjusted values from animation
+	ObjTuneStatReg ObjTune; //object treansform manager
+	std::vector < std::vector<VNT> > modelDat; //model vertex data vector
+	std::vector<Joint> Bones; //bones vector
+	const ofbx::Object* rootObj; //root obj link
+	std::vector<XMFLOAT4X4> BoneDataTLMA; //Transform link matrix
 	std::unordered_map<std::string, int> animNameS; //contains anim position in stack
 	std::unordered_map<int, std::string> animNameI; //contains anim position in stack reverse
 	std::vector< const ofbx::AnimationStack* > animStack;
-	std::vector< float > animStackMaxTime;
-	std::vector< bool > AnimVCacheMade; //VCache is more so a Bone Cache*
-	std::vector< std::vector< std::vector<XMFLOAT4X4> > > AnimVCacheData; //per anim, per interval - I have a set of bones
-	std::vector<XMMATRIX> animDat; //animation collection
-	std::vector<const ofbx::Cluster*> ClusterObject;
-	std::vector < std::vector<VertexBoneData> > VboneDat; //TODO: filter to same indices instead of including duplicate verticies part
-	std::vector < std::vector<UINT> > Indice;
-	XMMATRIX globalInverseTransform;
+	std::vector< float > animStackMaxTime; //anim max time vector
+	std::vector< bool > AnimVCacheMade; //bone pose pre calc is made or not?*
+	std::vector< std::vector< std::vector<XMFLOAT4X4> > > AnimVCacheData; //per anim, per interval - I have a set of matrix for VCache pre calc in order
+	std::vector<XMMATRIX> animDat; //animation data collection
+	std::vector<const ofbx::Cluster*> ClusterObject; 
+	std::vector < std::vector<VertexBoneData> > VboneDat; //Vertex bone data
+	std::vector < std::vector<UINT> > Indice; //indices vector
+	XMMATRIX globalInverseTransform; 
 	XMMATRIX globalTransform;
 
 
@@ -427,10 +437,12 @@ struct M3DR { //model Resource data only
 		fclose(fp);
 	}
 	float EndTimeOfAnim(int Anim) {
+		//get end of anim time if valid int
 		if (Anim >= animStackMaxTime.size()) { return 0; }
 		return animStackMaxTime[Anim];
 	}
-	void GetAnimEndTime(int Anim) {
+	void SetAnimEndTime(int Anim) {
+		//set actual end of animation time
 		float max = 0; // max time getter func - iterate through keys
 
 		for (int i = 0; i < Bones.size(); i++) {
@@ -481,12 +493,14 @@ struct M3DR { //model Resource data only
 	}
 
 	void GetAllAnimEndTime() {
+		//get all end of animation times
 		for (int i = 0; i < animStack.size(); i++) {
-			GetAnimEndTime(i);
+			SetAnimEndTime(i);
 		}
 	}
 
 	void AddBoneChildren(Joint* BoneP) {
+		//add child to bone
 		for (int i = 0; i < Bones.size(); i++) {
 			if (Bones[i].Bone->getParent() == BoneP->Bone) {
 				BoneP->children.push_back(std::make_shared<Joint>(Bones[i]));
@@ -494,6 +508,7 @@ struct M3DR { //model Resource data only
 		}
 	}
 	void SetAllBonesChildren() {
+
 		for (int i = 0; i < Bones.size(); i++) {
 			AddBoneChildren(&Bones[i]);
 		}
@@ -545,19 +560,18 @@ struct M3DR { //model Resource data only
 			XMStoreFloat4x4(&BoneDataTLMA[i], (Bones[i].SkinM));
 		}
 	}
-	void FillTopBones() { //indice copies bone if same
-	//if I need to do vertex all I have a setup from old git history
+	void FillTopBones() { 
 
-		for (int B = 0; B < Indice.size(); B++) {
+		for (int B = 0; B < Indice.size(); B++) { //for indice size, start filling bones 
 
-			std::unordered_map<int, int> sDubC; //shuffle doubles calc - shuffle through numbered index to reduce sort
+			std::unordered_map<int, int> sDubC; //--> map stops duplocate calc
 
 			for (int i = 0; i < Indice[B].size(); i++) {
-				if (sDubC.count(Indice[B][i]) == 0) {
+				if (sDubC.find(Indice[B][i]) == sDubC.end()) {
 					sDubC[Indice[B][i]] = i;
 
 
-
+					//fill top 4 if no contest in indice weights (only 4 or less weights
 					if (VboneDat[B][Indice[B][i]].weights.size() < 4) {
 						VboneDat[B][Indice[B][i]].weights.resize(4); VboneDat[B][Indice[B][i]].IDs.resize(4);
 						for (int xx = 0; xx < VboneDat[B][Indice[B][i]].weights.size(); xx++) {
@@ -571,6 +585,7 @@ struct M3DR { //model Resource data only
 					float tmpWH = 0.0f;
 					int tmpIDH = 0;
 
+					//add 4 strongestweights if not only 4 on vertex
 					for (int ii = 0; ii < VboneDat[B][Indice[B][i]].weights.size(); ii++) {
 						for (int iii = VboneDat[B][Indice[B][i]].weights.size() - 1; iii > ii; iii--) {
 
@@ -588,21 +603,17 @@ struct M3DR { //model Resource data only
 							}
 						}
 					}
+					//set actual bone weights and id from tmps
 					for (int y = 0; y < 4; y++) {
 						modelDat[B][Indice[B][i]].tbw.w[y] = VboneDat[B][Indice[B][i]].weights[y];
 
 						modelDat[B][Indice[B][i]].tbi.id[y] = VboneDat[B][Indice[B][i]].IDs[y];
 					}
 				}
-
-				//}
-
-
 			}
 
-			//TO FIX ANIMATION TEST IF MAX IS BROKEN OR NOT NEEDED - NORMALIZATION MAY BREAK MODEL ANIM'S?
+			//normalize bone weights based on man
 			for (const std::pair<int, int>& kv : sDubC) {
-
 				float max = 0.0f;
 
 				for (int ii = 0; ii < 4; ii++) {
@@ -614,9 +625,6 @@ struct M3DR { //model Resource data only
 						modelDat[B][kv.first].tbw.w[ii] = modelDat[B][kv.first].tbw.w[ii] / max;
 					}
 				}
-
-
-
 			}
 		}
 	}

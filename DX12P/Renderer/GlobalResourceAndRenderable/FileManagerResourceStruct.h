@@ -235,10 +235,10 @@ struct BuiltPredefined_c : ObjectBuilder {
 
 	BuiltPredefined_c() {
 		
-		for (auto& i : namesU) {
+		for (const auto& i : namesU) {
 			usedNameCont.insert(i);
 		}
-		for (auto& i : namesF) {
+		for (const auto& i : namesF) {
 			usedNameCont.insert(i);
 		}
 	}
@@ -254,10 +254,10 @@ struct BuiltPredefined_c : ObjectBuilder {
 	}
 
 	~BuiltPredefined_c() {
-		for (auto& i : namesU) {
+		for (const auto& i : namesU) {
 			usedNameCont.erase(i);
 		}
-		for (auto& i : namesF) {
+		for (const auto& i : namesF) {
 			usedNameCont.erase(i);
 		}
 		delete data;

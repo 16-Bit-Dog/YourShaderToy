@@ -62,7 +62,7 @@ struct StencilTypeMapMadeData { //sets new stencil based on user toggles if not 
 	}
 };
 struct StencilTypeMapMadeData_hash
-{
+{//hash for StencilTypeMapMadeData_hash
 	std::size_t operator() (const StencilTypeMapMadeData& t) const
 	{
 		std::size_t h[14];

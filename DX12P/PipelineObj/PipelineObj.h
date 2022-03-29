@@ -7,18 +7,20 @@
 //TODO: make toggle work
 
 struct PipelineObj {
-	bool On = true;
-	bool ComputeOnlyToggle = false;
+	//Pipeline object that stores all pipeline data for a specific pipeline object
 
-	VertexShaderPipeline Vertex;
+	
+	bool On = true;//is pipeline used?
+	bool ComputeOnlyToggle = false; //compute only pipeline?
 
-	PixelShaderPipeline Pixel;
+	VertexShaderPipeline Vertex; //vertex shader handler
 
-	//TODO: set the toggle
-	std::string name;
-	int Order = -1;
-	bool killP = false;
-	std::string padN = " ";
+	PixelShaderPipeline Pixel; //pixel shader handler
+
+	std::string name; //name of pipeline
+	int Order = -1; //order of pipeline
+	bool killP = false; //to kill pipeline toggle var -> awaiting death or not
+	std::string padN = " "; //to allow imGUI padding for name
 	PipelineObj(int i = -1) {
 		name = std::to_string(i) + " Pipeline";
 		Order = i;

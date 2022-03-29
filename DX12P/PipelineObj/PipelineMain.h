@@ -6,14 +6,19 @@
 
 
 struct PipelineMain {
+	//pipeline obj holder class
+
 	inline static PipelineMain* obj;
 	
-	std::map<int, PipelineObj*> P;//P for Pipelines
+	std::map<int, PipelineObj*> P;//P for Pipeline objects, linked to map
 
 	void RemovePipeline(int i) {
-		if (P.count(i) != 0) P.erase(i);
-	}
+		//removes pipeline if exists
+		if (P.find(i) != P.end()) P.erase(i);
+	} 
+
 	void CheckToKillPipe() {
+		//check if toggle kill var wants pipeline to be removed, loop through all and then kill since else ref breaks
 		std::vector<int> t;
 		for (const auto& i : P) {
 			if (i.second->killP) t.push_back(i.first);
@@ -51,7 +56,7 @@ struct PipelineMain {
 		}
 	}
 
-	void AddNewPipelineToPosition(int StartPos) {
+	void AddNewPipelineToPosition(int StartPos) { // add new pipeline to earliest allowed position
 		if (P.count(StartPos) != 0) {
 			int end = StartPos+1;
 			for (int i = StartPos+1; i < P.size()+ StartPos+1; i++) {
@@ -67,7 +72,7 @@ struct PipelineMain {
 		P[StartPos] = new PipelineObj(StartPos);
 	}
 
-	void AddNewPipelineToEnd() {
+	void AddNewPipelineToEnd() { //add pipeline to end of list of pipelines
 		int size = P.size() + 1;
 		for (int i = 1; i < size + 1; i++) {
 			if (P.count(i) == 0) {

@@ -225,7 +225,7 @@ struct MainDX11Objects : Renderable{
         ClearBuffer(ClearRTV);
         ClearBufferDepth(ClearDepthEveryPass);
 
-        for (auto& i : CompiledCode) {
+        for (const auto& i : CompiledCode) {
             if(i->On) i->ToRunLogic();
         }
 

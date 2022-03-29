@@ -35,6 +35,7 @@ auto file maker to copy pasta into code
 */
 
 void OutputStringToFileForCopyPata(M3DR* obj) {
+	//outputs string to copy paste into code for static infile object loading
 	std::ofstream outfile("ModelStat.txt", std::ofstream::trunc | std::ofstream::out);
 
 	std::vector<XMFLOAT3> PositionV = {
@@ -84,6 +85,7 @@ void OutputStringToFileForCopyPata(M3DR* obj) {
 }
 
 std::vector<VNT>* ReturnVNT(std::vector<XMFLOAT3>* Pos, std::vector<XMFLOAT2>* Tex) {
+	//return struct data type for my obj loader by reading data
 	std::vector<VNT>* v = new std::vector<VNT>();
 	v->resize((*Pos).size());
 	for (int i = 0; i < (*Pos).size(); i++) {
@@ -186,11 +188,12 @@ static std::vector<VNT>* ReturnFullScreenTri() {
 
 }
 */
-static std::vector<  std::pair< std::string, std::function<std::vector<VNT>*()> >  > StaticObjectPass{
+
+static std::vector<  std::pair< std::string, std::function<std::vector<VNT>*()> >  > StaticObjectPass{ //vector to static objects
 	{"Cube", ReturnCube},
 //	{"Plane", ReturnPlane},
 //	{"Fullscreen-Tri", ReturnFullScreenTri},
 };
 
-
+//string to pass to describe all constant objects built into program code
 static const char* ToAddStaticObjectString = "-1 is add through.fbx file selector\n0 is add Cube";//\n1 is add Plane\n2 is add FullScreen-Tri";

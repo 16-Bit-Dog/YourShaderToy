@@ -456,7 +456,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 //		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers();
 	}
 	void PreBindAllImageData() {
-		for (auto& i : ImageData) {
+		for (const auto& i : ImageData) {
 			PreBindImageData(i.second);
 		}
 	}
@@ -464,7 +464,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	}
 	void PreBindAllModelData() {
-		for (auto& i : ModelData) {
+		for (const auto& i : ModelData) {
 			PreBindModelData(i.second);
 		}
 	}
@@ -472,7 +472,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	}
 	void PreBindAllConstantData() {
-		for (auto& i : ConstantData) {
+		for (const auto& i : ConstantData) {
 			PreBindConstantData(i.second);
 		}
 	}
@@ -511,7 +511,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void AddItemTextImages(std::vector<std::string>*  v) {
 
-		for (auto& x : ImageData) {
+		for (const auto& x : ImageData) {
 			v->push_back("Texture2D " + x.second->name + " : register(t" + x.second->SRVName() + ");\n");
 			v->push_back("RWTexture2D<float4> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
 			v->push_back("sampler " + x.second->samplerName + " : register(s" + x.second->SamplerName() + "); \n");
@@ -525,7 +525,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	void AddItemTextConstants(std::vector<std::string>* v) {
 
-		for (auto& x : ConstantData) {
+		for (const auto& x : ConstantData) {
 			//draw structs:
 			v->push_back("struct " + x.second->StructName + "{\n");
 			for (int y = 0; y < x.second->typesInOrder.size();y++) {
@@ -563,7 +563,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void ClearAllImages() {
 
-		for (auto& i : ImageData) {
+		for (const auto& i : ImageData) {
 			delete i.second;
 		}
 
@@ -571,7 +571,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void ClearAllModels() {
 
-		for (auto& i : ModelData) {
+		for (const auto& i : ModelData) {
 			delete i.second;
 		}
 
@@ -579,7 +579,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void ClearAllConstants() {
 
-		for (auto& i : ConstantData) {
+		for (const auto& i : ConstantData) {
 			delete i.second;
 		}
 

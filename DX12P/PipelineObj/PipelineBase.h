@@ -6,16 +6,20 @@
 
 
 struct BasePipeline {
-	inline static uint64_t globalCont;
+	/*
+	base abstract class to inherit by all pipelines for handling generic data
+	*/
+	//base piepline global handler
+	inline static uint64_t globalCont; // global pipeline counter to iterate id of pipeline
 
-	uint64_t control = 0;
+	uint64_t control = 0; //the id of pipeline
 	
-	bool On = true;
-	std::string name = "";
+	bool On = true; // is pipeline used ?
+	std::string name = ""; //name of piepline
 
-	std::string ShaderTypeName = "";
+	std::string ShaderTypeName = ""; //shader type name
 
-	std::string ErrorMessage_s = "";
+	std::string ErrorMessage_s = ""; //err of pipeline compile
 
 	BasePipeline() {
 		control = globalCont;

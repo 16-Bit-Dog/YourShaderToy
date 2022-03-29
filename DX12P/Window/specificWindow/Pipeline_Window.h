@@ -83,7 +83,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void DrawPipelineOrder(const int& i) {
 		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->padN).c_str())) {
-			for (auto& x : PipelineMain::obj->P) {
+			for (const auto& x : PipelineMain::obj->P) {
 				if (ImGui::Button((x.second->name + " ").c_str())) {
 					PipelineMain::obj->Swap(x.first, i);
 				}
@@ -122,7 +122,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void DrawSelectModel(const int& i) {
 		ImGui::Text("     "); ImGui::SameLine();
 		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->padN).c_str())) {
-			for (auto& x : MASTER_FileManager::obj->ModelStore) {
+			for (const auto& x : MASTER_FileManager::obj->ModelStore) {
 				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->padN).c_str())) {
 					Renderable::DXM->ROB->SetDataToPipelineVertex(x, PipelineMain::obj->P[i]->Vertex);
 				}
@@ -280,7 +280,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			
 
 			
-			for (auto& i : PipelineMain::obj->P) {
+			for (const auto& i : PipelineMain::obj->P) {
 				i.second->padN = sPad(i.second->Order);
 				ImGui::Text((i.second->name).c_str());
 				ImGui::SameLine();

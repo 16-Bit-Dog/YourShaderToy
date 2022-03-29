@@ -5,7 +5,8 @@
 struct MASTER_Editor : MASTER_Function_Inherit {
 	inline static MASTER_Editor* obj;
 
-	std::vector<std::string> AutoAddGlobalsPredefined;
+	//global strings 
+	std::vector<std::string> AutoAddGlobalsPredefined; 
 	std::vector<std::string> AutoAddGlobalsImages;
 	std::vector<std::string> AutoAddGlobalsModels;
 	std::vector<std::string> AutoAddGlobalsConstants;
@@ -60,7 +61,8 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	}
 
 	std::string GetStringWithNoGlobals() {
-
+		//get default global string with other pre defined globals,
+		//DONT get user added globals
 		std::string s = std::string( //defaults
 			"////Globals\n"
 			"//Auto_Added_Globals\n"
@@ -103,13 +105,13 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			
 		);
 
-		for (auto& i : AutoAddGlobalsPredefined) {
+		for (const auto& i : AutoAddGlobalsPredefined) {
 			s += i;
 		}
-		for (auto& i : AutoAddGlobalsImages) {
+		for (const auto& i : AutoAddGlobalsImages) {
 			s += i;
 		}
-		for (auto& i : AutoAddGlobalsConstants) {
+		for (const auto& i : AutoAddGlobalsConstants) {
 			s += i;
 		}
 
@@ -119,15 +121,14 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 	std::string GetStringWithGlobalsText() {
 
-
-		std::string s = GetStringWithNoGlobals();
-		s += Globals;
+		std::string s = Globals;
+		s += GetStringWithNoGlobals();
 		return std::move(s);
 
 	}
 
 	void DrawGlobalsText() {
-
+		//draw Imgui globals text
 		std::string s = GetStringWithNoGlobals();
 		ImGui::Text(s.c_str());
 		ImGui::Text("//");
@@ -136,46 +137,25 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	}
 
 	void DrawVertexShaderText() {
-
-		ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
-		HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
-		ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
-
+		if (ImGui::CollapsingHeader("EditorVertexCollapse")) {
+			ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
+			HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
+			ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
+		}
 	}
 
 	void DrawPixelShaderText() {
-
-		ImGui::Text("//PixelShaders");
-		ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
-
+		if (ImGui::CollapsingHeader("EditorPixelCollapse")) {
+			ImGui::Text("//PixelShaders");
+			ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
+		}
 	}
 
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Editor:")) {
 			/*
-						Register Inputs: // hint - auto adds to AutoAddGlobals and Globals compiled code
-						[Drop Down Menu]
-						[[All existing Register inputs are added here]] - by default has a full screen quad here - every item has a drop down menu to change features about them
-						{
-						[+] //- Hint: click to add item, edit properties in existing input menu  //clicking one of these items adds them to Existing inputs - I put funky [] to show I need to add option to change in existing inputs
-						-- [Vertex Buffer] Full screen quad [VariableName:___] -- hint: x = X pos;  y = Y pos; z =  Z pos;
-						-- [Vertex Buffer] Load .obj Model [VariableName:___]
-						[SEPERATOR]
-						-- [float] Time  //hint - time in seconds, is a float
-						-- [float2] Viewport_Resolution
-						-- [float] TimeDelta
-						-- [float2] MousePosition;
-						-- [float] FrameCount;
-						-- [float2] MousePosition;
-						-- [float2] MouseButton; //x==1 -> LB down, y==2 -> RB down
-						-- [texture2d] Depth_Texture  // links regiser to depth texture [starts black] - but you flag when it copies in pipeline setup
-						-- [texture2d] Current_Output // links regiser to output texture [starts black] - but you flag when it copies in pipeline setup
-						-- [texture2d<float4>] Load_Texture_From_Computer [VariableName:___]
-						-- [RWtexture2d<float4>] Load_Texture_From_Computer [VariableName:___]
-						-- [texture2d<float4>] Blank_Texture [VariableName:___:, SIZE: X ___ Y ___]
+				//Draw menu of text inputs
 
-
-						}
 			*/
 
 			ImGui::Text("//HELP");

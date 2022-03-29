@@ -3,6 +3,7 @@
 #include "PipelineBase.h"
 
 struct PixelShaderPipeline : BasePipeline {
+	//Abstract pipeline to repisent Pixel pipeline object and settings
 
 	PixelShaderPipeline() {
 
