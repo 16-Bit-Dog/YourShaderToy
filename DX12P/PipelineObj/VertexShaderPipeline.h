@@ -8,8 +8,10 @@ struct VertexShaderPipeline : BasePipeline {
 
 	//TODO: blend state associated with vertex shader
 
-	std::vector<void**> Vdata; //vertex data generic pointer
-	std::vector<void**> Idata; //indice data generic pointer
+	std::vector<void*> Vdata; //vertex data generic pointer
+	std::string LoadedModelName = "";
+
+	std::vector<void*> Idata; //indice data generic pointer
 	std::vector<int> Icount; // indice count to draw
 	UINT VertexStride = 0; // stride until next vertex --> set by model loader dynamically
 	//

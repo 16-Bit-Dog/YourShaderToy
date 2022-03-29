@@ -146,10 +146,12 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp, bool UNORM_ELSE_FLOAT, d4* data) {
 		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, data));
+		Renderable::DXM->CompiledData = false;
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
 	void AddModelToList(std::string Path, std::string Name, int Type) {
 		ModelStore.push_back(new BuiltModel_c(Path, Name, Type));
+		Renderable::DXM->CompiledData = false;
 	}
 
 	void AddImage() {
@@ -333,10 +335,10 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::Separator();
 			ImGui::Text("Name: ");
 			ImGui::SameLine();
-			ImGui::Text(ModelStore[i]->NameRW.c_str());
+			ImGui::Text(ModelStore[i]->Name.c_str());
 			ImGui::Text("RWName: ");
 			ImGui::SameLine();
-			ImGui::Text(ModelStore[i]->Name.c_str());
+			ImGui::Text(ModelStore[i]->NameRW.c_str());
 			ImGui::SameLine();
 			ImGui::Text("|");
 			ImGui::SameLine();
@@ -369,12 +371,15 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	float ToAddConstantFloat = 0.0f;
 	void AddConstantInt(std::string* s, int32_t* intV, const int& i) {
 		ConstantStore[i]->AddInt(s, intV);
+		Renderable::DXM->CompiledData = false;
 	}
 	void AddConstantUint(std::string* s, uint32_t* uintV, const int& i) {
 		ConstantStore[i]->AddUint(s, uintV);
+		Renderable::DXM->CompiledData = false;
 	}
 	void AddConstantFloat(std::string* s,float* floatV, const int& i) {
 		ConstantStore[i]->AddFloat(s, floatV);
+		Renderable::DXM->CompiledData = false;
 	}
 /*	void AddConstantMatrix(std::string* s, float* matV[4][4], const int& i) {
 		ConstantStore[i]->AddMatrix(s, matV);

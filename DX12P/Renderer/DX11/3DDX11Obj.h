@@ -287,6 +287,7 @@ struct DX11M3DR : M3DR{
 			std::cout << "no file at path";
 		}
 
+		LoadVertexIndiceData();
 		DefaultCBuf();
 		DefaultSampler();
 		DefaultAllMatBuf();

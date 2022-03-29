@@ -38,8 +38,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		shows how program is running
 		*/
+		if (Renderable::DXM->CompiledData == false) ImGui::TextColored({ 1.0f, 0.1f, 0.1f, 1.0f }, "WARNING - FILE-MANAGER DATA NOT COMPILED");
 
 		if (ImGui::Button("Pipeline & Code Compile##StartCodeCompile")) {
+			if (Renderable::DXM->AutoFileManagerCompile && Renderable::DXM->CompiledData == false) MASTER_FileManager::obj->BuildAllObjectsItem();
+
 			Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);
 			Renderable::DXM->CompiledCode = true;
 		}
@@ -129,6 +132,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			}
 			ImGui::EndMenu();
 		}
+		ImGui::Text(("Loaded Model:" + PipelineMain::obj->P[i]->Vertex.LoadedModelName).c_str());
 	}
 	void DrawFaceToRenderSelect(const int& i) {
 		ImGui::Text("     "); ImGui::SameLine();

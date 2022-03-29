@@ -95,6 +95,8 @@ struct StencilTypeMapMadeData_hash
 
 
 struct Renderable {
+	bool AutoFileManagerCompile = true;
+
 	UINT REF_FOR_DEPTH_STENCIL = 1;
 
 	bool CompiledData = false;

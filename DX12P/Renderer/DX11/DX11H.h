@@ -39,7 +39,7 @@ struct MainDX11Objects : Renderable{
         ID3D11VertexShader* VertexShader = nullptr;
         ID3D11PixelShader* PixelShader = nullptr;
         
-        void** Model = nullptr;
+        void* Model = nullptr;
 
         void SetNull() {
             RasterObject = nullptr;

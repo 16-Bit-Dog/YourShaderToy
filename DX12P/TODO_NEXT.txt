@@ -1,6 +1,5 @@
-comment 3ddx11 code and below
 
-TODO: test stencil and test to add more rasterizer setup options
+TODO: test 3d model load and stencil and test to add more rasterizer setup options
 DO: DepthStencilObjects - DepthObject check, and ENUM inside Renderable
 
 ADD dynamic depth test...

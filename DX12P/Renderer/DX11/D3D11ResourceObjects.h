@@ -419,22 +419,25 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
 
 		if (ModelData.count(data->Name) > 0) {
+			vp.LoadedModelName = data->Name;
 
 			ModelToRendererDX11* md_tmp = ModelData[data->Name];
 
 			vp.Vdata.resize(md_tmp->Model.VBuf.size());
 			vp.Idata.resize(md_tmp->Model.IBuf.size());
 			vp.Icount.resize(md_tmp->Model.Indice.size());
+			
+			DX11M3DR* tmpM3 = &ModelData[data->Name]->Model;
 
-			for (int x = 0; x < ModelData[data->Name]->Model.VBuf.size(); x++) {
-				vp.Vdata[x] = (void**)&ModelData[data->Name]->Model.VBuf[x];
+			for (int x = 0; x < tmpM3->VBuf.size(); x++) {
+				vp.Vdata[x] = (void*)tmpM3->VBuf[x].Get();
 			}
 
-			for (int x = 0; x < ModelData[data->Name]->Model.IBuf.size(); x++) {
-				vp.Idata[x] = (void**)&ModelData[data->Name]->Model.IBuf[x];
-				vp.Icount[x] = ModelData[data->Name]->Model.Indice[x].size();
+			for (int x = 0; x < tmpM3->IBuf.size(); x++) {
+				vp.Idata[x] = (void*)tmpM3->IBuf[x].Get();
+				vp.Icount[x] = tmpM3->Indice[x].size();
 			}
-			vp.VertexStride = ModelData[data->Name]->Model.VertexStride;
+			vp.VertexStride = tmpM3->VertexStride;
 		}
 	}
 	void SetPipelineFaceRender(VertexShaderPipeline& vp, UINT FaceToRender) {
@@ -507,6 +510,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				v->push_back("	float " + PredefinedData->typesInOrderName[i] + ";\n");
 			}
 		}
+		v->push_back("}\n");
 
 	}
 	void AddItemTextImages(std::vector<std::string>*  v) {
@@ -549,7 +553,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			//
 
 			//uav buf
-			v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ") { \n");
+			v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ");\n");
 			//TODO: add RW Object name
 		}
 
@@ -618,7 +622,6 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			MainDX11Objects::obj->dxDeviceContext->RSSetState(MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get());
 			MainDX11Objects::obj->TestForOptimize.RasterObject = MainDX11Objects::obj->RasterObjects[int((*item)->PObj->Vertex.Wireframe) + (*item)->PObj->Vertex.FaceToRender].Get();
 		}
-
 		MainDX11Objects::obj->MakeDepthStencil((*item)->PObj->Vertex.StencilToMake); //try to make if not existing yet
 		ID3D11DepthStencilState** dss = MainDX11Objects::obj->DepthStencilObjects[(*item)->PObj->Vertex.StencilToMake].GetAddressOf();
 		if (MainDX11Objects::obj->TestForOptimize.DepthStencilObject != *dss) {
@@ -641,8 +644,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
 
 				if (MainDX11Objects::obj->TestForOptimize.Model != (*item)->PObj->Vertex.Vdata[i]) {
-					MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, 0);
-					MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)(*(*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, 0);
+					MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, &OffsetDef);
+					MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)((*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, OffsetDef);
 					MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
 				
 					MainDX11Objects::obj->TestForOptimize.Model = (*item)->PObj->Vertex.Vdata[i];
@@ -653,9 +656,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		else {
 			//run if no vertex data load default cube
 			StaticDX11Object::obj->MakeCube();
-			void** tmpAddress = (void**)StaticDX11Object::obj->CUBE->VBuf[0].GetAddressOf();
+			void* tmpAddress = (void*)StaticDX11Object::obj->CUBE->VBuf[0].Get();
 			if (MainDX11Objects::obj->TestForOptimize.Model != tmpAddress) {
-				MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**) tmpAddress, &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
+				MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**) &tmpAddress, &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
 				MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
 				MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
 
