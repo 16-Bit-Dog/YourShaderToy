@@ -18,7 +18,6 @@ struct PipelineObjectIntermediateStateDX11 {
     inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
 
-    bool On = true;
     std::string VName = "";
     ID3D11VertexShader* VDat = nullptr;
 
@@ -35,6 +34,8 @@ struct MainDX11Objects : Renderable{
     struct InUseTest {
         ID3D11RasterizerState* RasterObject = nullptr;
         ID3D11DepthStencilState* DepthStencilObject = nullptr;
+        ID3D11BlendState* BlendObject = nullptr;
+        std::array<float,4> BlendFactor = {-1.0f,-1.0f, -1.0f, -1.0f};
 
         ID3D11VertexShader* VertexShader = nullptr;
         ID3D11PixelShader* PixelShader = nullptr;
@@ -50,9 +51,10 @@ struct MainDX11Objects : Renderable{
     };
     InUseTest TestForOptimize;
 
-    std::unordered_map<int, ComPtr<ID3D11RasterizerState>> RasterObjects;
+    std::unordered_map<RasterTypeMapMadeData, ComPtr<ID3D11RasterizerState>, RasterTypeMapMadeData_hash> RasterObjects;
     std::unordered_map<StencilTypeMapMadeData, ComPtr<ID3D11DepthStencilState>, StencilTypeMapMadeData_hash> DepthStencilObjects;
-    
+    std::unordered_map<BlendTypeMapMadeData, ComPtr<ID3D11BlendState>, BlendTypeMapMadeData_hash> BlendObjects;
+
     CameraManagerD3D11* CAM_S;
 
     std::vector<PipelineObjectIntermediateStateDX11*> CompiledCode; //use this ordered to pass through code states
@@ -118,84 +120,64 @@ struct MainDX11Objects : Renderable{
 
             depthStencilStateDesc.StencilReadMask = StencilToMake.WhereToReadFromStencil;
             depthStencilStateDesc.StencilWriteMask = StencilToMake.WhereToWriteToStencil;
-            // Stencil operations if pixel is front-facing.
+            // Stencil operations if pixel is front tri-facing.
 
             depthStencilStateDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilFailOp);
             depthStencilStateDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilDepthFailOp);
             depthStencilStateDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP(StencilToMake.FrontFaceStencilPassOp);
             depthStencilStateDesc.FrontFace.StencilFunc = D3D11_COMPARISON_FUNC(StencilToMake.FrontTriComp);
 
-            // Stencil operations if pixel is back-facing.
+            // Stencil operations if pixel is back tri-facing.
             depthStencilStateDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilFailOp);
             depthStencilStateDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilDepthFailOp);
             depthStencilStateDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP(StencilToMake.BackFaceStencilPassOp);
             depthStencilStateDesc.BackFace.StencilFunc = D3D11_COMPARISON_FUNC(StencilToMake.BackTriComp);
-            /*
 
-            depthStencilStateDesc.DepthEnable = TRUE; //this is a bad idea
-            depthStencilStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-            depthStencilStateDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-            depthStencilStateDesc.StencilEnable = FALSE; //for now don't want it
 
-            */
-
-            dxDevice->CreateDepthStencilState(&depthStencilStateDesc, &DepthStencilObjects[StencilToMake]);
+            dxDevice->CreateDepthStencilState(
+                &depthStencilStateDesc, 
+                &DepthStencilObjects[StencilToMake]);
         }
     }
-    void MakeRasters() {
-        D3D11_RASTERIZER_DESC rasterizerDesc;
-        ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+    void MakeBlend(BlendTypeMapMadeData& BlendToMake) {
+        D3D11_BLEND_DESC blend;
+        ZeroMemory(&blend, sizeof(D3D11_BLEND_DESC));
 
-        rasterizerDesc.AntialiasedLineEnable = FALSE;
-        rasterizerDesc.CullMode = D3D11_CULL_NONE;
-        rasterizerDesc.DepthBias = 0.0f;
-        rasterizerDesc.DepthBiasClamp = 0.0f;
-        rasterizerDesc.SlopeScaledDepthBias = 0.0f;
-        rasterizerDesc.DepthClipEnable = false;
-        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-        rasterizerDesc.FrontCounterClockwise = FALSE;
-        rasterizerDesc.MultisampleEnable = FALSE;
-        rasterizerDesc.ScissorEnable = FALSE;
+        blend.AlphaToCoverageEnable = BlendToMake.AlphaToCoverageEnable;
+        blend.IndependentBlendEnable = BlendToMake.IndependentBlendEnable;
+        blend.RenderTarget[0].BlendEnable = BlendToMake.BlendEnable;
+        blend.RenderTarget[0].BlendOp = D3D11_BLEND_OP(BlendToMake.BlendOp);
+        blend.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP(BlendToMake.BlendOpAlpha);
+        blend.RenderTarget[0].DestBlend = D3D11_BLEND(BlendToMake.DestBlend);
+        blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND(BlendToMake.DestBlendAlpha);
+        blend.RenderTarget[0].RenderTargetWriteMask = BlendToMake.RenderTargetWriteMask;
+        blend.RenderTarget[0].SrcBlend = D3D11_BLEND(BlendToMake.SrcBlend);
+        blend.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND(BlendToMake.SrcBlendAlpha);
 
-        RasterObjects[RASTER_TYPE::ALL_SOLID] = nullptr;
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::ALL_SOLID]);
+    }
+    void MakeRaster(RasterTypeMapMadeData& RasterToMake) {
+        if (RasterObjects.find(RasterToMake) == RasterObjects.end()) {
 
-        RasterObjects[RASTER_TYPE::BACK_SOLID] = nullptr;
-        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+            D3D11_RASTERIZER_DESC rasterizerDesc;
+            ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::BACK_SOLID]);
+            rasterizerDesc.AntialiasedLineEnable = RasterToMake.AAL;
+            rasterizerDesc.CullMode = D3D11_CULL_MODE(RasterToMake.cull);
+            rasterizerDesc.DepthBias = 0.0f;
+            rasterizerDesc.DepthBiasClamp = 0.0f;
+            rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+            rasterizerDesc.DepthClipEnable = false;
+            rasterizerDesc.FillMode = D3D11_FILL_MODE(RasterToMake.ToFill+2);
+            rasterizerDesc.FrontCounterClockwise = FALSE;
+            rasterizerDesc.MultisampleEnable = FALSE;
+            rasterizerDesc.ScissorEnable = FALSE;
 
-        RasterObjects[RASTER_TYPE::FRONT_SOLID] = nullptr;
-        rasterizerDesc.CullMode = D3D11_CULL_FRONT;
 
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::FRONT_SOLID]);
+            dxDevice->CreateRasterizerState(
+                &rasterizerDesc,
+                &RasterObjects[RasterToMake]);
 
-        //
-        rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-        RasterObjects[RASTER_TYPE::ALL_WIRE] = nullptr;
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::ALL_WIRE]);
-
-        RasterObjects[RASTER_TYPE::BACK_WIRE] = nullptr;
-        rasterizerDesc.CullMode = D3D11_CULL_BACK;
-
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::BACK_WIRE]);
-
-        RasterObjects[RASTER_TYPE::FRONT_WIRE] = nullptr;
-        rasterizerDesc.CullMode = D3D11_CULL_FRONT;
-
-        dxDevice->CreateRasterizerState(
-            &rasterizerDesc,
-            &RasterObjects[RASTER_TYPE::FRONT_WIRE]);
+        }
     }
 
 
@@ -226,7 +208,7 @@ struct MainDX11Objects : Renderable{
         ClearBufferDepth(ClearDepthEveryPass);
 
         for (const auto& i : CompiledCode) {
-            if(i->On) i->ToRunLogic();
+            i->ToRunLogic();
         }
 
     }
@@ -372,7 +354,6 @@ struct MainDX11Objects : Renderable{
 
         dxDevice->CreateDepthStencilState(&depthStencilStateDesc, &dxDepthStencilStateDefault);
 
-        MakeRasters();
 #ifdef DX11OBJ_LOADER
         DX11M3DR::SET_DX_CONTENT(dxDevice, dxDeviceContext);
 #endif

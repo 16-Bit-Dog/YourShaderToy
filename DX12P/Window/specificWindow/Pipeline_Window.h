@@ -135,28 +135,28 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Text(("Loaded Model:" + PipelineMain::obj->P[i]->Vertex.LoadedModelName).c_str());
 	}
 	void DrawFaceToRenderSelect(const int& i) {
-		ImGui::Text("     "); ImGui::SameLine();
-		ImGui::Checkbox(("Use Wireframe" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.Wireframe);
+		ImGui::Checkbox(("Use Fill" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.ToFill);
+		ImGui::Checkbox(("AA Line" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.AAL);
 		if (ImGui::BeginMenu(("Select Face To Render:##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			bool AllFace = false;
 			bool BackFace = false;
-			bool FrontFace = false;
-			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::ALL_SOLID) { ImGui::Bullet(); ImGui::Text(""); }
+			bool FrontFace = false; //.cull means to cull out
+			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 1) { ImGui::Bullet(); ImGui::Text(""); }
 			else AllFace = ImGui::Button(("Both Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
 			if (AllFace) {
-				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::ALL_SOLID);
+				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 1;
 			}
 
-			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::BACK_SOLID) { ImGui::Bullet(); ImGui::Text(""); }
+			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 2) { ImGui::Bullet(); ImGui::Text(""); }
 			else BackFace = ImGui::Button(("Back Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
 			if (BackFace) {
-				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::BACK_SOLID);
+				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 2;
 			}
 
-			if (PipelineMain::obj->P[i]->Vertex.FaceToRender == RASTER_TYPE::FRONT_SOLID) { ImGui::Bullet(); ImGui::Text("");}
+			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 3) { ImGui::Bullet(); ImGui::Text("");}
 			else FrontFace = ImGui::Button(("Front Faces##Select Button C" + PipelineMain::obj->P[i]->padN).c_str());
 			if (FrontFace) {
-				Renderable::DXM->ROB->SetPipelineFaceRender(PipelineMain::obj->P[i]->Vertex, RASTER_TYPE::FRONT_SOLID);
+				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 3;
 			}
 			ImGui::EndMenu();
 		}
@@ -184,15 +184,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void MaskForStencilUINT8(std::string name, int* Comp) {
 		ImGui::InputInt(name.c_str(), Comp);
-		ImGui::SameLine(); ImGui::HelpMarker("Range to sample:"
-			"\n1 = never pass"
-			"\n2 = pass if less"
-			"\n3 = pass if equal"
-			"\n4 = pass if less/equal"
-			"\n5 = pass if greater"
-			"\n6 = pass if not-equal"
-			"\n7 = pass if greater/equal"
-			"\n8 = pass if always"
+		ImGui::SameLine(); ImGui::HelpMarker("0 is don't write, 255 is write all"
 		);
 		if (*Comp < 0) {
 			(*Comp) = 0;
@@ -222,17 +214,120 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		}
 	}
 
+	void BlendFactorControlInput(std::string name, float* Comp) {
+		ImGui::InputFloat(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("1.0f = blend color fully\n0.0f = don't blend"
+		);
+		if (*Comp < 0.0f) {
+			(*Comp) = 0.0f;
+		}
+		else if (*Comp > 1.0f) {
+			(*Comp) = 1.0f;
+		}
+	}
+
+	//TODO: maybe template... maybe not worth it for readability tho...
+
+	void BlendControlInput(std::string name, int* Comp) {
+		ImGui::InputInt(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("Interpretation of Blend Factor:"
+			"\n1 = Blend Factor (BF) is set to (0,0,0,0)"
+			"\n2 = BF is set to (1,1,1,1)"
+			"\n3 = BF is Pixel Shader (PS) RGBA Output Color"
+			"\n4 = BF is Inversed PS RGBA Output Color"
+			"\n5 = Alpha of PS Result is BF of RGBA"
+			"\n6 = Inversed Alpha of PS Result is BF of RGBA"
+			"\n7 = Alpha of Current Render Target (RT) is BF of RGBA"
+			"\n8 = Inversed Alpha of Current RT is BF of RGBA"
+			"\n9 = RGBA data of Current RT is BF of RGBA"
+			"\n10 = Inversed RGBA data of Current RT is BF of RGBA"
+			"\n11 = Alpha BF is 1.0f, RGB BF is min of Inversed-Alpha/Alpha"
+			"\n14 = Use Blend Factor Set by User"
+			"\n15 = Use Inverse Blend Factor Set by User"
+			"\n16 = "
+			"\n17 = "
+			"\n18 = "
+			"\n19 = "
+		);  
+		if (*Comp < 1) {
+			(*Comp) = 1;
+		}
+		if (*Comp > 11 && *Comp < 14) {
+			(*Comp) = 11;
+		}
+		else if (*Comp > 19) {
+			(*Comp) = 19;
+		}
+	}
+	void BlendOpControlInput(std::string name, int* Comp) {
+		ImGui::InputInt(name.c_str(), Comp);
+		ImGui::SameLine(); ImGui::HelpMarker("Blend Op of Pixels:\n"
+			"\n1 = Add Source 1 and Source 2"
+			"\n2 = Subtract Source 1 from Source 2"
+			"\n3 = Subtract Source 2 from Source 1"
+			"\n4 = Use Minimum of Source 1 and 2"
+			"\n5 = Use Maximum of Source 1 and 2"
+		);
+		if (*Comp < 1) {
+			(*Comp) = 1;
+		}
+		else if (*Comp > 5) {
+			(*Comp) = 5;
+		}
+	}
+
+	void DrawBlendSelect(const int& i) {
+
+		ImGui::Checkbox(("Enable Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendEnable);
+		if (PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendEnable) {
+
+
+			ImGui::Checkbox(("Use Color Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.IndependentBlendEnable);
+			ImGui::SameLine(); ImGui::HelpMarker("Compare resultant depth & \nenable writing to depth buffer");
+
+			ImGui::Checkbox(("Use Alpha Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.AlphaToCoverageEnable);
+			ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
+
+			ImGui::Text("     "); ImGui::SameLine(); ImGui::HelpMarker("Only Blend Control 14-15 use these values"); ImGui::SameLine();
+			if (ImGui::BeginMenu(("Set Blend Factor:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+
+				BlendFactorControlInput(("Red Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[0]);
+				BlendFactorControlInput(("Green Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[1]);
+				BlendFactorControlInput(("Blue Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[2]);
+				BlendFactorControlInput(("Alpha Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[3]);
+				ImGui::EndMenu();
+			}
+
+			ImGui::Text("     "); ImGui::SameLine();
+			if (ImGui::BeginMenu(("Select Blend Specifics:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+
+				BlendControlInput(("[SrcBlend] How PS Blends RGB" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlend);
+				BlendControlInput(("[DestBlend] How RTV Blends" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlend);
+				BlendOpControlInput(("How To Blend SrcBlend and DestBlend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOp);
+				ImGui::Text("");
+				BlendControlInput(("[SrcBlendAlpha] How PS Blends Alpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlendAlpha);
+				BlendControlInput(("[DestBlendAlpha] How RTV Blends Alpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlendAlpha);
+				BlendOpControlInput(("How To Blend SrcBlendAlpha and DestBlendAlpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOpAlpha);
+				ImGui::Text("");
+				MaskForStencilUINT8(("Render Target Write Mask: " + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.RenderTargetWriteMask);
+
+				ImGui::EndMenu();
+			}
+
+		}
+
+
+	}
+
 	void DrawCompFunctionSelect(const int& i) {
-		ImGui::Text("     "); ImGui::SameLine();
 		ImGui::Checkbox(("Use Depth Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableDepth);
 		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant depth & \nenable writing to depth buffer");
 
-		ImGui::Text("     "); ImGui::SameLine();
 		ImGui::Checkbox(("Use Stencil Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableStencil);
 		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
 
 		ImGui::Text("     "); ImGui::SameLine();
-		if (ImGui::BeginMenu(("Select Values:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::BeginMenu(("Select Depth-Stencil Specifics:##" + PipelineMain::obj->P[i]->padN).c_str())) {
 			
 			ImGui::Checkbox(("Depth Write Mask"+PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthWriteMask);
 			ImGui::SameLine(); ImGui::HelpMarker("no check = don't write to depth buffer\ncheck = write to depth buffer");
@@ -260,8 +355,12 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		PipelineMain::obj->P[i]->Vertex.Input();
 
 		DrawSelectModel(i);
+		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Rasterizer Settings:");
 		DrawFaceToRenderSelect(i);
+		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Depth-Stencil:");
 		DrawCompFunctionSelect(i);
+		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Blend:");
+		DrawBlendSelect(i);
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
 

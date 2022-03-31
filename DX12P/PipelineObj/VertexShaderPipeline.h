@@ -16,12 +16,15 @@ struct VertexShaderPipeline : BasePipeline {
 	UINT VertexStride = 0; // stride until next vertex --> set by model loader dynamically
 	//
 	//for choosing raster by map
-	UINT FaceToRender = 4; // which raster state should be used is determined by this var
-	bool Wireframe = false; // is wire frame used?
+	RasterTypeMapMadeData RasterToMake;
 	//
 	//stencil buffer settings for choosing stencil by map
 	StencilTypeMapMadeData StencilToMake; 
 
+	//Blend
+	BlendTypeMapMadeData BlendToMake;
+	std::array<float, 4> BlendFactor = { 1.0f,1.0f,1.0f,1.0f };
+	
 	VertexShaderPipeline() {
 		ShaderTypeName = "Vertex";
 		this->name = name + "SimpleVS";

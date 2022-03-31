@@ -7,13 +7,85 @@
 
 struct ResourceObjectBase;
 
-enum RASTER_TYPE {
-	ALL_SOLID = 0,
-	ALL_WIRE = 1,
-	BACK_SOLID = 2,
-	BACK_WIRE = 3,
-	FRONT_SOLID = 4,
-	FRONT_WIRE = 5
+//TODO: set Blend to many render targets all same later
+struct BlendTypeMapMadeData {
+
+	bool AlphaToCoverageEnable = false;
+	bool IndependentBlendEnable = false;
+	bool BlendEnable = false;
+	int BlendOp = 1;
+	int BlendOpAlpha = 1;
+	int DestBlend = 1;
+	int DestBlendAlpha = 1;
+	int SrcBlend = 1;
+	int SrcBlendAlpha = 1;
+	int RenderTargetWriteMask = 255;
+
+	bool operator==(const BlendTypeMapMadeData& p) const {
+
+		return (
+			AlphaToCoverageEnable == p.AlphaToCoverageEnable &&
+			IndependentBlendEnable == p.IndependentBlendEnable &&
+			BlendEnable == p.BlendEnable &&
+			BlendOp == p.BlendOp &&
+			BlendOpAlpha == p.BlendOpAlpha &&
+			DestBlend == p.DestBlend &&
+			DestBlendAlpha == p.DestBlendAlpha &&
+			SrcBlend == p.SrcBlend &&
+			SrcBlendAlpha == p.SrcBlendAlpha &&
+			RenderTargetWriteMask == p.RenderTargetWriteMask
+			);
+
+	}
+};
+
+struct BlendTypeMapMadeData_hash
+{//hash for StencilTypeMapMadeData_hash
+	std::size_t operator() (const BlendTypeMapMadeData& t) const {
+		std::size_t h[10];
+		h[0] = std::hash<bool>()(t.AlphaToCoverageEnable);
+		h[1] = std::hash<bool>()(t.IndependentBlendEnable);
+		h[2] = std::hash<bool>()(t.BlendEnable);
+		h[3] = std::hash<int>()(t.BlendOp);
+		h[4] = std::hash<int>()(t.BlendOpAlpha);
+		h[5] = std::hash<int>()(t.SrcBlend);
+		h[6] = std::hash<int>()(t.SrcBlendAlpha);
+		h[7] = std::hash<int>()(t.RenderTargetWriteMask);
+		h[8] = std::hash<int>()(t.DestBlendAlpha);
+		h[9] = std::hash<int>()(t.DestBlend);
+		
+		for (int i = 1; i < 10; i++) {
+			h[0] ^= h[i] >> i * 4;//makes unique hash pushed bit offset with intervals of 4 since it keeps all values ordered except the 255 mask which is normally 0 or 255, which works nicely still
+		}
+		return h[0];
+	}
+};
+
+struct RasterTypeMapMadeData {
+	int cull = 1;
+	bool ToFill = 1;
+	bool AAL = 0;
+	bool operator==(const RasterTypeMapMadeData& p) const {
+		return (
+			cull == p.cull &&
+			ToFill == p.ToFill &&
+			AAL == p.AAL 
+			);
+	}
+};
+
+struct RasterTypeMapMadeData_hash
+{//hash for StencilTypeMapMadeData_hash
+	std::size_t operator() (const RasterTypeMapMadeData& t) const{
+		std::size_t h[3];
+		h[0] = std::hash<bool>()(t.ToFill);
+		h[1] = std::hash<bool>()(t.AAL);
+		h[2] = std::hash<int>()(t.cull);
+		for (int i = 1; i < 14; i++) {
+			h[0] ^= h[i] >> i * 4;//makes unique hash pushed bit offset with intervals of 4 since it keeps all values ordered except the 255 mask which is normally 0 or 255, which works nicely still
+		}
+		return h[0];
+	}
 };
 
 struct StencilTypeMapMadeData { //sets new stencil based on user toggles if not made yet
@@ -63,8 +135,7 @@ struct StencilTypeMapMadeData { //sets new stencil based on user toggles if not 
 };
 struct StencilTypeMapMadeData_hash
 {//hash for StencilTypeMapMadeData_hash
-	std::size_t operator() (const StencilTypeMapMadeData& t) const
-	{
+	std::size_t operator() (const StencilTypeMapMadeData& t) const{
 		std::size_t h[14];
 		h[0] = std::hash<bool>()(t.EnableDepth);
 		h[1] = std::hash<bool>()(t.DepthWriteMask);
