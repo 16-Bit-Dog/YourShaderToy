@@ -362,10 +362,10 @@ struct ModelToRendererDX11 : RegisterMaps{
 struct PredefinedToRendererDX11 : RegisterMaps{
 	std::vector<int> typesInOrder = { UINT_OBJ, UINT_OBJ, UINT_OBJ, UINT_OBJ,
 		UINT_OBJ, UINT_OBJ, UINT_OBJ,
-		FLOAT_OBJ };
+		FLOAT_OBJ, FLOAT_OBJ };
 	std::vector<std::string> typesInOrderName = { "WINDOW_SIZE_X", "WINDOW_SIZE_Y", "MOUSE_POS_X", "MOUSE_POS_Y",
 		"LEFT_CLICK_STATE", "RIGHT_CLICK_STATE", "MIDDLE_CLICK_STATE",
-		"NET_TIME" };
+		"NET_TIME", "DELTA_LAST_KEY" };
 	
 	ComPtr<ID3D11Buffer> Cdata;
 	std::string Name = "PROGRAM_CONSTANTS";
@@ -690,7 +690,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		(*item)->PName = Pobj.second->Pixel.name;
 
 		if (Pobj.second->On == false) {
-			(*item)->PObj->On = false; 
+//			(*item)->PObj->On = false; 
 			delete itemP;
 			return -1; 
 		}
@@ -705,7 +705,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 		(*item)->PDat = PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName].Get();
 		if ((*item)->PDat == nullptr) { 
-			(*item)->PObj->On = false; 
+//			(*item)->PObj->On = false; 
 			delete itemP;
 			return -1;
 		}
@@ -716,7 +716,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		(*item)->VDat = PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName].Get();
 
 		if ((*item)->VDat == nullptr) { 
-			(*item)->PObj->On = false;
+//			(*item)->PObj->On = false;
 			delete itemP;
 			return -1;
 		}

@@ -17,9 +17,7 @@ struct MainDX12Objects : Renderable{
     inline static MainDX12Objects* obj;
 
     bool UseWarpDev = false;
-   
-    UINT Width;
-    UINT Height;
+
     HWND hwnd;
     GLFWwindow* window;
 
@@ -154,11 +152,14 @@ struct MainDX12Objects : Renderable{
 
     }
 
-    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, UINT sWidth, UINT sHeight) override{
+    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) override{
         window = windowW;
-        Width = sWidth;
-        Height = sHeight;
+        MainWidth = sWidth;
+        MainHeight = sHeight;
         hwnd = sHwnd;
+
+        MainWidthR = &sWidth;
+        MainHeightR = &sHeight;
 
         //create command queue
 
@@ -170,8 +171,8 @@ struct MainDX12Objects : Renderable{
         // Describe and create the swap chain.
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
         swapChainDesc.BufferCount = FrameCount;
-        swapChainDesc.BufferDesc.Width = sWidth;
-        swapChainDesc.BufferDesc.Height = sHeight;
+        swapChainDesc.BufferDesc.Width = MainWidth;
+        swapChainDesc.BufferDesc.Height = MainHeight;
         swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

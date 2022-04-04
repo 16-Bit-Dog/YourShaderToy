@@ -48,6 +48,10 @@ struct GLFW_Window_C {
 
 	inline static double time;
 
+	inline static double TimeOfLastPress;
+	
+	inline static double DeltaOfLastPress;
+	inline static double DeltaOfLastPress_CompileReset;
 
 	std::string title;
 
@@ -68,6 +72,7 @@ struct GLFW_Window_C {
 
 	void CleanSwapChain();
 
+
 	void WindowPreamble() {
 		glfwGetCursorPos(window, &MousePosX, &MousePosY);
 		glfwGetFramebufferSize(window, &Width, &Height);
@@ -75,6 +80,22 @@ struct GLFW_Window_C {
 		MouseRightState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 		MouseMiddleState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 		time = glfwGetTime();
+		DeltaOfLastPress = time - TimeOfLastPress;
+		if(DeltaOfLastPress_CompileReset > -1.0f)
+			DeltaOfLastPress_CompileReset = DeltaOfLastPress;
+	}
+	void ResetTime() {
+		TimeOfLastPress = glfwGetTime();
+		DeltaOfLastPress_CompileReset = 0.0f;
 	}
 	
+	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		MainWin->ResetTime();
+	}
+
+
+	GLFW_Window_C() {
+		TimeOfLastPress = glfwGetTime();
+	}
 };

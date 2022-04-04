@@ -175,6 +175,7 @@ void AllWin::LoopRunAllContext() {
 
 	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(WinList[0]->window);
 
+	glfwSetKeyCallback(GLFW_Window_C::MainWin->window, GLFW_Window_C::key_callback);
 	//run all main big GLFW windows with associate sub imgui inside
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
@@ -191,8 +192,8 @@ void AllWin::LoopRunAllContext() {
 		}
 
 		//Imgui frame logic setup
-		Renderable::DXM->ImGUINewFrameLogic();
 
+		
 
 		//win list runner
 		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
@@ -201,7 +202,10 @@ void AllWin::LoopRunAllContext() {
 
 			//set curr context to gather input data from TODO test: maybe set main window as the current GLFW context
 			glfwMakeContextCurrent(WinList[i]->window);
+
 			glfwPollEvents();
+			//TODO: switch draw window based on WinList --> important
+			Renderable::DXM->ImGUINewFrameLogic();
 
 			//TODO: make this work with many GLFW windows
 			//if main window [0] is selected, modify cam based on input, anad update all predefined daata per frame, and update cam buffer to gpu data 

@@ -174,6 +174,9 @@ struct Renderable {
 	bool CompiledCode = false;
 	bool ClearDepthEveryPass = true;
 
+	bool AutoCodeCompile = true;
+	float AutoCodeCompile_Wait = 1.5f;
+
 	inline static Renderable* DXM;
 
 	inline static ResourceObjectBase* ROB;
@@ -182,6 +185,13 @@ struct Renderable {
 
 	bool NewImGUIDat = false;
 
+	int MainWidth;
+	int MainHeight;
+
+	int* MainWidthR;
+	int* MainHeightR;
+
+	bool BufferReset = true;
 
 	virtual void ImGUINewFrameLogic() = 0;
 
@@ -189,7 +199,7 @@ struct Renderable {
 
 	virtual void ImGUIInit() = 0;
 
-	virtual void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, UINT sWidth, UINT sHeight) = 0;
+	virtual void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) = 0;
 
 	virtual void RendererStartUpLogic() = 0;
 

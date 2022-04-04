@@ -1,4 +1,16 @@
+resize view port
+
+make error shower and highlighter (error tab, sends copy of highlighted code as error string):
+- heading pipeline name
+    - sub heading of pipeline sub name
+
+make: Load TXT button
+
+make default quat4, scale3, and translation3 matrix func
+
 add matrix type constant
+
+TODO: add error tab to replace my current error tab <-- it reprints all code and highlights the bad parts of it
 
 test texture loading and constant loading
 

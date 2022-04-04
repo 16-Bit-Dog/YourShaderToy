@@ -23,7 +23,7 @@ struct GLFW_Window_C;
 namespace ImGui {
 
 	void InputTextMultilineQuick(std::string Tag, std::string* S, ImGuiInputTextFlags* flags) {
-		ImGui::InputTextMultiline(Tag.c_str(), S, ImVec2(ImGui::GetWindowWidth() * 0.8f, 200), *flags, NULL, nullptr);
+		ImGui::InputTextMultiline(Tag.c_str(), S, ImVec2(ImGui::GetWindowWidth(), GetWindowHeight()*0.5), *flags, NULL, nullptr);
 	}
 	static void HelpMarker(const char* desc)
 	{

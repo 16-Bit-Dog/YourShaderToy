@@ -24,6 +24,9 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			ImGuiStyle style_T;
 
+			ImGui::Checkbox("Auto Code Compile", &Renderable::DXM->AutoCodeCompile);
+			if(Renderable::DXM->AutoCodeCompile) ImGui::InputFloat("Range Of Auto Code Compile", &Renderable::DXM->AutoCodeCompile_Wait);
+
 			ImGui::Checkbox("Auto FileManager Compile With Code Compile", &Renderable::DXM->AutoFileManagerCompile);
 
 			ImGui::Checkbox("ClearDepthEveryPass ##Check", &Renderable::DXM->ClearDepthEveryPass);

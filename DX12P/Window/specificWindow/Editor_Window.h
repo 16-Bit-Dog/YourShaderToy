@@ -11,12 +11,45 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::vector<std::string> AutoAddGlobalsModels;
 	std::vector<std::string> AutoAddGlobalsConstants;
 
-	std::string Globals = "";
+	std::string Globals = std::string(
+		"float4 YPRToQuat(in float4 ypr){\n"
+		"//radians of yaw pitch roll to quat. NOT angle\n"
+		"return float4(sin(ypr.z / 2.0) * cos(ypr.y / 2.0) * cos(ypr.x / 2.0) - cos(ypr.z / 2.0) * sin(ypr.y / 2.0) * sin(ypr.x / 2.0),\n"
+		"cos(ypr.z / 2.0) * sin(ypr.y / 2.0) * cos(ypr.x / 2) + sin(ypr.z / 2.0) * cos(ypr.y / 2.0) * sin(ypr.x / 2.0),\n"
+		"cos(ypr.z / 2.0) * cos(ypr.y / 2.0) * sin(ypr.x / 2) - sin(ypr.z / 2.0) * sin(ypr.y / 2.0) * cos(ypr.x / 2.0),\n"
+		"cos(ypr.z / 2.0) * cos(ypr.y / 2.0) * cos(ypr.x / 2) + sin(ypr.z / 2.0) * sin(ypr.y / 2.0) * sin(ypr.x / 2.0));\n"
+		"}\n"
+		"float4 QuatRotateAroundPoint(in float4 pos, in float4 quat){\n"
+		"float3 t = 2.0 * cross(quat.xyz,pos.xyz);\n"
+		"return float4(pos.xyz + quat.w * t+cross(quat.xyz,t) ,1);\n"
+		"}\n"
+		"float4 GetTransQuatScale(in float4 pos, in float4 trans, in float4 scale, in float4 quat){\n"
+		"return QuatRotateAroundPoint(pos,quat)*scale+trans;\n"
+		"}\n"
+		"float4 ApplyTransQuatScale(in matrix mat, in float4 pos, in float4 trans, in float4 scale, in float4 quat){\n"
+		"return mul(mat, GetTransQuatScale(pos,trans,scale,quat));\n"
+		"}\n"
+		"void SetNullToIdentityMatrix(inout matrix mat){\n"
+		"mat[0][0] = 1;\n"
+		"mat[1][1] = 1;\n"
+		"mat[2][2] = 1;\n"
+		"mat[3][3] = 1;\n"
+		"}\n"
+
+	);
+
 	std::string VsString = std::string(
+		
+		
 
 		"VertexOut SimpleVS(Vertex IN){\n"
 		"VertexOut OUT;\n"
-		"OUT.position = mul(mul(WorldMatrix,mul(ProjectionMatrix, ViewMatrix)),float4(IN.position,1.0f));\n"
+		"matrix mvp = mul(ProjectionMatrix, ViewMatrix);" //todo, maybe add specifier for world mat, since this is just world rot
+		//"float2 track = float2((WINDOW_SIZE_X/2-MOUSE_POS_X)/90,(WINDOW_SIZE_Y/2-MOUSE_POS_Y)/90);"
+		"float4 t = float4((WINDOW_SIZE_X-MOUSE_POS_X)*3/WINDOW_SIZE_X,(WINDOW_SIZE_Y-MOUSE_POS_Y)*3/WINDOW_SIZE_Y,20,0);\n" 
+		"float4 s = float4(1,1,1,1);\n"
+		"float4 q = float4(sin(DELTA_LAST_KEY)*3.14,0,0,0);\n"
+		"OUT.position = ApplyTransQuatScale(mvp, float4(IN.position, 1), t, s, YPRToQuat(q));\n"
 		"OUT.color = float4(IN.uv.x,IN.uv.y,(IN.uv.x+IN.uv.y)/2.0f,1.0f);\n"
 		"OUT.PositionWS = float4(IN.position,1.0f);\n"
 		"OUT.uv = IN.uv;\n"
@@ -121,8 +154,9 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 	std::string GetStringWithGlobalsText() {
 
-		std::string s = Globals;
+		std::string s = "";
 		s += GetStringWithNoGlobals();
+		s += Globals;
 		return std::move(s);
 
 	}

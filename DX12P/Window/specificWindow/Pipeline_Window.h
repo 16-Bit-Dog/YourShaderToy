@@ -39,8 +39,14 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		shows how program is running
 		*/
 		if (Renderable::DXM->CompiledData == false) ImGui::TextColored({ 1.0f, 0.1f, 0.1f, 1.0f }, "WARNING - FILE-MANAGER DATA NOT COMPILED");
+		
+		bool button = ImGui::Button("Pipeline & Code Compile##StartCodeCompile");
 
-		if (ImGui::Button("Pipeline & Code Compile##StartCodeCompile")) {
+		if (Renderable::DXM->BufferReset || button || Renderable::DXM->AutoCodeCompile && Renderable::DXM->AutoCodeCompile_Wait < GLFW_Window_C::DeltaOfLastPress_CompileReset) {
+			Renderable::DXM->BufferReset = false;
+
+			GLFW_Window_C::DeltaOfLastPress_CompileReset = -2.0f;
+
 			if (Renderable::DXM->AutoFileManagerCompile && Renderable::DXM->CompiledData == false) MASTER_FileManager::obj->BuildAllObjectsItem();
 
 			Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);

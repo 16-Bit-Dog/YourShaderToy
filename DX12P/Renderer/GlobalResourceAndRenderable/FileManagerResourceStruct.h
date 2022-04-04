@@ -175,6 +175,9 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 	uint32_t RightClickState;
 	uint32_t MiddleClickState;
 	float time;
+	
+	float DeltaLastKeyPress;
+	float PAD[3];
 
 	CONST_DATA_PASS_c() {
 		
@@ -188,6 +191,7 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 		RightClickState = GLFW_Window_C::MouseRightState;
 		MiddleClickState = GLFW_Window_C::MouseMiddleState;
 		time = GLFW_Window_C::time;
+		DeltaLastKeyPress = GLFW_Window_C::DeltaOfLastPress;
 		//TODO fill struct to do built item compile
 	}
 	void update() {
@@ -201,6 +205,7 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 		RightClickState = GLFW_Window_C::MouseRightState;
 		MiddleClickState = GLFW_Window_C::MouseMiddleState;
 		time = GLFW_Window_C::time;
+		DeltaLastKeyPress = GLFW_Window_C::DeltaOfLastPress;
 	}
 };
 
@@ -218,6 +223,7 @@ struct BuiltPredefined_c : ObjectBuilder {
 	};
 	std::vector<std::string>  namesF = {
 	"NET_TIME"
+	"DELTA_LAST_KEY"
 	};
 
 	//UINT32 WindowSizeX; -> //MainWin.Width;

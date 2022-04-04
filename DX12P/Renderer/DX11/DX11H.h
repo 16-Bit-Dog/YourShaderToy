@@ -75,8 +75,6 @@ struct MainDX11Objects : Renderable{
 
     bool UseWarpDev = false;
 
-    UINT Width;
-    UINT Height;
     HWND hwnd;
     GLFWwindow* window;
 
@@ -217,27 +215,6 @@ struct MainDX11Objects : Renderable{
         //TODO: make scene draw view work
     }
 
-    void DrawLogic(bool sync = true) override {
-
-        if (NewImGUIDat) {
-            ImGui::Render();
-        }
-
-        DrawOnMainWindow();
-        DrawOnSideWindow(); //TODO: draw on Scene view with special movment
-        ClearRTV = true;
-
-        if (NewImGUIDat) {
-            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-        }
-
-        dxSwapChain->Present(sync, 0); // Present with vsync
-
-        NewImGUIDat = false;
-    }
-
     ID3D11Resource* GetResourceOfUAVSRV(ID3D11View* u) {
         ID3D11Resource* r = nullptr;
         u->GetResource(&r);
@@ -245,8 +222,8 @@ struct MainDX11Objects : Renderable{
     }
 
     void CreateSwapChainAndAssociate(DXGI_FORMAT format) {
-        swapChainDescW.Width = Width;
-        swapChainDescW.Height = Height;
+        swapChainDescW.Width = MainWidth;
+        swapChainDescW.Height = MainHeight;
         swapChainDescW.BufferCount = 2;
         swapChainDescW.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swapChainDescW.Format = format;
@@ -261,26 +238,27 @@ struct MainDX11Objects : Renderable{
         
         ID3D11Texture2D* backBuffer = nullptr;
         if (dxSwapChain != nullptr) {
+            dxDeviceContext->ClearState();
+            dxDeviceContext->Flush();
+
+            // Clear the previous window size specific context.
+            ID3D11RenderTargetView* nullViews[] = { nullptr };
+            dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
+            dxRenderTargetView.Reset();
+            dxDepthStencilBuffer.Reset();
+            dxDeviceContext->Flush();
+
             dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
         }
         if (backBuffer != nullptr) {
             SafeRelease(backBuffer);
         }
-        if (dxRenderTargetView != nullptr) {
-            SafeRelease(dxRenderTargetView);
-        }
-        if ((dxDepthStencilBuffer) == nullptr) {
-            SafeRelease(dxDepthStencilBuffer);
-        }
-
         if (dxSwapChain != nullptr) {
-            dxDeviceContext->ClearState();
-            dxDeviceContext->Flush();
-
-            dxSwapChain->ResizeBuffers(0, Width, Height, format, swapChainDescW.Flags);
+            BufferReset = true;
+            ThrowFailed(dxSwapChain->ResizeBuffers(0, MainWidth, MainHeight, format, swapChainDescW.Flags));
         }
         else {
-            ThrowFailed(dxFactory->CreateSwapChainForHwnd(dxDevice.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, &dxSwapChain));
+            dxFactory->CreateSwapChainForHwnd(dxDevice.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, dxSwapChain.GetAddressOf());
         }
 
         ThrowFailed(dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer));
@@ -288,7 +266,7 @@ struct MainDX11Objects : Renderable{
         ThrowFailed(dxDevice->CreateRenderTargetView(
             backBuffer,
             nullptr,
-            &dxRenderTargetView));
+            dxRenderTargetView.GetAddressOf()));
 
         SafeRelease(backBuffer);
 
@@ -299,8 +277,8 @@ struct MainDX11Objects : Renderable{
         depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
         depthStencilBufferDesc.CPUAccessFlags = 0;
         depthStencilBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-        depthStencilBufferDesc.Width = Width;
-        depthStencilBufferDesc.Height = Height;
+        depthStencilBufferDesc.Width = MainWidth;
+        depthStencilBufferDesc.Height = MainHeight;
         depthStencilBufferDesc.MipLevels = 1;
 
         depthStencilBufferDesc.SampleDesc.Count = 1;
@@ -311,27 +289,27 @@ struct MainDX11Objects : Renderable{
         ThrowFailed(dxDevice->CreateTexture2D(
             &depthStencilBufferDesc,
             nullptr,
-            &dxDepthStencilBuffer));
+            dxDepthStencilBuffer.GetAddressOf()));
 
 
 
         ThrowFailed(dxDevice->CreateDepthStencilView(
             dxDepthStencilBuffer.Get(),
             &dxDepthStencilDesc,
-            &dxDepthStencilView));
+            dxDepthStencilView.GetAddressOf()));
 
-        dxViewport.Width = Width;
-        dxViewport.Height = Height;
+        dxViewport.Width = MainWidth;
+        dxViewport.Height = MainHeight;
         dxViewport.TopLeftX = 0.0f;
         dxViewport.TopLeftY = 0.0f;
         dxViewport.MinDepth = 0.0f;
         dxViewport.MaxDepth = 1.0f;
     }
 
-    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, UINT sWidth, UINT sHeight) override{
+    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) override{
         window = windowW;
-        Width = sWidth;
-        Height = sHeight;
+        MainWidth = sWidth;
+        MainHeight = sHeight;
         hwnd = sHwnd;
 
         DEVMODEA WinMonitorInfo;
@@ -340,6 +318,10 @@ struct MainDX11Objects : Renderable{
 
         refreshRateStatic.Numerator = WinMonitorInfo.dmDisplayFrequency;
         refreshRateStatic.Denominator = 1;
+
+        MainWidthR = &sWidth;
+        MainHeightR = &sHeight;
+
         CreateSwapChainAndAssociate(DXGI_FORMAT_R8G8B8A8_UNORM);
 
         D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc;
@@ -425,6 +407,38 @@ struct MainDX11Objects : Renderable{
 
     void CleanRendererState() override {
 
+    }
+
+    void CheckAndResizeMainBuffer() {
+       
+        if (*MainWidthR != MainWidth || *MainHeightR != MainHeight) {
+            MainWidth = *MainWidthR;
+            MainHeight = *MainHeightR;
+            CreateSwapChainAndAssociate(DXGI_FORMAT_R8G8B8A8_UNORM);
+        }
+    }
+
+    void DrawLogic(bool sync = true) override {
+
+        CheckAndResizeMainBuffer();
+
+        if (NewImGUIDat) {
+            ImGui::Render();
+        }
+
+        DrawOnMainWindow();
+        DrawOnSideWindow(); //TODO: draw on Scene view with special movment
+        ClearRTV = true;
+
+        if (NewImGUIDat) {
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
+
+        dxSwapChain->Present(sync, 0); // Present with vsync
+
+        NewImGUIDat = false;
     }
 
 };
