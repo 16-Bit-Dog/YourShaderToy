@@ -17,6 +17,7 @@
 #include "Settings_Window.h"
 #include "Editor_Window.h"
 #include "FileManager_Window.h"
+#include "CodeError_Window.h"
 
 struct GroupData;
 
@@ -84,4 +85,6 @@ struct GroupData;
 		Add_New_Win_Type([](GroupData* GDV) { MASTER_Editor::obj->BasicViewDraw(GDV); }, "Editor");
 		Add_New_Win_Type([&](GroupData* GDV) { MASTER_Pipeline::obj->BasicViewDraw(GDV); }, "Pipeline");
 		Add_New_Win_Type([&](GroupData* GDV) { MASTER_FileManager::obj->BasicViewDraw(GDV); }, "File Manager");
+		Add_New_Win_Type([&](GroupData* GDV) { MASTER_CodeError::obj->BasicViewDraw(GDV); }, "Code Error");
+		
 	}

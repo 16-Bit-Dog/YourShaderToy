@@ -13,7 +13,7 @@ enum WIN_TYPE_ENUM { // not used for now, but important to share all "scene" dat
 	W_SCENE = 2,
 	W_EDITOR = 3,
 	W_PIPELINE = 4,
-	W_FILEMANAGER = 5
+	W_FILEMANAGER = 5,
 };
 
 struct WIN_TYPE {

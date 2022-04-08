@@ -507,7 +507,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				v->push_back("	float " + PredefinedData->typesInOrderName[i] + ";\n");
 			}
 		}
-		v->push_back("}\n");
+		v->push_back("};\n");
 
 	}
 	void AddItemTextImages(std::vector<std::string>*  v) {
@@ -698,10 +698,13 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		std::string Globals = MASTER_Editor::obj->GetStringWithGlobalsText();
 		std::string VGlobals = Globals + MASTER_Editor::obj->VsString;
 		std::string PGlobals = Globals + MASTER_Editor::obj->PsString;
+		(*item)->PObj->Vertex.code = VGlobals;
+		(*item)->PObj->Pixel.code = PGlobals;
 
 
 		if (PipelineObjectIntermediateStateDX11::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX11::PixelShaderMap.end()){
 			PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName] = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&PGlobals, Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+			Pobj.second->Pixel.CompileError = false;
 		}
 		(*item)->PDat = PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName].Get();
 		if ((*item)->PDat == nullptr) { 
@@ -712,6 +715,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		if (PipelineObjectIntermediateStateDX11::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX11::VertexShaderMap.end()) {
 			PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName] = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&VGlobals, Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+			Pobj.second->Vertex.CompileError = false;
 		}
 		(*item)->VDat = PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName].Get();
 

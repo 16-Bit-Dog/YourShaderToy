@@ -260,5 +260,8 @@
     <ClInclude Include="CameraManager\CamManagerD3D11.h">
       <Filter>Header Files\CamManager</Filter>
     </ClInclude>
+    <ClInclude Include="Window\specificWindow\CodeError_Window.h">
+      <Filter>Header Files\Window\specificWindow</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

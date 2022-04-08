@@ -3,6 +3,10 @@
 #include "Master_ImGUI_Settings.h"
 
 struct MASTER_Function_Inherit {
+	ImGuiWindowFlags WinBlockF = ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoDocking;
+		
+
 	ImGuiInputTextFlags TextType = ImGuiInputTextFlags_AllowTabInput;
 
 	ImGuiWindowFlags SettingWindowFlag; //DO NOT USE VARS FROM THIS STRUCT, ONLY FROM ALIAS OF THIS STRUCT

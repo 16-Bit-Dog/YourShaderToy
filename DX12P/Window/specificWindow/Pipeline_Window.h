@@ -85,16 +85,16 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		ImGui::Text("Remove This Pipeline");
 		ImGui::SameLine();
-		if (ImGui::Button(("-##Remove This Pipeline" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::Button(("-##Remove This Pipeline" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			PipelineMain::obj->P[i]->killP = true;
 		}
 	}
 
 	void DrawPipelineOrder(const int& i) {
-		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			for (const auto& x : PipelineMain::obj->P) {
 				if (ImGui::Button((x.second->name + " ").c_str())) {
-					PipelineMain::obj->Swap(x.first, i);
+					MapTools::Swap(x.first, i, PipelineMain::obj->P);
 				}
 			}
 			ImGui::End();
@@ -108,7 +108,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Text("Name: ");
 		ImGui::SameLine();
 
-		ImGui::InputText(("##" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->name);
+		ImGui::InputText(("##" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->name);
 
 		if (PipelineMain::obj->P[i]->name == "") PipelineMain::obj->P[i]->name = " ";
 	}
@@ -121,7 +121,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	}
 
 	void DrawPipelineComputeOnlyToggle(const int& i) {
-		ImGui::Checkbox(("Compute Only##bool" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->ComputeOnlyToggle);
+		ImGui::Checkbox(("Compute Only##bool" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->ComputeOnlyToggle);
 	}
 
 	void DrawPipelineIfTrueComputeOnlyToggle(const int& i) {
@@ -130,9 +130,9 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void DrawSelectModel(const int& i) {
 		ImGui::Text("     "); ImGui::SameLine();
-		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			for (const auto& x : MASTER_FileManager::obj->ModelStore) {
-				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->padN).c_str())) {
+				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 					Renderable::DXM->ROB->SetDataToPipelineVertex(x, PipelineMain::obj->P[i]->Vertex);
 				}
 			}
@@ -141,26 +141,26 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Text(("Loaded Model:" + PipelineMain::obj->P[i]->Vertex.LoadedModelName).c_str());
 	}
 	void DrawFaceToRenderSelect(const int& i) {
-		ImGui::Checkbox(("Use Fill" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.ToFill);
-		ImGui::Checkbox(("AA Line" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.AAL);
-		if (ImGui::BeginMenu(("Select Face To Render:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		ImGui::Checkbox(("Use Fill" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.ToFill);
+		ImGui::Checkbox(("AA Line" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.AAL);
+		if (ImGui::BeginMenu(("Select Face To Render:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			bool AllFace = false;
 			bool BackFace = false;
 			bool FrontFace = false; //.cull means to cull out
 			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 1) { ImGui::Bullet(); ImGui::Text(""); }
-			else AllFace = ImGui::Button(("Both Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
+			else AllFace = ImGui::Button(("Both Faces##Select Button" + PipelineMain::obj->P[i]->Spacing()).c_str());
 			if (AllFace) {
 				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 1;
 			}
 
 			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 2) { ImGui::Bullet(); ImGui::Text(""); }
-			else BackFace = ImGui::Button(("Back Faces##Select Button" + PipelineMain::obj->P[i]->padN).c_str());
+			else BackFace = ImGui::Button(("Back Faces##Select Button" + PipelineMain::obj->P[i]->Spacing()).c_str());
 			if (BackFace) {
 				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 2;
 			}
 
 			if (PipelineMain::obj->P[i]->Vertex.RasterToMake.cull == 3) { ImGui::Bullet(); ImGui::Text("");}
-			else FrontFace = ImGui::Button(("Front Faces##Select Button C" + PipelineMain::obj->P[i]->padN).c_str());
+			else FrontFace = ImGui::Button(("Front Faces##Select Button C" + PipelineMain::obj->P[i]->Spacing()).c_str());
 			if (FrontFace) {
 				PipelineMain::obj->P[i]->Vertex.RasterToMake.cull = 3;
 			}
@@ -284,38 +284,38 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void DrawBlendSelect(const int& i) {
 
-		ImGui::Checkbox(("Enable Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendEnable);
+		ImGui::Checkbox(("Enable Blend" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendEnable);
 		if (PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendEnable) {
 
 
-			ImGui::Checkbox(("Use Color Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.IndependentBlendEnable);
+			ImGui::Checkbox(("Use Color Blend" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.IndependentBlendEnable);
 			ImGui::SameLine(); ImGui::HelpMarker("Compare resultant depth & \nenable writing to depth buffer");
 
-			ImGui::Checkbox(("Use Alpha Blend" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.AlphaToCoverageEnable);
+			ImGui::Checkbox(("Use Alpha Blend" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.BlendToMake.AlphaToCoverageEnable);
 			ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
 
 			ImGui::Text("     "); ImGui::SameLine(); ImGui::HelpMarker("Only Blend Control 14-15 use these values"); ImGui::SameLine();
-			if (ImGui::BeginMenu(("Set Blend Factor:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			if (ImGui::BeginMenu(("Set Blend Factor:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 
-				BlendFactorControlInput(("Red Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[0]);
-				BlendFactorControlInput(("Green Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[1]);
-				BlendFactorControlInput(("Blue Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[2]);
-				BlendFactorControlInput(("Alpha Blend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendFactor[3]);
+				BlendFactorControlInput(("Red Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[0]);
+				BlendFactorControlInput(("Green Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[1]);
+				BlendFactorControlInput(("Blue Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[2]);
+				BlendFactorControlInput(("Alpha Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[3]);
 				ImGui::EndMenu();
 			}
 
 			ImGui::Text("     "); ImGui::SameLine();
-			if (ImGui::BeginMenu(("Select Blend Specifics:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+			if (ImGui::BeginMenu(("Select Blend Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 
-				BlendControlInput(("[SrcBlend] How PS Blends RGB" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlend);
-				BlendControlInput(("[DestBlend] How RTV Blends" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlend);
-				BlendOpControlInput(("How To Blend SrcBlend and DestBlend" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOp);
+				BlendControlInput(("[SrcBlend] How PS Blends RGB" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlend);
+				BlendControlInput(("[DestBlend] How RTV Blends" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlend);
+				BlendOpControlInput(("How To Blend SrcBlend and DestBlend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOp);
 				ImGui::Text("");
-				BlendControlInput(("[SrcBlendAlpha] How PS Blends Alpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlendAlpha);
-				BlendControlInput(("[DestBlendAlpha] How RTV Blends Alpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlendAlpha);
-				BlendOpControlInput(("How To Blend SrcBlendAlpha and DestBlendAlpha" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOpAlpha);
+				BlendControlInput(("[SrcBlendAlpha] How PS Blends Alpha" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlendAlpha);
+				BlendControlInput(("[DestBlendAlpha] How RTV Blends Alpha" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlendAlpha);
+				BlendOpControlInput(("How To Blend SrcBlendAlpha and DestBlendAlpha" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.BlendOpAlpha);
 				ImGui::Text("");
-				MaskForStencilUINT8(("Render Target Write Mask: " + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.BlendToMake.RenderTargetWriteMask);
+				MaskForStencilUINT8(("Render Target Write Mask: " + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.RenderTargetWriteMask);
 
 				ImGui::EndMenu();
 			}
@@ -326,31 +326,31 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	}
 
 	void DrawCompFunctionSelect(const int& i) {
-		ImGui::Checkbox(("Use Depth Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableDepth);
+		ImGui::Checkbox(("Use Depth Test" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableDepth);
 		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant depth & \nenable writing to depth buffer");
 
-		ImGui::Checkbox(("Use Stencil Test" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableStencil);
+		ImGui::Checkbox(("Use Stencil Test" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.EnableStencil);
 		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
 
 		ImGui::Text("     "); ImGui::SameLine();
-		if (ImGui::BeginMenu(("Select Depth-Stencil Specifics:##" + PipelineMain::obj->P[i]->padN).c_str())) {
+		if (ImGui::BeginMenu(("Select Depth-Stencil Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			
-			ImGui::Checkbox(("Depth Write Mask"+PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthWriteMask);
+			ImGui::Checkbox(("Depth Write Mask"+PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthWriteMask);
 			ImGui::SameLine(); ImGui::HelpMarker("no check = don't write to depth buffer\ncheck = write to depth buffer");
-			CompFuncControlInt(("Depth Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthComp); // use this func to control tri fragment test
+			CompFuncControlInt(("Depth Comparison" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthComp); // use this func to control tri fragment test
 			
-			MaskForStencilUINT8(("Stencil Read Mask" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToReadFromStencil);
-			MaskForStencilUINT8(("Stencil Write Mask" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToWriteToStencil);
+			MaskForStencilUINT8(("Stencil Read Mask" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToReadFromStencil);
+			MaskForStencilUINT8(("Stencil Write Mask" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.WhereToWriteToStencil);
 
-			PassFailOpStencil(("FRONT: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilFailOp);
-			PassFailOpStencil(("FRONT: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilDepthFailOp);
-			PassFailOpStencil(("FRONT: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilPassOp);
-			CompFuncControlInt(("FRONT: Tri Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontTriComp); // use this func to control tri fragment test
+			PassFailOpStencil(("FRONT: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilFailOp);
+			PassFailOpStencil(("FRONT: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilDepthFailOp);
+			PassFailOpStencil(("FRONT: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontFaceStencilPassOp);
+			CompFuncControlInt(("FRONT: Tri Comparison" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.FrontTriComp); // use this func to control tri fragment test
 			
-			PassFailOpStencil(("BACK: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilFailOp);
-			PassFailOpStencil(("BACK: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilDepthFailOp);
-			PassFailOpStencil(("BACK: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilPassOp);
-			CompFuncControlInt(("BACK: Tri Comparison" + PipelineMain::obj->P[i]->padN), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackTriComp); // use this func to control tri fragment test
+			PassFailOpStencil(("BACK: If Tri Fails The Comp. Pass" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilFailOp);
+			PassFailOpStencil(("BACK: If Tri passes Comp. - Depth Fails" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilDepthFailOp);
+			PassFailOpStencil(("BACK: If Tri Passes - Depth Passes" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackFaceStencilPassOp);
+			CompFuncControlInt(("BACK: Tri Comparison" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.StencilToMake.BackTriComp); // use this func to control tri fragment test
 			
 			
 			ImGui::EndMenu();
@@ -370,10 +370,13 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
 
+		PipelineMain::obj->P[i]->DrawCompute();
+
+
 	}
 
 	void DrawPipelineOnToggle(const int& i) {
-		ImGui::Checkbox(("Use Pipeline##bool" + PipelineMain::obj->P[i]->padN).c_str(), &PipelineMain::obj->P[i]->On);
+		ImGui::Checkbox(("Use Pipeline##bool" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->On);
 	}
 
 	virtual void BasicViewDraw(GroupData* GD) {
@@ -390,13 +393,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 			
 			for (const auto& i : PipelineMain::obj->P) {
-				i.second->padN = sPad(i.second->Order);
 				ImGui::Text((i.second->name).c_str());
 				ImGui::SameLine();
-				if (ImGui::CollapsingHeader(("##"+i.second->padN).c_str(), NULL))
+				if (ImGui::CollapsingHeader(("##"+i.second->Spacing()).c_str(), NULL))
 				{
-
-					DrawPipelineAdd(i.first, i.second->padN+"B");
+					DrawPipelineAdd(i.first, i.second->Spacing()+ "B");
 					ImGui::NewLine();
 					DrawPipelineSub(i.first);
 					DrawPipelineOrder(i.first);
@@ -406,7 +407,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 					if(PipelineMain::obj->P[i.first]->ComputeOnlyToggle) DrawPipelineIfTrueComputeOnlyToggle(i.first);
 					else DrawPipelineIfFalseComputeOnlyToggle(i.first);
 					ImGui::NewLine();
-					DrawPipelineAdd(i.first+1, i.second->padN+"A", "Add Pipeline After");
+					DrawPipelineAdd(i.first+1, i.second->Spacing() + "A", "Add Pipeline After");
 				}
 				ImGui::Separator();
 			}

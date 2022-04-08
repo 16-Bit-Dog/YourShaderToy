@@ -449,6 +449,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void ShowConstant() {
 		for (int i = 0; i < ConstantStore.size(); i++) {
+
 			ImGui::Separator();
 			ImGui::Text("Name: ");
 			ImGui::SameLine();

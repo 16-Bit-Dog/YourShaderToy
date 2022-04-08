@@ -1,24 +1,23 @@
-resize view port
 
-make error shower and highlighter (error tab, sends copy of highlighted code as error string):
-- heading pipeline name
-    - sub heading of pipeline sub name
 
-make: Load TXT button
+add compute shader -> same as Vertex shader, no different, I can bind everything
+- Then fix compute only pipeline path
+- add block size thing
+^^ add "auto map block size to current window size" 
 
-make default quat4, scale3, and translation3 matrix func
+add rtv copy somehow
 
-add matrix type constant
-
-TODO: add error tab to replace my current error tab <-- it reprints all code and highlights the bad parts of it
+add "new DepthTexture" to file manager tab -- you have inside this tab 1 forced main depth, and you can make more--> maybe not?
 
 test texture loading and constant loading
 
-add compute shader and -compute only- pipeline
-    add rtv copy
-    add "new DepthTexture" to file manager tab -- you have inside this tab 1 forced main depth, and you can make more
+make: Load TXT button
 
-add view port resizing
+add matrix type constant
+
+add VR mode 
+
+add d3d12
 
 view port in scene view always has acsess to w a s d cam, and thats what the cam is for - add debug selection and stuff
     - 

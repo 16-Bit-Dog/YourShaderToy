@@ -25,6 +25,7 @@ void FillAllObjects() {
 	MASTER_Setting::obj = new MASTER_Setting();
 	MASTER_Editor::obj = new MASTER_Editor();
 	MASTER_FileManager::obj = new MASTER_FileManager();
+	MASTER_CodeError::obj = new MASTER_CodeError();
 	PipelineMain::obj = new PipelineMain();
 	StaticDX11Object::obj = new StaticDX11Object();
 }
