@@ -1,4 +1,5 @@
-
+TODO: bind CS shader stuff and run compute shader code
+And use update subresouce of current dim's of compute shader thing
 
 add compute shader -> same as Vertex shader, no different, I can bind everything
 - Then fix compute only pipeline path

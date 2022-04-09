@@ -527,7 +527,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			DrawBuildAllObjects();
 			ImGui::Separator();
 			ImGui::Separator();
-			CheckImageFileSelectors();
+			CheckImageFileSelectors();			
 			ImGui::Separator(); ImGui::Separator();
 			DrawPREDEFINED();
 			ImGui::Separator(); ImGui::Separator();

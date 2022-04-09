@@ -122,6 +122,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void DrawPipelineComputeOnlyToggle(const int& i) {
 		ImGui::Checkbox(("Compute Only##bool" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->ComputeOnlyToggle);
+		ImGui::Checkbox(("Turn Compute Off##bool" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->TurnComputeOffToggle);
 	}
 
 	void DrawPipelineIfTrueComputeOnlyToggle(const int& i) {

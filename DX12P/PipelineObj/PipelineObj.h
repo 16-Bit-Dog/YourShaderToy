@@ -78,17 +78,17 @@ namespace MapTools {
 
 struct PipelineObj {
 	//Pipeline object that stores all pipeline data for a specific pipeline object
-
 	
 	bool On = true;//is pipeline used?
 	bool ComputeOnlyToggle = false; //compute only pipeline?
+	bool TurnComputeOffToggle = false;
 
 	VertexShaderPipeline Vertex; //vertex shader handler
 
 	PixelShaderPipeline Pixel; //pixel shader handler
 
 	std::map<int, ComputeShaderPipeline*> Compute;
-
+	
 	std::string name; //name of pipeline
 	int Order = -1; //order of pipeline
 	bool killP = false; //to kill pipeline toggle var -> awaiting death or not
@@ -112,7 +112,7 @@ struct PipelineObj {
 	}
 
 	void DrawCompute() {
-		if(ImGui::CollapsingHeader(("Compute:##" + Spacing()).c_str(), NULL)) {
+		if(ImGui::CollapsingHeader(("Compute [runs after]:##" + Spacing()).c_str(), NULL)) {
 
 			if (ImGui::Button(("+##Compute Add Start" + Spacing()).c_str())) {
 				MapTools::AddNew(0, Compute);
@@ -124,9 +124,10 @@ struct PipelineObj {
 				if(ImGui::CollapsingHeader((i.second->Spacing() + Spacing()).c_str())) {
 					i.second->DrawNameSwitch();
 					i.second->Input();
+
+					i.second->DrawBlockInputs();
 				}
 			}
-
 
 			if (ImGui::Button(("+##Compute Add End" + std::to_string(Order)).c_str())) {
 				MapTools::AddNewToEnd(Compute);

@@ -26,6 +26,7 @@ struct VertexShaderPipeline : BasePipeline {
 	std::array<float, 4> BlendFactor = { 1.0f,1.0f,1.0f,1.0f };
 	
 	VertexShaderPipeline() {
+		T_P = VERTEX;
 		ShaderTypeName = "Vertex";
 		this->name = name + "SimpleVS";
 	}

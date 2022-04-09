@@ -10,21 +10,31 @@ struct BasePipeline {
 	base abstract class to inherit by all pipelines for handling generic data
 	*/
 	//base piepline global handler
+
+	enum {
+		VERTEX = 0,
+		PIXEL = 1,
+		COMPUTE = 2,
+	};
+
 	inline static uint64_t globalCont; // global pipeline counter to iterate id of pipeline
 
 	uint64_t control = 0; //the id of pipeline
 	
+	UINT T_P = 0;
+
 	bool On = true; // is pipeline used ?
 	std::string name = ""; //name of piepline
 
-	std::string code = "";
-	std::vector<std::string> codeV;
+	inline static std::array<std::string,12> code;
+	
+	inline static std::array<std::vector<std::string>,12> codeV;
 
 	std::string ShaderTypeName = ""; //shader type name
 
 	std::string ErrorMessage_s = ""; //err of pipeline compile
 
-	bool CompileError = false;
+	bool CompileError;
 
 	BasePipeline() {
 		control = globalCont;
@@ -38,31 +48,28 @@ struct BasePipeline {
 	std::string GetName() {
 		return std::move(ShaderTypeName + this->Spacing());
 	}
+
+	inline static void GenCode(int TYPE) {
+		BasePipeline::codeV[TYPE].clear();
+		int L = 0;
+		for (int i = 1; i < code[TYPE].size(); i++) {
+			if (BasePipeline::code[TYPE].substr(i - 1, 1) == "\n") {
+				BasePipeline::codeV[TYPE].push_back(std::to_string(codeV.size() + 1) + "| " + BasePipeline::code[TYPE].substr(L, i - L));
+				L = i;
+			}
+		}
+		BasePipeline::codeV[TYPE].push_back(std::to_string(BasePipeline::codeV[TYPE].size() + 1) + "| " + BasePipeline::code[TYPE].substr(L, BasePipeline::code[TYPE].size() - L));
+	}
 	void GetAndShowErrorMessage(){
 		
-		if (CompileError == false) {
-			codeV.clear();
-			int L = 0;
-			for (int i = 1; i < code.size(); i++) { 
-				if (code.substr(i - 1, 1) == "\n") {
-					codeV.push_back(std::to_string(codeV.size()+1)+"| "+code.substr(L, i-L));
-					L = i;
-				}
-			}
-			codeV.push_back(std::to_string(codeV.size() + 1) + "| " + code.substr(L, code.size() - L));
-
-			CompileError = true;
-
-		}
-
 		ImGui::TextColored({ 1.0f,0.1f,0.1f,1.0f }, ErrorMessage_s.c_str());
 
 		if(ImGui::CollapsingHeader(("Code:##FunctionNameInputForShader" + ShaderTypeName + Spacing()).c_str(), NULL)) {
-			for (const auto& i : codeV) {
+			for (const auto& i : codeV[T_P]) {
 				ImGui::Text(i.c_str());
 			}
-			
 		}
+	
 	}
 
 	void PrintError() {

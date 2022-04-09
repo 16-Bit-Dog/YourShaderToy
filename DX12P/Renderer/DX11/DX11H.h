@@ -14,15 +14,32 @@
 #include <functional>
 using namespace DirectX;
 
+struct ComputeDataHolder {
+    std::string CName;
+    ID3D11ComputeShader* CDat;
+    uint32_t DimX;
+    uint32_t DimY;
+    uint32_t DimZ;
+};
+
 struct PipelineObjectIntermediateStateDX11 {
     inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
+    inline static std::unordered_map<std::string, ComPtr<ID3D11ComputeShader>> ComputeShaderMap;
+    
 
     std::string VName = "";
     ID3D11VertexShader* VDat = nullptr;
 
     std::string PName = "";
     ID3D11PixelShader* PDat = nullptr;
+
+    std::vector<ComputeDataHolder> Compute;
+
+    void setCSize(const int& size) {
+        Compute.resize(size);
+    }
+
     PipelineObj* PObj;
     //TODO: add compute shader stuff -- std::vector 
     std::function<void()> ToRunLogic;
@@ -39,7 +56,8 @@ struct MainDX11Objects : Renderable{
 
         ID3D11VertexShader* VertexShader = nullptr;
         ID3D11PixelShader* PixelShader = nullptr;
-        
+        ID3D11ComputeShader* ComputeShader = nullptr;
+
         void* Model = nullptr;
 
         void SetNull() {
