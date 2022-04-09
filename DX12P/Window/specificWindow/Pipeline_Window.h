@@ -380,6 +380,18 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Checkbox(("Use Pipeline##bool" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->On);
 	}
 
+	void DrawRTV(PipelineObj* i) {
+		i->CheckIfRTVExistsAndRebind();
+		ImGui::Text(("RTV Bound:"+Renderable::DXM->RTV[i->RTV_Selected].name).c_str());
+		if (ImGui::BeginMenu(("Change RTV Bound For Stage: ##Change RTV for PObj"+i->Spacing()).c_str())) {
+			for (auto& x : Renderable::DXM->RTV) {
+				if (ImGui::Button((x.second.name+"##ButtonToChangeRTVBound"+i->Spacing()+x.second.Spacing()).c_str())) {
+					i->RTV_Selected = x.first;
+				}
+			}
+		}
+	}
+
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Pipeline:")) {
 
@@ -398,6 +410,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 				ImGui::SameLine();
 				if (ImGui::CollapsingHeader(("##"+i.second->Spacing()).c_str(), NULL))
 				{
+					DrawRTV(i.second);
 					DrawPipelineAdd(i.first, i.second->Spacing()+ "B");
 					ImGui::NewLine();
 					DrawPipelineSub(i.first);

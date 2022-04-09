@@ -1,16 +1,27 @@
-TODO: bind CS shader stuff and run compute shader code
-And use update subresouce of current dim's of compute shader thing
+make sure to resize all and set all
 
-add compute shader -> same as Vertex shader, no different, I can bind everything
-- Then fix compute only pipeline path
-- add block size thing
-^^ add "auto map block size to current window size" 
+TODO:
+recreate RTV's if wrong size when compiling (only for new) and resize all buffers manually if resized manually
 
-add rtv copy somehow
+pipelineObj link is sent to a pipelineIntermediate to not allow easy dynamic change
+
+set in ToRun before everything the OM render target, since that is when it runs. it runs this change even if compute only and compute is off
+
+
+--------
+
+test compute and binding
+
+print out RTV size in FILE_MANAGER
+
+add: check box and select,
+ Texture-> COPY-TO-RTV 
+ RTX -> COPY-TO-TEXTURE 
+
+^^ add "auto map block size to current RTV size" which just does math on the spot to auto set  
 
 add "new DepthTexture" to file manager tab -- you have inside this tab 1 forced main depth, and you can make more--> maybe not?
 
-test texture loading and constant loading
 
 make: Load TXT button
 

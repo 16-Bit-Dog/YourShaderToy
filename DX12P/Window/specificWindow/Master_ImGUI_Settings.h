@@ -120,7 +120,7 @@ struct MASTER_IM_GUI {
 		if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 		if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
 
-		return window_flags;
+		return std::move(window_flags);
 	}
 
 	void SetAndCreateimGUIContext(GLFWwindow* w) {
@@ -177,9 +177,7 @@ struct MASTER_IM_GUI {
 
 };
 std::string sPad(int num) {
-	std::string n = " ";
-	for (int i = 0; i < num; i++) n += " ";
-	return n;
+	return std::move(std::string(' ', num));
 }
 
 //TODO: make ID for object values to read from GroupData* GD, and add to map accordingly, default 0, else read from (And use consistant BUTTON ID) for new buttons

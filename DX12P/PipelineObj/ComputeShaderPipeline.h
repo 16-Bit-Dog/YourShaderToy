@@ -21,7 +21,6 @@ struct ComputeShaderPipeline : BasePipeline {
 		this->name = name + "SimpleCS";
 	}
 
-	
 	void scalarUintHandle(const std::string ToolTipN, uint32_t& B) {
 		ImGui::InputScalar((ToolTipN + Spacing()).c_str(), ImGuiDataType_U32, &B);
 	}

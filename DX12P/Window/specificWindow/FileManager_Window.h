@@ -283,6 +283,37 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 	}
 
+	void ShowRTV() {
+		std::vector<uint64_t> ToRemove;
+
+		for (auto& i : Renderable::DXM->RTV) {
+			ImGui::InputText(("Name: ##RTV name input" + i.second.Spacing()).c_str(), &i.second.name);
+			if (ImGui::Button(("-##Remove RTV" + i.second.Spacing()).c_str())) {
+				if (Renderable::DXM->RTV.size() > 1) {
+					ToRemove.push_back(i.first);
+				}
+			}
+		}
+
+		for (const auto& i : ToRemove) {
+			Renderable::DXM->RTV.erase(i);
+		}
+
+	}
+	void AddRTV() {
+		if (ImGui::Button("+##Add new RTV")) {
+			Renderable::DXM->AddNewRTV();
+		}
+	}
+	void DrawRTV() {
+		if (ImGui::CollapsingHeader("RTV:", NULL))
+		{
+			AddRTV();
+
+			ShowRTV();
+		}
+		ImGui::Separator();
+	}
 	void DrawIMAGE() {
 		if (ImGui::CollapsingHeader("Images:", NULL))
 		{
@@ -530,6 +561,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			CheckImageFileSelectors();			
 			ImGui::Separator(); ImGui::Separator();
 			DrawPREDEFINED();
+			ImGui::Separator(); ImGui::Separator();
+			DrawRTV();
 			ImGui::Separator(); ImGui::Separator();
 			DrawIMAGE();
 			ImGui::Separator(); ImGui::Separator();

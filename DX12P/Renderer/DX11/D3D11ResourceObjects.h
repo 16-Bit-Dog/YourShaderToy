@@ -51,16 +51,16 @@ struct RegisterMaps {
 	int sampler_num = -1;
 
 	std::string CBName() {
-		return std::to_string(cb_num);
+		return std::move(std::to_string(cb_num));
 	}
 	std::string SRVName() {
-		return std::to_string(srv_num);
+		return std::move(std::to_string(srv_num));
 	}
 	std::string UAVName() {
-		return std::to_string(uav_num);
+		return std::move(std::to_string(uav_num));
 	}
 	std::string SamplerName() {
-		return std::to_string(sampler_num);
+		return std::move(std::to_string(sampler_num));
 	}
 
 
@@ -441,6 +441,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 
+	inline static const UINT NOneP = 0;
+
 	void PreBindImageData(ImageObjectToRendererDX11* ID) {
 	//	ID->UAV_R
 	//	ID->uav
@@ -454,6 +456,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(ID->sampler_num, 1, &ID->Samp);
 //		MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources();
 //		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers();
+
+		MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, &ID->uav, &NOneP);
+		MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(ID->sampler_num, 1, &ID->Samp);
 	}
 	void PreBindAllImageData() {
 		for (const auto& i : ImageData) {
@@ -461,7 +466,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 	void PreBindModelData(ModelToRendererDX11* MD) {
-
+		//TODO: add this section
 	}
 	void PreBindAllModelData() {
 		for (const auto& i : ModelData) {
@@ -469,6 +474,13 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 	void PreBindConstantData(StructObjectToRendererDX11* ID) {
+		
+		MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
+
+		MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
+
+		MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, ID->uav.GetAddressOf(), &NOneP);
+
 
 	}
 	void PreBindAllConstantData() {
@@ -480,6 +492,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 
 		MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
+	
+		MainDX11Objects::obj->dxDeviceContext->CSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 	}
 	//TODO: add individual compile buttons and checkmark for if up to date data
 	void PreBindAllResources() {

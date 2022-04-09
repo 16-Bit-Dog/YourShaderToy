@@ -93,6 +93,18 @@ struct PipelineObj {
 	int Order = -1; //order of pipeline
 	bool killP = false; //to kill pipeline toggle var -> awaiting death or not
 	
+	uint64_t RTV_Selected = 0;
+
+	bool CheckIfRTVExistsAndRebind() {
+		if (Renderable::DXM->RTV.find(RTV_Selected) == Renderable::DXM->RTV.end()) {
+			for (const auto& i : Renderable::DXM->RTV) {
+				RTV_Selected = i.first;
+				return false;
+			}
+		}
+		return true;
+	}
+
 	std::string Spacing() {
 		return std::move(std::string(Order, 'POBJ'));
 	}
