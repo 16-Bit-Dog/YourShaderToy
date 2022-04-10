@@ -209,6 +209,67 @@ struct CONST_DATA_PASS_c { //just for sizeof()
 	}
 };
 
+
+struct DepthTarget_s {
+	inline static uint64_t GLOBAL_ID_COUNTER = 0;
+
+	std::string TYPE_N = "";
+
+	std::string name;
+	uint64_t ID;
+
+	std::string Spacing() {
+		return std::move(std::string("D", ID));
+	}
+
+	inline static uint64_t GetNextID() {
+		return std::move(GLOBAL_ID_COUNTER+1);
+	}
+	DepthTarget_s() {
+		ID = GLOBAL_ID_COUNTER;
+
+		GLOBAL_ID_COUNTER += 1;
+
+		TYPE_N = "DEPTH";
+		name = TYPE_N + " " + std::to_string(ID);
+		DealWithNameConflict(&usedNameCont, &name, TYPE_N);
+
+	}
+	~DepthTarget_s() {
+		usedNameCont.erase(name);
+	}
+};
+struct RenderTarget_s {
+
+	inline static uint64_t GLOBAL_ID_COUNTER = 0;
+
+	std::string TYPE_N = "";
+
+	std::string name;
+	uint64_t ID;
+
+	std::string Spacing() {
+		return std::move(std::string("R", ID));
+	}
+
+	inline static uint64_t GetNextID() {
+		return std::move(GLOBAL_ID_COUNTER+1);
+	}
+	RenderTarget_s() {
+		ID = GLOBAL_ID_COUNTER;
+
+		GLOBAL_ID_COUNTER += 1;
+
+		TYPE_N = "RTV";
+		name = TYPE_N + " " + std::to_string(ID);
+		DealWithNameConflict(&usedNameCont, &name, TYPE_N);
+
+	}
+	~RenderTarget_s() {
+		usedNameCont.erase(name);
+	}
+};
+
 struct BuiltPredefined_c : ObjectBuilder {
 	CONST_DATA_PASS_c* data = new CONST_DATA_PASS_c();
 
@@ -476,5 +537,9 @@ void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, st
 	}
 }
 
+struct RTV_DEPTH {
+	inline static std::unordered_map<uint64_t, RenderTarget_s*> RTV = { {0, new RenderTarget_s()} };
+	inline static std::unordered_map<uint64_t, DepthTarget_s*> DEPTH = { {0, new DepthTarget_s()} };
+};
 
 #endif

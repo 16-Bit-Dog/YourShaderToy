@@ -29,6 +29,13 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	std::vector<BuiltModel_c*> ModelStore;
 	std::vector<BuiltConstant_c*> ConstantStore;
 
+	void AddNewRTV() {
+		RTV_DEPTH::RTV[RenderTarget_s::GetNextID()] = (new RenderTarget_s());
+	}
+	void AddNewDEPTH() {
+		RTV_DEPTH::DEPTH[DepthTarget_s::GetNextID()] = (new DepthTarget_s());
+	}
+
 	virtual void settingWindowSettingsMaker() {
 		SettingWindowFlag = MASTER_IM_GUI::obj->WindowDrawFlagBuilder(
 			false, false,
@@ -66,7 +73,12 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void CleanAllBuild() {
 		Renderable::DXM->ROB->ClearAllObjects();
 	}
-
+	void FillEditorTextRTV() {
+		Renderable::DXM->ROB->AddItemTextRTV(&MASTER_Editor::obj->AutoAddGlobalsRTV);
+	}
+	void FillEditorTextDEPTH() {
+		Renderable::DXM->ROB->AddItemTextDEPTH(&MASTER_Editor::obj->AutoAddGlobalsDEPTH);
+	}
 	void FillEditorTextDefaults() {
 		Renderable::DXM->ROB->AddItemTextDefault(&MASTER_Editor::obj->AutoAddGlobalsPredefined);
 	}
@@ -90,7 +102,11 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		MASTER_Editor::obj->AutoAddGlobalsImages.clear();
 		MASTER_Editor::obj->AutoAddGlobalsModels.clear();
 		MASTER_Editor::obj->AutoAddGlobalsConstants.clear();
+		MASTER_Editor::obj->AutoAddGlobalsRTV.clear();
+		MASTER_Editor::obj->AutoAddGlobalsDEPTH.clear();
 
+		FillEditorTextRTV();
+		FillEditorTextDEPTH();
 		FillEditorTextDefaults();
 		FillEditorTextImages();
 		FillEditorTextModels();
@@ -286,23 +302,25 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void ShowRTV() {
 		std::vector<uint64_t> ToRemove;
 
-		for (auto& i : Renderable::DXM->RTV) {
-			ImGui::InputText(("Name: ##RTV name input" + i.second.Spacing()).c_str(), &i.second.name);
-			if (ImGui::Button(("-##Remove RTV" + i.second.Spacing()).c_str())) {
-				if (Renderable::DXM->RTV.size() > 1) {
+		for (auto& i : RTV_DEPTH::RTV) {
+			ImGui::Text("Name: "); ImGui::SameLine();
+			ImGui::InputText(("##RTV name input" + i.second->Spacing()).c_str(), &i.second->name);
+			if (ImGui::Button(("-##Remove RTV" + i.second->Spacing()).c_str())) {
+				if (RTV_DEPTH::RTV.size() > 1) {
 					ToRemove.push_back(i.first);
 				}
 			}
+			ImGui::Separator();
 		}
 
 		for (const auto& i : ToRemove) {
-			Renderable::DXM->RTV.erase(i);
+			RTV_DEPTH::RTV.erase(i);
 		}
 
 	}
 	void AddRTV() {
 		if (ImGui::Button("+##Add new RTV")) {
-			Renderable::DXM->AddNewRTV();
+			AddNewRTV();
 		}
 	}
 	void DrawRTV() {
@@ -311,6 +329,41 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			AddRTV();
 
 			ShowRTV();
+		}
+		ImGui::Separator();
+	}
+
+
+	void ShowDEPTH() {
+		std::vector<uint64_t> ToRemove;
+
+		for (auto& i : RTV_DEPTH::DEPTH) {
+			ImGui::Text("Name: "); ImGui::SameLine();
+			ImGui::InputText(("##DEPTH name input" + i.second->Spacing()).c_str(), &i.second->name);
+			if (ImGui::Button(("-##Remove DEPTH" + i.second->Spacing()).c_str())) {
+				if (RTV_DEPTH::DEPTH.size() > 1) {
+					ToRemove.push_back(i.first);
+				}
+			}
+			ImGui::Separator();
+		}
+
+		for (const auto& i : ToRemove) {
+			RTV_DEPTH::DEPTH.erase(i);
+		}
+
+	}
+	void AddDEPTH() {
+		if (ImGui::Button("+##Add new DEPTH")) {
+			AddNewDEPTH();
+		}
+	}
+	void DrawDEPTH() {
+		if (ImGui::CollapsingHeader("DEPTH:", NULL))
+		{
+			AddDEPTH();
+
+			ShowDEPTH();
 		}
 		ImGui::Separator();
 	}
@@ -563,6 +616,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			DrawPREDEFINED();
 			ImGui::Separator(); ImGui::Separator();
 			DrawRTV();
+			ImGui::Separator(); ImGui::Separator();
+			DrawDEPTH();
 			ImGui::Separator(); ImGui::Separator();
 			DrawIMAGE();
 			ImGui::Separator(); ImGui::Separator();

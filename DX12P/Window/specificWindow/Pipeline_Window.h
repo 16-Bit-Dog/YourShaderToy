@@ -381,17 +381,29 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	}
 
 	void DrawRTV(PipelineObj* i) {
-		i->CheckIfRTVExistsAndRebind();
-		ImGui::Text(("RTV Bound:"+Renderable::DXM->RTV[i->RTV_Selected].name).c_str());
+		i->CheckIfRTVExistsAndRebind(RTV_DEPTH::RTV);
+		ImGui::Text(("RTV Bound: "+ RTV_DEPTH::RTV[i->RTV_Selected]->name).c_str());
 		if (ImGui::BeginMenu(("Change RTV Bound For Stage: ##Change RTV for PObj"+i->Spacing()).c_str())) {
-			for (auto& x : Renderable::DXM->RTV) {
-				if (ImGui::Button((x.second.name+"##ButtonToChangeRTVBound"+i->Spacing()+x.second.Spacing()).c_str())) {
+			for (auto& x : RTV_DEPTH::RTV) {
+				if (ImGui::Button((x.second->name+"##ButtonToChangeRTVBound"+i->Spacing()+x.second->Spacing()).c_str())) {
 					i->RTV_Selected = x.first;
 				}
 			}
+			ImGui::EndMenu();
 		}
 	}
-
+	void DrawDEPTH(PipelineObj* i) {
+		i->CheckIfDEPTHExistsAndRebind(RTV_DEPTH::DEPTH);
+		ImGui::Text(("DEPTH Bound: " + RTV_DEPTH::DEPTH[i->DEPTH_Selected]->name).c_str());
+		if (ImGui::BeginMenu(("Change DEPTH Bound For Stage: ##Change DEPTH for PObj" + i->Spacing()).c_str())) {
+			for (auto& x : RTV_DEPTH::DEPTH) {
+				if (ImGui::Button((x.second->name + "##ButtonToChangeDEPTHBound" + i->Spacing() + x.second->Spacing()).c_str())) {
+					i->DEPTH_Selected = x.first;
+				}
+			}
+			ImGui::EndMenu();
+		}
+	}
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Pipeline:")) {
 
@@ -411,6 +423,9 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 				if (ImGui::CollapsingHeader(("##"+i.second->Spacing()).c_str(), NULL))
 				{
 					DrawRTV(i.second);
+					ImGui::NewLine();
+					DrawDEPTH(i.second);
+					ImGui::NewLine();
 					DrawPipelineAdd(i.first, i.second->Spacing()+ "B");
 					ImGui::NewLine();
 					DrawPipelineSub(i.first);

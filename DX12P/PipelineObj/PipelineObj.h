@@ -4,6 +4,7 @@
 #include "PixelShaderPipeline.h"
 #include "ComputeShaderPipeline.h"
 #include "map"
+#include "FileManagerResourceStruct.h"
 
 //TODO: fix interact with name and create from inside pipeline state new pipeline
 //TODO: make toggle work
@@ -94,19 +95,29 @@ struct PipelineObj {
 	bool killP = false; //to kill pipeline toggle var -> awaiting death or not
 	
 	uint64_t RTV_Selected = 0;
+	uint64_t DEPTH_Selected = 0;
 
-	bool CheckIfRTVExistsAndRebind() {
-		if (Renderable::DXM->RTV.find(RTV_Selected) == Renderable::DXM->RTV.end()) {
-			for (const auto& i : Renderable::DXM->RTV) {
+	void CheckIfRTVExistsAndRebind(std::unordered_map<uint64_t, RenderTarget_s*>& RTV) {
+		if (RTV.find(RTV_Selected) == RTV.end()) {
+			for (const auto& i : RTV) {
 				RTV_Selected = i.first;
-				return false;
+				return;
 			}
 		}
-		return true;
+		return;
+	}
+	void CheckIfDEPTHExistsAndRebind(std::unordered_map<uint64_t, DepthTarget_s*>& DEPTH) {
+		if (DEPTH.find(DEPTH_Selected) == DEPTH.end()) {
+			for (const auto& i : DEPTH) {
+				DEPTH_Selected = i.first;
+				return;
+			}
+		}
+		return;
 	}
 
 	std::string Spacing() {
-		return std::move(std::string(Order, 'POBJ'));
+		return std::move(std::string("PO", Order));
 	}
 
 	std::string GetName() {

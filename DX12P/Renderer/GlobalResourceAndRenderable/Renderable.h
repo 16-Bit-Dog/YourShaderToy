@@ -164,25 +164,7 @@ struct StencilTypeMapMadeData_hash
 	}
 };
 
-struct RenderTarget_s {
-	inline static uint64_t GLOBAL_ID_COUNTER = 0;
 
-	std::string name;
-	uint64_t ID;
-
-	std::string Spacing() {
-		return std::move(std::string("RTV", ID));
-	}
-
-	inline static uint64_t GetNextID() {
-		return std::move(GLOBAL_ID_COUNTER++);
-	}
-	RenderTarget_s() {
-		ID = GLOBAL_ID_COUNTER;
-		name = "RTV " + std::to_string(ID);
-		GLOBAL_ID_COUNTER += 1;
-	}
-};
 
 struct Renderable {
 	bool AutoFileManagerCompile = true;
@@ -211,11 +193,6 @@ struct Renderable {
 	int* MainHeightR;
 
 	bool BufferReset = true;
-
-	std::unordered_map<uint64_t, RenderTarget_s> RTV;
-	void AddNewRTV() {
-		RTV[RenderTarget_s::GetNextID()] = (RenderTarget_s());
-	}
 
 	virtual void ImGUINewFrameLogic() = 0;
 

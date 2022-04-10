@@ -115,6 +115,40 @@ struct RegisterMaps {
 	}
 };
 
+struct RTVData_s : RegisterMaps {
+	ComPtr<ID3D11RenderTargetView> rtv = nullptr;
+	ComPtr<ID3D11Texture2D> t = nullptr;
+
+	std::string name;
+
+
+	RTVData_s(RenderTarget_s* r) {
+		AddUAVNum();
+		name = r->name;
+
+		//TODO; make resource and pass to compile shader
+	}
+	~RTVData_s() {
+		RemoveUAVNum();
+	}
+};
+
+struct DEPTHData_s : RegisterMaps {
+	ComPtr<ID3D11DepthStencilView> dsv = nullptr;
+	ComPtr<ID3D11Texture2D> t = nullptr;
+
+	std::string name;
+
+	DEPTHData_s(DepthTarget_s* d) {
+		AddUAVNum();
+		name = d->name;
+
+	}
+	~DEPTHData_s() {
+		RemoveUAVNum();
+	}
+};
+
 struct ImageObjectToRendererDX11 : RegisterMaps{
 
 	ComPtr<ID3D11ShaderResourceView> srv;
@@ -416,6 +450,10 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	std::unordered_map<std::string /*name to identify model*/, ModelToRendererDX11*/*data*/> ModelData;
 	std::unordered_map<std::string /*name to identify struct*/, StructObjectToRendererDX11*/*data*/> ConstantData;
 
+	std::unordered_map<uint64_t, RTVData_s*> RTVData;
+	std::unordered_map<uint64_t, DEPTHData_s*> DEPTHData;
+
+
 	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
 
 		if (ModelData.count(data->Name) > 0) {
@@ -532,6 +570,17 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			v->push_back("sampler " + x.second->samplerName + " : register(s" + x.second->SamplerName() + "); \n");
 		}
 	}
+	void AddItemTextRTV(std::vector<std::string>* v) {
+		for (auto& x : RTVData) {
+			v->push_back("RWTexture2D<float4> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
+		}
+	}
+	void AddItemTextDEPTH(std::vector<std::string>* v) {
+		for (auto& x : DEPTHData) {
+			v->push_back("RWTexture2D<float> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
+		}
+	}
+
 	void AddItemTextModels(std::vector<std::string>* v) {
 
 		//nothig, since these are the VetexShaderInput -- set these as input using name in Pipeline Input - TODO:
@@ -569,6 +618,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 
 	}
+
 
 
 	void ClearAllPredefined() {
@@ -629,6 +679,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	void RunLogic(PipelineObjectIntermediateStateDX11** item) {
 		if ((*item)->PObj->On) {
 			//TODO, make run logic, then make code output in order
+
+			MainDX11Objects::obj->dxDeviceContext->OMSetRenderTargets(1, RTVData[(*item)->RTV_Num]->rtv.GetAddressOf(), DEPTHData[(*item)->DEPTH_Num]->dsv.Get());
+
 			if (!(*item)->PObj->ComputeOnlyToggle) {
 				MainDX11Objects::obj->MakeBlend((*item)->PObj->Vertex.BlendToMake);
 				ID3D11BlendState* bss = MainDX11Objects::obj->BlendObjects[(*item)->PObj->Vertex.BlendToMake].Get();
@@ -691,6 +744,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				}
 			}
 			//
+			MainDX11Objects::obj->SetNullRTV();
+			//TODO: SET RTV UAV and DSV UAV --> also make and associate UAV stuff
 			if (!(*item)->PObj->TurnComputeOffToggle) {
 				for (int i = 0; i < (*item)->Compute.size(); i++) {
 					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
@@ -716,6 +771,12 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		(*item)->VName = Pobj.second->Vertex.name;
 		(*item)->PName = Pobj.second->Pixel.name;
 		(*item)->setCSize((*item)->PObj->Compute.size());
+
+		Pobj.second->CheckIfRTVExistsAndRebind(RTV_DEPTH::RTV);
+		Pobj.second->CheckIfDEPTHExistsAndRebind(RTV_DEPTH::DEPTH);
+		(*item)->RTV_Num = Pobj.second->RTV_Selected;
+		(*item)->DEPTH_Num = Pobj.second->DEPTH_Selected;
+		
 
 		int iter = 0;
 		for (const auto& i : (*item)->PObj->Compute) {
@@ -782,6 +843,22 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		PipelineObjectIntermediateStateDX11::PixelShaderMap.clear();
 		PipelineObjectIntermediateStateDX11::VertexShaderMap.clear();
 	}
+
+	void GenRTVFromExistingMap() {
+		RTVData.clear();
+
+		for (auto& i : RTV_DEPTH::RTV) {
+			RTVData[i.first] = new RTVData_s(i.second);
+		}
+	}
+	void GenDEPTHFromExistingMap() {
+		DEPTHData.clear();
+
+		for (auto& i : RTV_DEPTH::DEPTH) {
+			DEPTHData[i.first] = new DEPTHData_s(i.second);
+		}
+	}
+
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
 		MainDX11Objects::obj->CompiledCode.clear();
 		ClearShaderCache();
@@ -798,6 +875,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		BasePipeline::GenCode(BasePipeline::VERTEX);
 		BasePipeline::GenCode(BasePipeline::PIXEL);
 		BasePipeline::GenCode(BasePipeline::COMPUTE);
+
+		GenRTVFromExistingMap();
+		GenDEPTHFromExistingMap();
 
 		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects
 

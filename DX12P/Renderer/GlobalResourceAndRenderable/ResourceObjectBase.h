@@ -21,7 +21,9 @@ struct ResourceObjectBase {
 	virtual void AddItemTextImages(std::vector<std::string>* v) = 0;
 	virtual void AddItemTextModels(std::vector<std::string>* v) = 0;
 	virtual void AddItemTextConstants(std::vector<std::string>* v) = 0;
-	
+	virtual void AddItemTextRTV(std::vector<std::string>* v) = 0;
+	virtual void AddItemTextDEPTH(std::vector<std::string>* v) = 0; //THESE ADD CODE IN XXResourceObjects.h files
+
 	virtual void PreBindAllResources() = 0;
 
 	virtual void ClearAllPredefined() = 0;

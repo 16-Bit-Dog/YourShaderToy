@@ -6,6 +6,9 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	inline static MASTER_Editor* obj;
 
 	//global strings 
+	std::vector<std::string> AutoAddGlobalsRTV;
+	std::vector<std::string> AutoAddGlobalsDEPTH;
+
 	std::vector<std::string> AutoAddGlobalsPredefined; 
 	std::vector<std::string> AutoAddGlobalsImages;
 	std::vector<std::string> AutoAddGlobalsModels;
@@ -138,6 +141,12 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			
 		);
 
+		for (const auto& i : AutoAddGlobalsRTV) {
+			s += i;
+		}
+		for (const auto& i : AutoAddGlobalsDEPTH) {
+			s += i;
+		}
 		for (const auto& i : AutoAddGlobalsPredefined) {
 			s += i;
 		}
@@ -147,6 +156,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		for (const auto& i : AutoAddGlobalsConstants) {
 			s += i;
 		}
+
 
 		return std::move(s);
 

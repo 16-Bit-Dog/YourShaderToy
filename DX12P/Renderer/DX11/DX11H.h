@@ -27,6 +27,8 @@ struct PipelineObjectIntermediateStateDX11 {
     inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11ComputeShader>> ComputeShaderMap;
     
+    uint64_t RTV_Num = 0;
+    uint64_t DEPTH_Num = 0;
 
     std::string VName = "";
     ID3D11VertexShader* VDat = nullptr;
@@ -210,7 +212,7 @@ struct MainDX11Objects : Renderable{
 
     void DrawOnMainWindow() {
         dxDeviceContext->RSSetViewports(1, &dxViewport);
-        dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
+  //      dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
         //dxDeviceContext->OMSetDepthStencilState(dxDepthStencilStateDefault.Get(), 0); //TODO add dynamic control of depth stencil state per draw and UINT tracker to stop rebinding
         MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
         MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -239,6 +241,11 @@ struct MainDX11Objects : Renderable{
         return r;
     }
 
+    void SetNullRTV() {
+        ID3D11RenderTargetView* nullViews[] = { nullptr };
+        dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
+    }
+
     void CreateSwapChainAndAssociate(DXGI_FORMAT format) {
         swapChainDescW.Width = MainWidth;
         swapChainDescW.Height = MainHeight;
@@ -260,9 +267,8 @@ struct MainDX11Objects : Renderable{
             dxDeviceContext->Flush();
 
             // Clear the previous window size specific context.
-            ID3D11RenderTargetView* nullViews[] = { nullptr };
-            dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
-            dxRenderTargetView.Reset();
+            SetNullRTV();
+            dxRenderTargetView.Reset(); //TODO, remove this since its redundant once done
             dxDepthStencilBuffer.Reset();
             dxDeviceContext->Flush();
 
