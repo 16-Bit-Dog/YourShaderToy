@@ -17,7 +17,6 @@ struct MASTER_CodeError : MASTER_Function_Inherit {
 	MASTER_CodeError() {
 		settingWindowSettingsMaker();
 	}
-
 	void PrintError(PipelineObj* P) {
 		P->Vertex.PrintError();
 		P->Pixel.PrintError();

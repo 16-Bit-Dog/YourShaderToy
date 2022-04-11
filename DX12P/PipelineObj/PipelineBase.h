@@ -65,20 +65,36 @@ struct BasePipeline {
 		ImGui::TextColored({ 1.0f,0.1f,0.1f,1.0f }, ErrorMessage_s.c_str());
 
 		if(ImGui::CollapsingHeader(("Code:##FunctionNameInputForShader" + ShaderTypeName + Spacing()).c_str(), NULL)) {
+			ImGui::Indent();
 			for (const auto& i : codeV[T_P]) {
 				ImGui::Text(i.c_str());
 			}
+			ImGui::Unindent();
 		}
 	
 	}
 
+	bool tmpHeaderHandle;
+
 	void PrintError() {
 		
-		if (ImGui::CollapsingHeader(GetName().c_str(), NULL)) {
-
-			GetAndShowErrorMessage();
-
+		if (ErrorMessage_s.size() > 2) {
+			ImGui::PushStyleColor(ImGuiCol_Text, { 1.0f, 0.1f, 0.1f, 1.0f });
 		}
+
+		ImGui::Indent();
+
+		bool tmpHeaderHandle = ImGui::CollapsingHeader(GetName().c_str(), NULL); //TODO: indent these future items
+		
+		if (ErrorMessage_s.size() > 2) {
+			ImGui::PopStyleColor();
+		}
+
+		if (tmpHeaderHandle) {
+			GetAndShowErrorMessage();
+		}
+		
+		ImGui::Unindent();
 
 	}
 

@@ -40,10 +40,10 @@ struct IntTypeAndName_c {
 	int32_t val = 0;
 	std::string n;
 	std::string nRW;
-	IntTypeAndName_c(std::string* s, std::string* sRW, int32_t* intV) {
+	IntTypeAndName_c(std::string* s, std::string* sRW, int32_t& intV) {
 		n = *s;
 		nRW = *sRW;
-		val = *intV;
+		val = intV;
 	}
 	~IntTypeAndName_c() {
 		usedNameCont.erase(n);
@@ -54,10 +54,10 @@ struct UintTypeAndName_c {
 	uint32_t val = 0;
 	std::string n;
 	std::string nRW;
-	UintTypeAndName_c(std::string* s, std::string* sRW, uint32_t* uintV) {
+	UintTypeAndName_c(std::string* s, std::string* sRW, uint32_t& uintV) {
 		n = *s;
 		nRW = *sRW;
-		val = *uintV;
+		val = uintV;
 	}
 	~UintTypeAndName_c() {
 		usedNameCont.erase(n);
@@ -68,10 +68,10 @@ struct FloatTypeAndName_c {
 	float val = 0.0f;
 	std::string n;
 	std::string nRW;
-	FloatTypeAndName_c(std::string* s, std::string* sRW, float* floatV) {
+	FloatTypeAndName_c(std::string* s, std::string* sRW, float& floatV) {
 		n = *s;
 		nRW = *sRW;
-		val = *floatV;
+		val = floatV;
 	}
 	~FloatTypeAndName_c() {
 		usedNameCont.erase(n);
@@ -440,12 +440,12 @@ struct BuiltModel_c : ObjectBuilder {
 struct BuiltConstant_c : ObjectBuilder {
 	std::string Name = "";
 	std::string NameRW = "";
+	std::string NameRW_SRV = "";
 	std::string StructName = "";
 	TypeStorageMass vars;
 
 	std::string StructElementName = "";
 	std::string StructElementNameRW = "";
-
 	//bool ReadWrite = false;
 	
 	bool ReadWrite = true;
@@ -456,31 +456,35 @@ struct BuiltConstant_c : ObjectBuilder {
 		DealWithNameConflict(&usedNameCont, &Name, "STRUCT");
 		NameRW = Name + "_RW";
 		DealWithNameConflict(&usedNameCont, &NameRW, "STRUCT_RW");
+		NameRW_SRV = NameRW + "_SRV";
+		DealWithNameConflict(&usedNameCont, &NameRW_SRV, "STRUCT_RW_SRV");
+
 		StructName = Name+"_S";
 		DealWithNameConflict(&usedNameCont, &StructName, "STRUCT_S");
 	
 		StructElementName = Name + "_rw";
 		StructElementNameRW = Name + "_s";
+		
 		DealWithNameConflict(&usedNameCont, &StructElementName, "VAR_S");
 		DealWithNameConflict(&usedNameCont, &StructElementNameRW, "VAR_S");
 
 	}
 
-	void AddInt(std::string* s, int32_t* intV) {
+	void AddInt(std::string* s, int32_t& intV) {
 		std::string stmp = *s;
 		DealWithNameConflict(&usedNameCont, &stmp, "INT");
 		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &sRW, "INT_RW");
 		vars.IT.push_back(IntTypeAndName_c(&stmp, &sRW, intV));
 	}
-	void AddUint(std::string* s, uint32_t* uintV) {
+	void AddUint(std::string* s, uint32_t& uintV) {
 		std::string stmp = *s;
 		DealWithNameConflict(&usedNameCont, &stmp, "UINT");
 		std::string sRW = stmp + "_RW";
 		DealWithNameConflict(&usedNameCont, &sRW, "UINT_RW");
 		vars.UT.push_back(UintTypeAndName_c(&stmp, &sRW, uintV));
 	}
-	void AddFloat(std::string* s, float* floatV) {
+	void AddFloat(std::string* s, float& floatV) {
 		std::string stmp = *s;
 		DealWithNameConflict(&usedNameCont, &stmp, "FLOAT");
 		std::string sRW = stmp + "_RW";

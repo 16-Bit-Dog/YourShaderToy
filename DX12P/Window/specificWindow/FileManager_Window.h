@@ -131,7 +131,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void DrawPREDEFINED() {
 		if (ImGui::CollapsingHeader("Predefined:", NULL))
 		{
-
+			ImGui::Indent();
 			ImGui::Text("Variables:");
 			ImGui::Text("WINDOW_SIZE_X"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Width");
 			ImGui::Text("WINDOW_SIZE_Y"); ImGui::SameLine(); ImGui::HelpMarker("Main Window Height");
@@ -142,7 +142,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::Text("RIGHT_CLICK_STATE"); ImGui::SameLine(); ImGui::HelpMarker("Right Mouse click: \npress = 1\nclosed = 0"); 
 			ImGui::Text("MIDDLE_CLICK_STATE"); ImGui::SameLine(); ImGui::HelpMarker("Middle Mouse click: \npress = 1\nclosed = 0");
 			ImGui::Text("NET_TIME"); ImGui::SameLine(); ImGui::HelpMarker("Time since window creation");
-
+			ImGui::Unindent();
 		}
 		ImGui::Separator();
 	}
@@ -275,8 +275,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::SameLine();
 			ToggleReadWrite(i);
 			
-			ImGui::Bullet();
+			ImGui::Indent();
 			if (ImGui::CollapsingHeader(("Image Info:##" + sPad(i)).c_str(), NULL)) { //TODO test
+				
 				ImGui::Text(("sizeX: " + std::to_string(ImageStore[i]->sizeX)).c_str());
 				ImGui::SameLine();
 				ImGui::Text("|");
@@ -293,8 +294,9 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 					ImGui::Text(ImageStore[i]->Path.c_str());
 				}
 				//TODO: show info tab collapsing header
-
+				
 			}
+			ImGui::Unindent();
 			ImGui::Separator();
 		}
 	}
@@ -326,9 +328,11 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void DrawRTV() {
 		if (ImGui::CollapsingHeader("RTV:", NULL))
 		{
+
 			AddRTV();
 
 			ShowRTV();
+
 		}
 		ImGui::Separator();
 	}
@@ -338,6 +342,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		std::vector<uint64_t> ToRemove;
 
 		for (auto& i : RTV_DEPTH::DEPTH) {
+			
 			ImGui::Text("Name: "); ImGui::SameLine();
 			ImGui::InputText(("##DEPTH name input" + i.second->Spacing()).c_str(), &i.second->name);
 			if (ImGui::Button(("-##Remove DEPTH" + i.second->Spacing()).c_str())) {
@@ -453,15 +458,15 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	int32_t ToAddConstantInt = 0;
 	uint32_t ToAddConstantUint = 0;
 	float ToAddConstantFloat = 0.0f;
-	void AddConstantInt(std::string* s, int32_t* intV, const int& i) {
+	void AddConstantInt(std::string* s, int32_t& intV, const int& i) {
 		ConstantStore[i]->AddInt(s, intV);
 		Renderable::DXM->CompiledData = false;
 	}
-	void AddConstantUint(std::string* s, uint32_t* uintV, const int& i) {
+	void AddConstantUint(std::string* s, uint32_t& uintV, const int& i) {
 		ConstantStore[i]->AddUint(s, uintV);
 		Renderable::DXM->CompiledData = false;
 	}
-	void AddConstantFloat(std::string* s,float* floatV, const int& i) {
+	void AddConstantFloat(std::string* s,float& floatV, const int& i) {
 		ConstantStore[i]->AddFloat(s, floatV);
 		Renderable::DXM->CompiledData = false;
 	}
@@ -541,14 +546,19 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::SameLine();
 			ImGui::Text("RWName: ");
 			ImGui::SameLine();
-			ImGui::Text(ConstantStore[i]->NameRW.c_str());
+			ImGui::Text(ConstantStore[i]->NameRW.c_str());			
+			ImGui::Text("RW_SRV Name: ");
+			ImGui::SameLine();
+			ImGui::Text(ConstantStore[i]->NameRW_SRV.c_str());
+
 			ImGui::Text("Struct Name: ");
 			ImGui::SameLine();
 			ImGui::Text(ConstantStore[i]->StructName.c_str());
-			ImGui::SameLine();
 			
 			if (ImGui::CollapsingHeader(("Constant's Info:##" + sPad(i)).c_str(), NULL)) {  
+				ImGui::Indent();
 				ShowUintIntFloat(i);
+				ImGui::Unindent();
 			}
 
 			if (!RemoveConstant(i)) {
@@ -564,17 +574,17 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Int##IntConstantModelStore" + sPad(i)).c_str())) {
-					AddConstantInt(&ToAddConstantMenuName, &ToAddConstantInt, i);
+					AddConstantInt(&ToAddConstantMenuName, ToAddConstantInt, i);
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Uint##UintConstantModelStore" + sPad(i)).c_str())) {
-					AddConstantUint(&ToAddConstantMenuName, &ToAddConstantUint, i);
+					AddConstantUint(&ToAddConstantMenuName, ToAddConstantUint, i);
 				}
 				
 				ImGui::SameLine();
 				if (ImGui::Button(("Add Float##ConstantModelStore" + sPad(i)).c_str())) {
-					AddConstantFloat(&ToAddConstantMenuName, 0, i);
+					AddConstantFloat(&ToAddConstantMenuName, ToAddConstantFloat, i);
 				}
 
 				ImGui::EndMenu();

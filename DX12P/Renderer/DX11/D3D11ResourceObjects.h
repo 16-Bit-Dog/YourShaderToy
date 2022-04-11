@@ -130,6 +130,9 @@ struct RTVData_s : RegisterMaps {
 	}
 	~RTVData_s() {
 		RemoveUAVNum();
+
+		SafeRelease(rtv);
+		SafeRelease(t);
 	}
 };
 
@@ -146,6 +149,9 @@ struct DEPTHData_s : RegisterMaps {
 	}
 	~DEPTHData_s() {
 		RemoveUAVNum();
+
+		SafeRelease(dsv);
+		SafeRelease(t);
 	}
 };
 
@@ -246,6 +252,9 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 		RemoveUAVNum();
 		RemoveSNum();
 		
+		SafeRelease(srv);
+		SafeRelease(uav);
+		SafeRelease(Samp);
 		//SafeRelease TODO: check if I need to clean up anything
 	}
 };
@@ -254,11 +263,13 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 struct StructObjectToRendererDX11 : RegisterMaps{
 	ComPtr<ID3D11Buffer> con;
 	
-	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object due to limits of DX11
+	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object data for a const pair and not const
 	ComPtr<ID3D11UnorderedAccessView> uav;
+	ComPtr<ID3D11ShaderResourceView> srv;
 
 	std::string Name;
 	std::string NameRW;
+	std::string NameRW_SRV;
 	std::string StructName;
 	std::string StructElementName = "s";
 	std::string StructElementNameRW = "s";
@@ -275,9 +286,11 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
 		AddUAVNum();
 		AddCBNum();
+		AddSRVNum();
 
 		Name = data->Name;
 		NameRW = data->NameRW;
+		NameRW_SRV = data->NameRW_SRV;
 		StructName = data->StructName;
 		StructElementName = data->StructElementName;
 		StructElementNameRW = data->StructElementNameRW;
@@ -334,12 +347,20 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 
 		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
 		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+		bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 		bufDesc.CPUAccessFlags = 0;
 		bufDesc.ByteWidth = memSize;
 		bufDesc.StructureByteStride = sizeof(float);
 		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+		ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+		SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+		SRVDesc.Buffer.FirstElement = 0;
+		SRVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
+		
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		//UAVDesc.Texture2D
@@ -351,7 +372,10 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 
 		if (data->ReadWrite) {
 			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
+			MainDX11Objects::obj->dxDevice->CreateShaderResourceView(uavB.Get(), &SRVDesc, &srv);
+
 			HasRW = data->ReadWrite;
+	
 		}
 
 		delete Data;
@@ -359,8 +383,11 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 
 	~StructObjectToRendererDX11() {
 		RemoveUAVNum();
+		RemoveSRVNum();
 		RemoveCBNum();
 
+		SafeRelease(uavB);
+		SafeRelease(con);
 	}
 	
 };
@@ -614,6 +641,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 			//uav buf
 			v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ");\n");
+			v->push_back("StructuredBuffer<" + x.second->StructName + "> " + x.second->NameRW_SRV + " : register(t" + x.second->SRVName() + ");\n");
+
 			//TODO: add RW Object name
 		}
 
@@ -746,6 +775,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			//
 			MainDX11Objects::obj->SetNullRTV();
 			//TODO: SET RTV UAV and DSV UAV --> also make and associate UAV stuff
+			for (auto& i : RTVData) {
+
+			}
 			if (!(*item)->PObj->TurnComputeOffToggle) {
 				for (int i = 0; i < (*item)->Compute.size(); i++) {
 					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
@@ -845,6 +877,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 
 	void GenRTVFromExistingMap() {
+		for (const auto& i : RTVData) {
+			delete i.second;
+		}
 		RTVData.clear();
 
 		for (auto& i : RTV_DEPTH::RTV) {
@@ -852,6 +887,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 	void GenDEPTHFromExistingMap() {
+		for (const auto& i : DEPTHData) {
+			delete i.second;
+		}
 		DEPTHData.clear();
 
 		for (auto& i : RTV_DEPTH::DEPTH) {
