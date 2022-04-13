@@ -58,6 +58,7 @@ struct PipelineObjectIntermediateStateDX11 {
 
 };
 
+
 struct MainDX11Objects : Renderable{
 
     std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
@@ -117,6 +118,11 @@ struct MainDX11Objects : Renderable{
     //Pipeline Objects
     
     ComPtr<ID3D11Device5> dxDevice = 0;
+
+#ifdef DEBUG
+    ComPtr<ID3D11Debug> dxDebug = 0;
+#endif // DEBUG
+
     ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
     ComPtr<IDXGISwapChain1> dxSwapChain = nullptr;
 
@@ -228,6 +234,8 @@ struct MainDX11Objects : Renderable{
         dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 
         dxDeviceContext->CopyResource(backBuffer, PipelineObjectIntermediateStateDX11::SelectedFinalRTV);    
+       
+        SafeRelease(backBuffer);
     }
 
     void DrawOnMainWindow() {
@@ -295,17 +303,24 @@ struct MainDX11Objects : Renderable{
             SafeRelease(backBuffer);
         }
         if (dxSwapChain != nullptr) {
+
             BufferReset = true;
             RtvAndDepthBlock::ReleaseAllRTVAndDepth();
-            ThrowFailed(dxSwapChain->ResizeBuffers(0, MainWidth, MainHeight, format, swapChainDescW.Flags));
             RtvAndDepthBlock::MakeRTVAndDepth();
+
+#ifdef _DEBUG
+            //dxDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+#endif // _DEBUG
+
+            ThrowFailed(dxSwapChain->ResizeBuffers(0, MainWidth, MainHeight, format, swapChainDescW.Flags));
+            
         }
         else {
             dxFactory->CreateSwapChainForHwnd(dxDevice.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, dxSwapChain.GetAddressOf());
         }
 
         ThrowFailed(dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer));
-    /*
+        /*
         ThrowFailed(dxDevice->CreateRenderTargetView(
             backBuffer,
             nullptr,
@@ -431,8 +446,13 @@ struct MainDX11Objects : Renderable{
         ThrowFailed(dev.As(&dxDevice));
         ThrowFailed(devC.As(&dxDeviceContext));
 
+        //TODO, maybe use IDD_PPV_ARGS ? I can, but its not verbose I guess :Shrug:
         dxDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxGIDevice);
+#ifdef DEBUG
+        dxDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&dxDebug);
+#endif // DEBUG
 
+        
 
 
         dxGIDevice->GetAdapter(&dxAdapter);

@@ -125,6 +125,7 @@ struct RTVData_s : RegisterMaps {
 
 	void ReleaseBuffers() {
 		rtv.Reset();
+//		SafeRelease(uav);
 	}
 
 	void MakeBuffers() {
@@ -188,7 +189,7 @@ struct DEPTHData_s : RegisterMaps {
 
 	void ReleaseBuffers() {
 		dsv.Reset();
-	//	SafeRelease(t);
+		//SafeRelease(srv);
 	}
 	void MakeBuffers() {
 
@@ -657,7 +658,6 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		PreBindAllModelData();
 		PreBindAllConstantData();
 		PreBindDefault();
-		//TODO: add sampler
 
 	}
 
