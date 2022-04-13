@@ -22,7 +22,17 @@ struct ComputeDataHolder {
     uint32_t DimZ;
 };
 
+struct RtvAndDepthBlock {
+    inline static std::function<void()> ClearRTVAndDepth;
+    inline static std::function<void()> ReleaseAllRTVAndDepth;
+    inline static std::function<void()> MakeRTVAndDepth;
+
+    
+};
+
 struct PipelineObjectIntermediateStateDX11 {
+    inline static ID3D11Texture2D* SelectedFinalRTV = nullptr; 
+
     inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11ComputeShader>> ComputeShaderMap;
@@ -49,6 +59,8 @@ struct PipelineObjectIntermediateStateDX11 {
 };
 
 struct MainDX11Objects : Renderable{
+
+    std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
 
     struct InUseTest {
         ID3D11RasterizerState* RasterObject = nullptr;
@@ -112,9 +124,9 @@ struct MainDX11Objects : Renderable{
     DXGI_FORMAT_D32_FLOAT,D3D11_DSV_DIMENSION_TEXTURE2D
     };
 
-    ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; 
-    ComPtr<ID3D11Texture2D> dxDepthStencilBuffer = nullptr;
-    ComPtr<ID3D11DepthStencilView> dxDepthStencilView = nullptr;
+    //ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; 
+    //ComPtr<ID3D11Texture2D> dxDepthStencilBuffer = nullptr;
+    //ComPtr<ID3D11DepthStencilView> dxDepthStencilView = nullptr;
     ComPtr<ID3D11DepthStencilState> dxDepthStencilStateDefault = nullptr;
 
     D3D11_VIEWPORT dxViewport; //TODO create view port per scene view and draw after for scene view
@@ -199,15 +211,23 @@ struct MainDX11Objects : Renderable{
     }
 
 
-
+    /*
     void ClearBuffer(bool clearColorT = true, XMFLOAT4 p = { 0.0f,0.5f,0.0f,1.0f }) {
         if (clearColorT) {
             float ClearColor[4] = { float(p.x), float(p.y), float(p.z), float(p.w) };
             dxDeviceContext->ClearRenderTargetView(dxRenderTargetView.Get(), ClearColor);
         }
-    }
+    }*/
+    /*
     void ClearBufferDepth(bool ClearDepth = true) {
         if (ClearDepth) dxDeviceContext->ClearDepthStencilView(dxDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
+    }
+    */
+    void CopyRTVFinalBuffer() {
+        ID3D11Texture2D* backBuffer = nullptr;
+        dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
+
+        dxDeviceContext->CopyResource(backBuffer, PipelineObjectIntermediateStateDX11::SelectedFinalRTV);    
     }
 
     void DrawOnMainWindow() {
@@ -222,13 +242,11 @@ struct MainDX11Objects : Renderable{
         MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(0, 6, tmpB);
         TestForOptimize.SetNull();
 
-        ClearBuffer(ClearRTV);
-        ClearBufferDepth(ClearDepthEveryPass);
-
+        RtvAndDepthBlock::ClearRTVAndDepth();
         for (const auto& i : CompiledCode) {
             i->ToRunLogic();
         }
-
+        CopyRTVFinalBuffer();
     }
 
     void DrawOnSideWindow() {
@@ -262,14 +280,13 @@ struct MainDX11Objects : Renderable{
         swapChainDescF.Windowed = !bFullScreen;
         
         ID3D11Texture2D* backBuffer = nullptr;
+
         if (dxSwapChain != nullptr) {
             dxDeviceContext->ClearState();
             dxDeviceContext->Flush();
 
             // Clear the previous window size specific context.
             SetNullRTV();
-            dxRenderTargetView.Reset(); //TODO, remove this since its redundant once done
-            dxDepthStencilBuffer.Reset();
             dxDeviceContext->Flush();
 
             dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
@@ -279,21 +296,23 @@ struct MainDX11Objects : Renderable{
         }
         if (dxSwapChain != nullptr) {
             BufferReset = true;
+            RtvAndDepthBlock::ReleaseAllRTVAndDepth();
             ThrowFailed(dxSwapChain->ResizeBuffers(0, MainWidth, MainHeight, format, swapChainDescW.Flags));
+            RtvAndDepthBlock::MakeRTVAndDepth();
         }
         else {
             dxFactory->CreateSwapChainForHwnd(dxDevice.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, dxSwapChain.GetAddressOf());
         }
 
         ThrowFailed(dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer));
-    
+    /*
         ThrowFailed(dxDevice->CreateRenderTargetView(
             backBuffer,
             nullptr,
             dxRenderTargetView.GetAddressOf()));
-
+        */
         SafeRelease(backBuffer);
-
+        /*
         D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
         ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
 
@@ -321,7 +340,7 @@ struct MainDX11Objects : Renderable{
             dxDepthStencilBuffer.Get(),
             &dxDepthStencilDesc,
             dxDepthStencilView.GetAddressOf()));
-
+            */
         dxViewport.Width = MainWidth;
         dxViewport.Height = MainHeight;
         dxViewport.TopLeftX = 0.0f;

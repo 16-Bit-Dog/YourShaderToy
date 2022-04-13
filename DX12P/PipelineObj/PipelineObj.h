@@ -10,6 +10,16 @@
 //TODO: make toggle work
 
 namespace MapTools {
+	template<typename T>
+	void CheckIfSelectedExists(std::unordered_map<uint64_t, T*>& RTV, uint64_t* item) {
+		if (RTV.find(*item) == RTV.end()) {
+			for (const auto& i : RTV) {
+				(*item) = i.first;
+				return;
+			}
+		}
+	}
+
 	template<class T>
 	static bool Swap(int newP, int oldP, std::map<int, T*>& P, const int& RecursivePush = 0, const int& originalStop = 0 /* paired with recursive push to signify an end if swaping negative*/) {
 		if (newP != oldP) {
@@ -96,25 +106,9 @@ struct PipelineObj {
 	
 	uint64_t RTV_Selected = 0;
 	uint64_t DEPTH_Selected = 0;
+	inline static uint64_t SelectedFinalRTV;
 
-	void CheckIfRTVExistsAndRebind(std::unordered_map<uint64_t, RenderTarget_s*>& RTV) {
-		if (RTV.find(RTV_Selected) == RTV.end()) {
-			for (const auto& i : RTV) {
-				RTV_Selected = i.first;
-				return;
-			}
-		}
-		return;
-	}
-	void CheckIfDEPTHExistsAndRebind(std::unordered_map<uint64_t, DepthTarget_s*>& DEPTH) {
-		if (DEPTH.find(DEPTH_Selected) == DEPTH.end()) {
-			for (const auto& i : DEPTH) {
-				DEPTH_Selected = i.first;
-				return;
-			}
-		}
-		return;
-	}
+	//TODO: maybe just template these last 3 up
 
 	std::string Spacing() {
 		return std::move(std::string("PO", Order));

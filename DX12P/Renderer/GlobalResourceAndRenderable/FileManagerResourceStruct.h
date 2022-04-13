@@ -218,6 +218,8 @@ struct DepthTarget_s {
 	std::string name;
 	uint64_t ID;
 
+	bool ClearEveryNewPass;
+
 	std::string Spacing() {
 		return std::move(std::string("D", ID));
 	}
@@ -247,6 +249,8 @@ struct RenderTarget_s {
 
 	std::string name;
 	uint64_t ID;
+
+	bool ClearEveryNewPass;
 
 	std::string Spacing() {
 		return std::move(std::string("R", ID));

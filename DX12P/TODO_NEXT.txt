@@ -1,13 +1,12 @@
-bind all RTV and DEPTH with UAV after unbind OM every right before compute pass --> then clear the UAV to allow RTV and DPH to work later in code
+fix resize buffers
 
-ALSO ALSO --> create textures for DEPTH and RTV
-
-Add imGUI indentation
+TODO: add the HAS_Write that some resources use so it works properly
 
 TODO: proof read for proper COM deletion so I stop leaking random mem- prob also make the non com thing a com and use .addressOf() instead of &
 
 make sure to resize all and set all dst and rtv when resizing screen, also remove garbage depth stencil and RTV once done this.
 
+add file saver PROJ file to save what you made
 
 make register changer/swapper functionality 
 

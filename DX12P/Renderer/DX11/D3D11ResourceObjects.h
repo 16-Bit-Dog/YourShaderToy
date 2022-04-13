@@ -118,40 +118,128 @@ struct RegisterMaps {
 struct RTVData_s : RegisterMaps {
 	ComPtr<ID3D11RenderTargetView> rtv = nullptr;
 	ComPtr<ID3D11Texture2D> t = nullptr;
-
+	ComPtr<ID3D11UnorderedAccessView> uav = nullptr;
 	std::string name;
 
+	bool ClearEveryNewPass = false;
 
+	void ReleaseBuffers() {
+		rtv.Reset();
+	}
+
+	void MakeBuffers() {
+		D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
+		ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+
+		depthStencilBufferDesc.ArraySize = 1;
+		depthStencilBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
+		depthStencilBufferDesc.CPUAccessFlags = 0;
+		depthStencilBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		depthStencilBufferDesc.Width = MainDX11Objects::obj->MainWidth;
+		depthStencilBufferDesc.Height = MainDX11Objects::obj->MainHeight;
+		depthStencilBufferDesc.MipLevels = 1;
+
+		depthStencilBufferDesc.SampleDesc.Count = 1;
+		depthStencilBufferDesc.SampleDesc.Quality = 0;
+
+		depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+
+		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateTexture2D(
+			&depthStencilBufferDesc,
+			nullptr,
+			t.GetAddressOf()));
+
+
+		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateRenderTargetView(
+			t.Get(),
+			nullptr,
+			rtv.GetAddressOf()));
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+		//UAVDesc.Texture2D
+		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+		UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
+		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+
+		MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(t.Get(), &UAVDesc, &uav);
+
+	}
 	RTVData_s(RenderTarget_s* r) {
 		AddUAVNum();
 		name = r->name;
-
-		//TODO; make resource and pass to compile shader
+		ClearEveryNewPass = r->ClearEveryNewPass;
+		MakeBuffers();
+	
 	}
 	~RTVData_s() {
 		RemoveUAVNum();
-
-		SafeRelease(rtv);
-		SafeRelease(t);
+		ReleaseBuffers();
 	}
 };
 
 struct DEPTHData_s : RegisterMaps {
 	ComPtr<ID3D11DepthStencilView> dsv = nullptr;
 	ComPtr<ID3D11Texture2D> t = nullptr;
+	ComPtr<ID3D11ShaderResourceView> srv = nullptr;
 
 	std::string name;
 
-	DEPTHData_s(DepthTarget_s* d) {
-		AddUAVNum();
-		name = d->name;
+	bool ClearEveryNewPass;
+
+	void ReleaseBuffers() {
+		dsv.Reset();
+	//	SafeRelease(t);
+	}
+	void MakeBuffers() {
+
+
+		D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
+		ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+
+		depthStencilBufferDesc.ArraySize = 1;
+		depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+		depthStencilBufferDesc.CPUAccessFlags = 0;
+		depthStencilBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		depthStencilBufferDesc.Width = MainDX11Objects::obj->MainWidth;
+		depthStencilBufferDesc.Height = MainDX11Objects::obj->MainHeight;
+		depthStencilBufferDesc.MipLevels = 1;
+
+		depthStencilBufferDesc.SampleDesc.Count = 1;
+		depthStencilBufferDesc.SampleDesc.Quality = 0;
+
+		depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+
+		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateTexture2D(
+			&depthStencilBufferDesc,
+			nullptr,
+			t.GetAddressOf()));
+
+
+		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateDepthStencilView(
+			t.Get(),
+			&MainDX11Objects::obj->dxDepthStencilDesc,
+			dsv.GetAddressOf()));
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+		//UAVDesc.Texture2D
+		ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+		SRVDesc.Texture2D.MostDetailedMip = 0;
+		SRVDesc.Texture2D.MipLevels = -1;
+		SRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+
+		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(t.Get(), &SRVDesc, &srv);
 
 	}
+	DEPTHData_s(DepthTarget_s* d) {
+		AddSRVNum();
+		name = d->name;
+		ClearEveryNewPass = d->ClearEveryNewPass;
+		MakeBuffers();
+	}
 	~DEPTHData_s() {
-		RemoveUAVNum();
-
-		SafeRelease(dsv);
-		SafeRelease(t);
+		RemoveSRVNum();
 	}
 };
 
@@ -386,6 +474,8 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 		RemoveSRVNum();
 		RemoveCBNum();
 
+		SafeRelease(uav);
+		SafeRelease(srv);
 		SafeRelease(uavB);
 		SafeRelease(con);
 	}
@@ -604,7 +694,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	}
 	void AddItemTextDEPTH(std::vector<std::string>* v) {
 		for (auto& x : DEPTHData) {
-			v->push_back("RWTexture2D<float> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
+			v->push_back("Texture2D<float> " + x.second->name + " : register(t" + x.second->SRVName() + "); \n");
 		}
 	}
 
@@ -704,6 +794,37 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	inline static UINT OffsetDef = 0;
 
+	template<class T> 
+	void BindCSToUAV(T& data) {
+		for (auto& i : data) {
+			MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i.second->uav_num, 1, i.second->uav.GetAddressOf(), &OffsetDef);
+		}
+	}
+
+	template<class T>
+	void BindCSToSRV(T& data) {
+		for (auto& i : data) {
+			MainDX11Objects::obj->dxDeviceContext->CSSetShaderResources(i.second->srv_num, 1, i.second->srv.GetAddressOf());
+		}
+	}
+
+	template<class T> 
+	void UnBindCSToUAV(T& data){
+		ID3D11UnorderedAccessView* nullC = nullptr;
+
+		for (auto& i : data) {
+			MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i.second->uav_num, 1, &nullC, &OffsetDef);
+		}
+	}
+
+	template<class T>
+	void UnBindCSToSRV(T& data) {
+		ID3D11ShaderResourceView* nullC = nullptr;
+
+		for (auto& i : data) {
+			MainDX11Objects::obj->dxDeviceContext->CSSetShaderResources(i.second->srv_num, 1, &nullC);
+		}
+	}
 
 	void RunLogic(PipelineObjectIntermediateStateDX11** item) {
 		if ((*item)->PObj->On) {
@@ -775,9 +896,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			//
 			MainDX11Objects::obj->SetNullRTV();
 			//TODO: SET RTV UAV and DSV UAV --> also make and associate UAV stuff
-			for (auto& i : RTVData) {
-
-			}
+			BindCSToUAV(RTVData);
+			BindCSToSRV(DEPTHData);
 			if (!(*item)->PObj->TurnComputeOffToggle) {
 				for (int i = 0; i < (*item)->Compute.size(); i++) {
 					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
@@ -789,6 +909,21 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 					}
 				}
 			}
+			UnBindCSToUAV(RTVData);
+			UnBindCSToSRV(DEPTHData);
+		}
+	}
+
+	void ClearRTVAndDepth() {
+		for (auto& i : RTVData) {
+			if (i.second->ClearEveryNewPass) {
+				MainDX11Objects::obj->dxDeviceContext->ClearRenderTargetView(i.second->rtv.Get(), &MainDX11Objects::obj->CLEAR_COLOR[0]);
+			}
+		}
+		for (auto& i : DEPTHData) {
+			if (i.second->ClearEveryNewPass) {
+				MainDX11Objects::obj->dxDeviceContext->ClearDepthStencilView(i.second->dsv.Get(), D3D11_CLEAR_DEPTH, 1, 0);
+			}
 		}
 	}
 
@@ -798,14 +933,14 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		PipelineObjectIntermediateStateDX11* itemP = new PipelineObjectIntermediateStateDX11();
 		PipelineObjectIntermediateStateDX11** item = &itemP;
-
+		
 		(*item)->PObj = Pobj.second;
 		(*item)->VName = Pobj.second->Vertex.name;
 		(*item)->PName = Pobj.second->Pixel.name;
 		(*item)->setCSize((*item)->PObj->Compute.size());
 
-		Pobj.second->CheckIfRTVExistsAndRebind(RTV_DEPTH::RTV);
-		Pobj.second->CheckIfDEPTHExistsAndRebind(RTV_DEPTH::DEPTH);
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &Pobj.second->RTV_Selected);
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::DEPTH, &Pobj.second->DEPTH_Selected);
 		(*item)->RTV_Num = Pobj.second->RTV_Selected;
 		(*item)->DEPTH_Num = Pobj.second->DEPTH_Selected;
 		
@@ -897,8 +1032,31 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 
+	void ReleaseRTVAndDepth() {
+		for (auto& i : RTVData) {
+			i.second->ReleaseBuffers();
+		}
+		for (auto& i : DEPTHData) {
+			i.second->ReleaseBuffers();
+		}
+	}
+	void MakeRTVAndDepth() {
+		for (auto& i : RTVData) {
+			i.second->MakeBuffers();
+		}
+		for (auto& i : DEPTHData) {
+			i.second->MakeBuffers();
+		}
+	}
+
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
+		RtvAndDepthBlock::ClearRTVAndDepth = [&]() {ClearRTVAndDepth(); };
+		RtvAndDepthBlock::ReleaseAllRTVAndDepth = [&]() {ReleaseRTVAndDepth(); };
+		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepth(); };
+
+			
 		MainDX11Objects::obj->CompiledCode.clear();
+
 		ClearShaderCache();
 		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
 
@@ -917,6 +1075,11 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		GenRTVFromExistingMap();
 		GenDEPTHFromExistingMap();
 
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &PipelineObj::SelectedFinalRTV);
+		PipelineObjectIntermediateStateDX11::SelectedFinalRTV = RTVData[PipelineObj::SelectedFinalRTV]->t.Get();
+		//This was done to not add to ref counter since I acctually don't want to unknowingly not delete the resource -- I delete at 2 specific points known in time
+
+		
 		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects
 
 			CompileNewPipelineObject(i);

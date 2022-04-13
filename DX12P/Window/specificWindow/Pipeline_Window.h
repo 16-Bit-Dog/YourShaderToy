@@ -381,7 +381,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	}
 
 	void DrawRTV(PipelineObj* i) {
-		i->CheckIfRTVExistsAndRebind(RTV_DEPTH::RTV);
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &i->RTV_Selected);
 		ImGui::Text(("RTV Bound: "+ RTV_DEPTH::RTV[i->RTV_Selected]->name).c_str());
 		if (ImGui::BeginMenu(("Change RTV Bound For Stage: ##Change RTV for PObj"+i->Spacing()).c_str())) {
 			for (auto& x : RTV_DEPTH::RTV) {
@@ -393,7 +393,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		}
 	}
 	void DrawDEPTH(PipelineObj* i) {
-		i->CheckIfDEPTHExistsAndRebind(RTV_DEPTH::DEPTH);
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::DEPTH, &i->DEPTH_Selected);
 		ImGui::Text(("DEPTH Bound: " + RTV_DEPTH::DEPTH[i->DEPTH_Selected]->name).c_str());
 		if (ImGui::BeginMenu(("Change DEPTH Bound For Stage: ##Change DEPTH for PObj" + i->Spacing()).c_str())) {
 			for (auto& x : RTV_DEPTH::DEPTH) {
@@ -404,6 +404,23 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			ImGui::EndMenu();
 		}
 	}
+
+	void SelectRTVToDrawFrom() {
+		ImGui::Text(("Current RTV With Goal of Output: " + RTV_DEPTH::RTV[PipelineObj::SelectedFinalRTV]->name).c_str());
+		
+		if (ImGui::BeginMenu("Change RTV Bound For Output: ##Change RTV for final out")) {
+			for (auto& x : RTV_DEPTH::RTV) {
+				if (ImGui::Button((x.second->name + "##ButtonToChangeRTVFinalBound" + x.second->Spacing()).c_str())) {
+					PipelineObj::SelectedFinalRTV = x.first;
+				}
+			}
+			ImGui::EndMenu();
+		}
+	
+		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &PipelineObj::SelectedFinalRTV);
+	
+	}
+
 	virtual void BasicViewDraw(GroupData* GD) {
 		if (DrawBasicWindow(this, GD, "Pipeline:")) {
 
@@ -415,7 +432,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			
 			ImGui::Separator();
 			
-
+			SelectRTVToDrawFrom();
 			
 			for (const auto& i : PipelineMain::obj->P) {
 				ImGui::Text((i.second->name).c_str());

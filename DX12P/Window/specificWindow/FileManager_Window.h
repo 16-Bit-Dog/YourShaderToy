@@ -307,6 +307,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		for (auto& i : RTV_DEPTH::RTV) {
 			ImGui::Text("Name: "); ImGui::SameLine();
 			ImGui::InputText(("##RTV name input" + i.second->Spacing()).c_str(), &i.second->name);
+			ImGui::Checkbox(("Clear Depth Every New Pass##Toggle clear DEPTH" + i.second->Spacing()).c_str(), &i.second->ClearEveryNewPass);
 			if (ImGui::Button(("-##Remove RTV" + i.second->Spacing()).c_str())) {
 				if (RTV_DEPTH::RTV.size() > 1) {
 					ToRemove.push_back(i.first);
@@ -345,6 +346,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			
 			ImGui::Text("Name: "); ImGui::SameLine();
 			ImGui::InputText(("##DEPTH name input" + i.second->Spacing()).c_str(), &i.second->name);
+			ImGui::Checkbox(("Clear Depth Every New Pass##Toggle clear DEPTH" + i.second->Spacing()).c_str(), &i.second->ClearEveryNewPass);
+
 			if (ImGui::Button(("-##Remove DEPTH" + i.second->Spacing()).c_str())) {
 				if (RTV_DEPTH::DEPTH.size() > 1) {
 					ToRemove.push_back(i.first);
