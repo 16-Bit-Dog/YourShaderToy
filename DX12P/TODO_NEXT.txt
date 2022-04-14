@@ -1,4 +1,4 @@
-fix resize buffers
+Fix the new window being hidden and not shown
 
 TODO: add the HAS_Write that some resources use so it works properly
 

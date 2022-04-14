@@ -130,9 +130,9 @@ struct MainDX11Objects : Renderable{
     DXGI_FORMAT_D32_FLOAT,D3D11_DSV_DIMENSION_TEXTURE2D
     };
 
-    //ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; 
-    //ComPtr<ID3D11Texture2D> dxDepthStencilBuffer = nullptr;
-    //ComPtr<ID3D11DepthStencilView> dxDepthStencilView = nullptr;
+    ComPtr<ID3D11RenderTargetView> dxRenderTargetView = nullptr; 
+    ComPtr<ID3D11Texture2D> dxDepthStencilBuffer = nullptr;
+    ComPtr<ID3D11DepthStencilView> dxDepthStencilView = nullptr;
     ComPtr<ID3D11DepthStencilState> dxDepthStencilStateDefault = nullptr;
 
     D3D11_VIEWPORT dxViewport; //TODO create view port per scene view and draw after for scene view
@@ -217,18 +217,18 @@ struct MainDX11Objects : Renderable{
     }
 
 
-    /*
+    
     void ClearBuffer(bool clearColorT = true, XMFLOAT4 p = { 0.0f,0.5f,0.0f,1.0f }) {
         if (clearColorT) {
             float ClearColor[4] = { float(p.x), float(p.y), float(p.z), float(p.w) };
             dxDeviceContext->ClearRenderTargetView(dxRenderTargetView.Get(), ClearColor);
         }
-    }*/
-    /*
+    }
+
     void ClearBufferDepth(bool ClearDepth = true) {
         if (ClearDepth) dxDeviceContext->ClearDepthStencilView(dxDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
     }
-    */
+    
     void CopyRTVFinalBuffer() {
         ID3D11Texture2D* backBuffer = nullptr;
         dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
@@ -240,7 +240,7 @@ struct MainDX11Objects : Renderable{
 
     void DrawOnMainWindow() {
         dxDeviceContext->RSSetViewports(1, &dxViewport);
-  //      dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
+        
         //dxDeviceContext->OMSetDepthStencilState(dxDepthStencilStateDefault.Get(), 0); //TODO add dynamic control of depth stencil state per draw and UINT tracker to stop rebinding
         MainDX11Objects::obj->dxDeviceContext->IASetInputLayout(MainDX11Objects::obj->dxIL.Get());
         MainDX11Objects::obj->dxDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -255,6 +255,8 @@ struct MainDX11Objects : Renderable{
             i->ToRunLogic();
         }
         CopyRTVFinalBuffer();
+
+        dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
     }
 
     void DrawOnSideWindow() {
@@ -293,6 +295,8 @@ struct MainDX11Objects : Renderable{
             dxDeviceContext->ClearState();
             dxDeviceContext->Flush();
 
+            dxRenderTargetView.Reset();
+
             // Clear the previous window size specific context.
             SetNullRTV();
             dxDeviceContext->Flush();
@@ -320,14 +324,14 @@ struct MainDX11Objects : Renderable{
         }
 
         ThrowFailed(dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer));
-        /*
+        
         ThrowFailed(dxDevice->CreateRenderTargetView(
             backBuffer,
             nullptr,
             dxRenderTargetView.GetAddressOf()));
-        */
+        
         SafeRelease(backBuffer);
-        /*
+        
         D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
         ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
 
@@ -355,7 +359,7 @@ struct MainDX11Objects : Renderable{
             dxDepthStencilBuffer.Get(),
             &dxDepthStencilDesc,
             dxDepthStencilView.GetAddressOf()));
-            */
+            
         dxViewport.Width = MainWidth;
         dxViewport.Height = MainHeight;
         dxViewport.TopLeftX = 0.0f;
@@ -491,8 +495,7 @@ struct MainDX11Objects : Renderable{
 
         DrawOnMainWindow();
         DrawOnSideWindow(); //TODO: draw on Scene view with special movment
-        ClearRTV = true;
-
+        
         if (NewImGUIDat) {
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
             ImGui::UpdatePlatformWindows();
