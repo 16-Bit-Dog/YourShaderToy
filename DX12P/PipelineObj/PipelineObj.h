@@ -129,25 +129,30 @@ struct PipelineObj {
 	}
 
 	void DrawCompute() {
-		if(ImGui::CollapsingHeader(("Compute [runs after]:##" + Spacing()).c_str(), NULL)) {
+		if(ImGui::CollapsingHeaderOpenGreen(("Compute [runs after]:##" + Spacing()).c_str())) {
 
+			ImGui::Text("(After Any Changes to Compute Shaders Compile Pipeline [auto compile will also help]");
 			if (ImGui::Button(("+##Compute Add Start" + Spacing()).c_str())) {
 				MapTools::AddNew(0, Compute);
+				GLFW_Window_C::StartPipelineCompileTimer();
 			}
 
 			for (const auto& i : Compute) {
+				ImGui::Indent();
 				ImGui::Text(i.second->NameOfCompute.c_str());
 				ImGui::SameLine();
-				if(ImGui::CollapsingHeader((i.second->Spacing() + Spacing()).c_str())) {
+				if(ImGui::CollapsingHeaderOpenGreen(("##"+i.second->Spacing() + Spacing()).c_str())) {
 					i.second->DrawNameSwitch();
 					i.second->Input();
 
-					i.second->DrawBlockInputs();
+					i.second->DrawThreadCountInputs();
 				}
+				ImGui::Unindent();
 			}
-
+			ImGui::Text("");
 			if (ImGui::Button(("+##Compute Add End" + std::to_string(Order)).c_str())) {
 				MapTools::AddNewToEnd(Compute);
+				GLFW_Window_C::StartPipelineCompileTimer();
 			}
 
 		}

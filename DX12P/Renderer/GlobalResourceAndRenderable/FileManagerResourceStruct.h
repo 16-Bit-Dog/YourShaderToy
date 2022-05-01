@@ -12,7 +12,7 @@
 #include "Renderable.h"
 #include "Window_Struct.h"
 
-static std::set<std::string> usedNameCont{ "PROGRAM_CONSTANTS", "", "Vertex",
+static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLOCK_Y", "PROGRAM_CONSTANTS", "", "Vertex",
 
 "ProjectionMatrixS", "ViewMatrixS", "WorldMatrixS",
 "ProjectionMatrix", "ViewMatrix", "WorldMatrix",
@@ -40,7 +40,7 @@ struct IntTypeAndName_c {
 	int32_t val = 0;
 	std::string n;
 	std::string nRW;
-	IntTypeAndName_c(std::string* s, std::string* sRW, int32_t& intV) {
+	IntTypeAndName_c(std::string* s, std::string* sRW, const int32_t& intV) {
 		n = *s;
 		nRW = *sRW;
 		val = intV;
@@ -54,7 +54,7 @@ struct UintTypeAndName_c {
 	uint32_t val = 0;
 	std::string n;
 	std::string nRW;
-	UintTypeAndName_c(std::string* s, std::string* sRW, uint32_t& uintV) {
+	UintTypeAndName_c(std::string* s, std::string* sRW, const uint32_t& uintV) {
 		n = *s;
 		nRW = *sRW;
 		val = uintV;
@@ -68,7 +68,7 @@ struct FloatTypeAndName_c {
 	float val = 0.0f;
 	std::string n;
 	std::string nRW;
-	FloatTypeAndName_c(std::string* s, std::string* sRW, float& floatV) {
+	FloatTypeAndName_c(std::string* s, std::string* sRW, const float& floatV) {
 		n = *s;
 		nRW = *sRW;
 		val = floatV;
@@ -101,14 +101,14 @@ struct d4 {
 
 	}
 
-	d4(uint8_t* data8t, int sizeX, int sizeY) {
+	d4(uint8_t* data8t, const int& sizeX, const int& sizeY) {
 		sizeX_c = sizeX;
 		sizeY_c = sizeY;
 		bpp_c = 8;
 		data8 = data8t;
 		dataV = (void*)data8t;
 	}
-	d4(int sizeX, int sizeY, int bpp) {
+	d4(const int& sizeX, const int& sizeY, const int& bpp) {
 		sizeX_c = sizeX;
 		sizeY_c = sizeY;
 		bpp_c = bpp;
@@ -144,7 +144,7 @@ struct d4 {
 	}
 };
 
-void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict);
+void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, const std::string& suffixConflict);
 
 
 /*
@@ -160,7 +160,8 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 struct ObjectBuilder {
 	
 	inline static bool UNORM_ELSE_FLOAT_Driver;
-	
+	inline static bool LinkSizeToRTV;
+
 	virtual void BuildItem() = 0;
 
 };
@@ -218,7 +219,8 @@ struct DepthTarget_s {
 	std::string name;
 	uint64_t ID;
 
-	bool ClearEveryNewPass;
+	bool ClearEveryNewPass = true;
+	bool ClearEveryNewPassOld = false;
 
 	std::string Spacing() {
 		return std::move(std::string("D", ID));
@@ -242,7 +244,7 @@ struct DepthTarget_s {
 	}
 };
 struct RenderTarget_s {
-
+	
 	inline static uint64_t GLOBAL_ID_COUNTER = 0;
 
 	std::string TYPE_N = "";
@@ -250,7 +252,8 @@ struct RenderTarget_s {
 	std::string name;
 	uint64_t ID;
 
-	bool ClearEveryNewPass;
+	bool ClearEveryNewPass = true;
+	bool ClearEveryNewPassOld = false;
 
 	std::string Spacing() {
 		return std::move(std::string("R", ID));
@@ -355,21 +358,24 @@ struct BuiltImage_c : ObjectBuilder {
 	int channels; 
 	bool ReadWrite = true;
 	bool IsPath;
-	bool UNORM_ELSE_FLOAT;
+	bool UNORM_ELSE_FLOAT = true;
 	//d4 data;
+	bool LinkSizeToRTV = false;
 
 	void BuildItem() {
 		Renderable::ROB->LoadImageFromData(this);
 	}
 
 
-	BuiltImage_c(std::string p, std::string s, bool IsPath, int sizeX_tmp, int sizeY_tmp, int channels_tmp, int bpp_tmp, bool UNORM_ELSE_FLOAT_tmp, d4* data_tmp) {
+	BuiltImage_c(const std::string& p, std::string s, const bool& IsPath, const int& sizeX_tmp, const int& sizeY_tmp, const int& channels_tmp, const int& bpp_tmp, const bool& UNORM_ELSE_FLOAT_tmp, const bool& LinkSizeToRTV, const d4* data_tmp) {
 		//set name
 		
+		this->LinkSizeToRTV = LinkSizeToRTV;
+
 		data = *data_tmp;
 
 		UNORM_ELSE_FLOAT = UNORM_ELSE_FLOAT_tmp;
-		IsPath = IsPath;
+		this->IsPath = IsPath;
 		Path = p;
 		bpp = bpp_tmp;
 
@@ -413,7 +419,7 @@ struct BuiltModel_c : ObjectBuilder {
 	}
 
 
-	BuiltModel_c(std::string p, std::string s, int t) {
+	BuiltModel_c(const std::string& p, std::string s, const int& t) {
 		//TODO fill M3DR based on path in D3D11ResourceObjects.h, else stop trying to load and throw error saying "invalid" 
 		
 		Path = p;
@@ -474,7 +480,7 @@ struct BuiltConstant_c : ObjectBuilder {
 
 	}
 
-	void AddInt(std::string* s, int32_t& intV) {
+	void AddInt(std::string* s, const int32_t& intV) {
 		std::string stmp = *s;
 		DealWithNameConflict(&usedNameCont, &stmp, "INT");
 		std::string sRW = stmp + "_RW";
@@ -528,7 +534,7 @@ bool IsNotAlphaAndUnderScore(unsigned char ch) {
 	return (!std::isalnum(ch) && ch != '_');
 }
 
-void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, std::string suffixConflict) {
+void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, const std::string& suffixConflict) {
 	Name->erase(std::remove_if(Name->begin(), Name->end(), IsNotAlphaAndUnderScore), Name->end()); //replace escape chars and such
 	
 	if (usedName->count(*Name) != 0) {

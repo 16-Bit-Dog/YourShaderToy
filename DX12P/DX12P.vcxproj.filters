@@ -263,5 +263,8 @@
     <ClInclude Include="Window\specificWindow\CodeError_Window.h">
       <Filter>Header Files\Window\specificWindow</Filter>
     </ClInclude>
+    <ClInclude Include="imGUI\ImGuiHelper.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

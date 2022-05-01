@@ -2,6 +2,9 @@
 #include "string"
 #include "imgui.h"
 #include "imgui_stdlib.h"
+#include "ImGuiHelper.h"
+#include "functional"
+
 //TODO: click compile compiles all code and order of data pass
 
 
@@ -10,6 +13,12 @@ struct BasePipeline {
 	base abstract class to inherit by all pipelines for handling generic data
 	*/
 	//base piepline global handler
+
+	inline static void Empty() {
+
+	}
+
+	inline static std::function<void()> StartPipelineCompileTimer = Empty;
 
 	enum {
 		VERTEX = 0,
@@ -54,7 +63,7 @@ struct BasePipeline {
 		int L = 0;
 		for (int i = 1; i < code[TYPE].size(); i++) {
 			if (BasePipeline::code[TYPE].substr(i - 1, 1) == "\n") {
-				BasePipeline::codeV[TYPE].push_back(std::to_string(codeV.size() + 1) + "| " + BasePipeline::code[TYPE].substr(L, i - L));
+				BasePipeline::codeV[TYPE].push_back(std::to_string(codeV[TYPE].size() + 1) + "| " + BasePipeline::code[TYPE].substr(L, i - L));
 				L = i;
 			}
 		}
@@ -64,7 +73,7 @@ struct BasePipeline {
 		
 		ImGui::TextColored({ 1.0f,0.1f,0.1f,1.0f }, ErrorMessage_s.c_str());
 
-		if(ImGui::CollapsingHeader(("Code:##FunctionNameInputForShader" + ShaderTypeName + Spacing()).c_str(), NULL)) {
+		if(ImGui::CollapsingHeader(("Code:##FunctionNameInputForShader" + ShaderTypeName + Spacing()).c_str())) {
 			ImGui::Indent();
 			for (const auto& i : codeV[T_P]) {
 				ImGui::Text(i.c_str());

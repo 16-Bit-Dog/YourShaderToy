@@ -17,6 +17,7 @@ using namespace DirectX;
 struct ComputeDataHolder {
     std::string CName;
     ID3D11ComputeShader* CDat;
+    bool AutoSetBlockToWindowSize = false;
     uint32_t DimX;
     uint32_t DimY;
     uint32_t DimZ;
@@ -31,7 +32,7 @@ struct RtvAndDepthBlock {
 };
 
 struct PipelineObjectIntermediateStateDX11 {
-    inline static ID3D11Texture2D* SelectedFinalRTV = nullptr; 
+    inline static ID3D11Resource* SelectedFinalRTV = nullptr; 
 
     inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
     inline static std::unordered_map<std::string, ComPtr<ID3D11PixelShader>> PixelShaderMap;
@@ -61,6 +62,7 @@ struct PipelineObjectIntermediateStateDX11 {
 
 struct MainDX11Objects : Renderable{
 
+
     std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
 
     struct InUseTest {
@@ -79,6 +81,7 @@ struct MainDX11Objects : Renderable{
             RasterObject = nullptr;
             VertexShader = nullptr;
             PixelShader = nullptr;
+            ComputeShader = nullptr;
             Model = nullptr;
         }
     };
@@ -233,7 +236,7 @@ struct MainDX11Objects : Renderable{
         ID3D11Texture2D* backBuffer = nullptr;
         dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 
-        dxDeviceContext->CopyResource(backBuffer, PipelineObjectIntermediateStateDX11::SelectedFinalRTV);    
+        dxDeviceContext->CopyResource(backBuffer, (ID3D11Texture2D*) PipelineObjectIntermediateStateDX11::SelectedFinalRTV);    
        
         SafeRelease(backBuffer);
     }
@@ -269,7 +272,7 @@ struct MainDX11Objects : Renderable{
         return r;
     }
 
-    void SetNullRTV() {
+    void SetNullRTVandDEPTH() {
         ID3D11RenderTargetView* nullViews[] = { nullptr };
         dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
     }
@@ -296,9 +299,8 @@ struct MainDX11Objects : Renderable{
             dxDeviceContext->Flush();
 
             dxRenderTargetView.Reset();
-
             // Clear the previous window size specific context.
-            SetNullRTV();
+            SetNullRTVandDEPTH();
             dxDeviceContext->Flush();
 
             dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
@@ -352,8 +354,6 @@ struct MainDX11Objects : Renderable{
             &depthStencilBufferDesc,
             nullptr,
             dxDepthStencilBuffer.GetAddressOf()));
-
-
 
         ThrowFailed(dxDevice->CreateDepthStencilView(
             dxDepthStencilBuffer.Get(),

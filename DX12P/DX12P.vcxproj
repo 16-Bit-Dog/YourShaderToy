@@ -175,6 +175,7 @@
     <ClInclude Include="ImageLib\stb_image.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="imGUI\ImGuiHelper.h" />
     <ClInclude Include="imGUI\imgui_impl_dx11.h" />
     <ClInclude Include="imGUI\imgui_stdlib.h" />
     <ClInclude Include="LuaSingle\config.hpp" />

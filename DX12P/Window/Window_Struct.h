@@ -23,7 +23,7 @@ struct MASTER_Objects;
 struct GroupData;
 
 struct GLFW_Window_C {
-	//generic glfw class
+	//generic glfw class 
 
 	inline static GLFW_Window_C* MainWin;
 
@@ -52,6 +52,9 @@ struct GLFW_Window_C {
 	
 	inline static double DeltaOfLastPress;
 	inline static double DeltaOfLastPress_CompileReset;
+
+	static void StartPipelineCompileTimer() { DeltaOfLastPress_CompileReset = 0.0f; }
+
 
 	std::string title;
 
@@ -97,5 +100,6 @@ struct GLFW_Window_C {
 
 	GLFW_Window_C() {
 		TimeOfLastPress = glfwGetTime();
+		BasePipeline::StartPipelineCompileTimer = StartPipelineCompileTimer;
 	}
 };

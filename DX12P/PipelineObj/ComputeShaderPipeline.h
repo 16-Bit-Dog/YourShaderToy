@@ -12,6 +12,9 @@ struct ComputeShaderPipeline : BasePipeline {
 	uint32_t BlockSizeY;
 	uint32_t BlockSizeZ;
 
+	bool AutoSetBlockToWindowSize = false;
+	bool AutoSetBlockToWindowSizePFrame = false;
+
 	ComputeShaderPipeline(int OrderN = 0) {
 		T_P = COMPUTE;
 		Order = OrderN;
@@ -25,10 +28,21 @@ struct ComputeShaderPipeline : BasePipeline {
 		ImGui::InputScalar((ToolTipN + Spacing()).c_str(), ImGuiDataType_U32, &B);
 	}
 
-	void DrawBlockInputs() {
-		scalarUintHandle("Dim-X #inputDimXOfCompute", BlockSizeX);
-		scalarUintHandle("Dim-Y #inputDimYOfCompute", BlockSizeY);
-		scalarUintHandle("Dim-Z #inputDimZOfCompute", BlockSizeZ);
+	void DrawThreadCountInputs() {
+		//3 lines here check if auto set was clicked to get ready auto compile
+		ImGui::CheckboxCallback(("Auto Set Thread X and Y to RTV##" + Spacing()), &AutoSetBlockToWindowSize, StartPipelineCompileTimer);
+		//if() 
+		//AutoSetBlockToWindowSizePFrame = AutoSetBlockToWindowSize;
+		
+
+		if (AutoSetBlockToWindowSize == false) {
+			scalarUintHandle("Dim-X ##inputDimXOfCompute", BlockSizeX);
+			scalarUintHandle("Dim-Y ##inputDimYOfCompute", BlockSizeY);
+			scalarUintHandle("Dim-Z ##inputDimZOfCompute", BlockSizeZ);
+		}
+		else {
+
+		}
 	}
 
 	void DrawNameSwitch() {

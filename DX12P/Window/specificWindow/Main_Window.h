@@ -6,23 +6,10 @@ struct MASTER_Function_Inherit {
 	ImGuiWindowFlags WinBlockF = ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoDocking;
 		
-
 	ImGuiInputTextFlags TextType = ImGuiInputTextFlags_AllowTabInput;
 
 	ImGuiWindowFlags SettingWindowFlag; //DO NOT USE VARS FROM THIS STRUCT, ONLY FROM ALIAS OF THIS STRUCT
 
-	static void HelpMarker(const char* desc)
-	{
-		ImGui::TextDisabled("(?)");
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-			ImGui::TextUnformatted(desc);
-			ImGui::PopTextWrapPos();
-			ImGui::EndTooltip();
-		}
-	}
 	void DrawTopMenuBar(MASTER_Function_Inherit* WF, GroupData* GD) {
 		if (ImGui::BeginMenuBar()) {
 

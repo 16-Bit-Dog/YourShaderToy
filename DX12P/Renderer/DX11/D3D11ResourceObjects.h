@@ -1,7 +1,4 @@
 
-//#define GET_OBJECT_STATIC
-
-
 #ifndef DX11_H_RESOURCE_OBJ
 #define DX11_H_RESOURCE_OBJ
 
@@ -17,27 +14,7 @@
 #include "StaticObjectsDX11.h"
 #include "Editor_Window.h"
 
-//DX11M3DR
-
-
-
-/*
-struct DX11_OBJ_RESOURCE_S {
-	inline static Renderable* DX11Obj;
-
-	inline static ComPtr<ID3D11Device5> dxDeviceR;
-	inline static ComPtr<ID3D11DeviceContext4> dxDeviceContextR;
-
-	inline static void SET_DX_CONTENT(ComPtr<ID3D11Device5> dxDevice_tmp, ComPtr<ID3D11DeviceContext4> dxDeviceContext_tmp, Renderable* dxmo) {
-		dxDeviceR = dxDevice_tmp;
-		dxDeviceContextR = dxDeviceContext_tmp;
-		DX11Obj = dxmo;
-	}
-
-};
-*/
-
-//TODO: texture loaded clamp, mirror, ect. and sampling options
+//ResourceToHLSL - COMPILE CODE STRING SECTION
 
 struct RegisterMaps {
 	inline static std::set<int> UAV_R;
@@ -121,11 +98,13 @@ struct RTVData_s : RegisterMaps {
 	ComPtr<ID3D11UnorderedAccessView> uav = nullptr;
 	std::string name;
 
-	bool ClearEveryNewPass = false;
+	bool ClearEveryNewPass = true;
 
 	void ReleaseBuffers() {
+		
+		t.Reset(); 
 		rtv.Reset();
-//		SafeRelease(uav);
+		uav.Reset();
 	}
 
 	void MakeBuffers() {
@@ -185,10 +164,12 @@ struct DEPTHData_s : RegisterMaps {
 
 	std::string name;
 
-	bool ClearEveryNewPass;
+	bool ClearEveryNewPass = true;
 
 	void ReleaseBuffers() {
+		t.Reset();
 		dsv.Reset();
+		srv.Reset();
 		//SafeRelease(srv);
 	}
 	void MakeBuffers() {
@@ -250,8 +231,11 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 	ComPtr<ID3D11UnorderedAccessView> uav;
 	ComPtr<ID3D11SamplerState> Samp;
 	bool HasRW = false;
+	bool LinkSizeToRTV = false;
 
 	DXGI_FORMAT format;
+
+	std::string formatString = "";
 
 	std::string name;
 	
@@ -259,38 +243,28 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 	
 	std::string samplerName;
 
-	ImageObjectToRendererDX11(BuiltImage_c* data) {
-		AddUAVNum();
-		AddSRVNum();
-		AddSNum();
-		//TODO: sampler options
-		nameRW = data->NameRW;
-		samplerName = data->SamplerName;
-		name = data->Name;
+	void ReleaseBuffersNonSamp() {
+		SafeRelease(uav);
 
+		SafeRelease(srv);
+	}
+	void MakeBuffers(BuiltImage_c* data) {
 		ComPtr<ID3D11Texture2D> r;
 
-		if (data->data.bpp_c == 8) {
-			format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		}
-		else if (data->data.bpp_c == 16) {
-			if (data->UNORM_ELSE_FLOAT) format = DXGI_FORMAT_R16G16B16A16_UNORM;
-			else format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		}
-		else if (data->data.bpp_c == 32) {
-			if (data->UNORM_ELSE_FLOAT) format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			else format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		}
-
-
 		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
-		defaultResourceData.pSysMem = data->data.dataReturn();
+		if(data != nullptr)	defaultResourceData.pSysMem = data->data.dataReturn();
 
 		D3D11_TEXTURE2D_DESC gpuTexDesc;
 		ZeroMemory(&gpuTexDesc, sizeof(D3D11_TEXTURE2D_DESC));
 		gpuTexDesc.Format = format;
-		gpuTexDesc.Width = data->data.sizeX_c;
-		gpuTexDesc.Height = data->data.sizeY_c;
+		if (LinkSizeToRTV == false) {
+			gpuTexDesc.Width = data->data.sizeX_c;
+			gpuTexDesc.Height = data->data.sizeY_c;
+		}
+		else {
+			gpuTexDesc.Width = MainDX11Objects::obj->MainWidth;
+			gpuTexDesc.Height = MainDX11Objects::obj->MainHeight;
+		}
 		gpuTexDesc.MipLevels = 1;
 		gpuTexDesc.ArraySize = 1;
 		gpuTexDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |
@@ -313,13 +287,52 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 		UAVDesc.Format = format; //
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
-		if (data->ReadWrite) {
+		if (HasRW) {
 			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
-			HasRW = data->ReadWrite;
 		}
 
 		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
+
+	}
+	
+	ImageObjectToRendererDX11(BuiltImage_c* data) {
+		AddUAVNum();
+		AddSRVNum();
+		AddSNum();
+		//TODO: sampler options
+		LinkSizeToRTV = data->LinkSizeToRTV;
+		nameRW = data->NameRW;
+		samplerName = data->SamplerName;
+		name = data->Name;
+		HasRW = data->ReadWrite;
+
+		if (data->data.bpp_c == 8) {
+			format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			formatString = "unorm float4";
+		}
+		else if (data->data.bpp_c == 16) {
+			if (data->UNORM_ELSE_FLOAT){
+				format = DXGI_FORMAT_R16G16B16A16_UNORM;
+				formatString = "unorm float4";
+			}
+			else{
+				format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+				formatString = "float4";
+			}
+		}
+		else if (data->data.bpp_c == 32) {
+			if (data->UNORM_ELSE_FLOAT){ 
+				format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				formatString = "unorm float4";
+			}
+			else{
+				format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				formatString = "float4";
+			}
+		}
+
+		MakeBuffers(data);
 
 		D3D11_SAMPLER_DESC samp_desc;
 
@@ -370,7 +383,7 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 
 	TypeStorageMass ReferToData; //copy of type storage mass since you have compiled data here with names
 
-	bool HasRW = true;
+	bool HasRW = false;
 
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
 		AddUAVNum();
@@ -514,7 +527,7 @@ struct ModelToRendererDX11 : RegisterMaps{
 struct PredefinedToRendererDX11 : RegisterMaps{
 	std::vector<int> typesInOrder = { UINT_OBJ, UINT_OBJ, UINT_OBJ, UINT_OBJ,
 		UINT_OBJ, UINT_OBJ, UINT_OBJ,
-		FLOAT_OBJ, FLOAT_OBJ };
+		FLOAT_OBJ, FLOAT_OBJ }; //PRE DEFINED TYPES
 	std::vector<std::string> typesInOrderName = { "WINDOW_SIZE_X", "WINDOW_SIZE_Y", "MOUSE_POS_X", "MOUSE_POS_Y",
 		"LEFT_CLICK_STATE", "RIGHT_CLICK_STATE", "MIDDLE_CLICK_STATE",
 		"NET_TIME", "DELTA_LAST_KEY" };
@@ -540,6 +553,8 @@ struct PredefinedToRendererDX11 : RegisterMaps{
 
 		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
 		//TODO: load data into const buffer under names stated previously
+
+
 	}
 
 	~PredefinedToRendererDX11() {
@@ -661,7 +676,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	}
 
-
+#pragma region ResourceToHLSL
+	
 	void AddItemTextDefault(std::vector<std::string>* v) {
 
 		v->push_back("cbuffer " + PredefinedData->Name + ": register(b"+PredefinedData->CBName()+") { \n");
@@ -683,16 +699,22 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		for (const auto& x : ImageData) {
 			v->push_back("Texture2D " + x.second->name + " : register(t" + x.second->SRVName() + ");\n");
-			v->push_back("RWTexture2D<float4> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
+			if(x.second->HasRW) v->push_back("RWTexture2D<" + x.second->formatString + "> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
 			v->push_back("sampler " + x.second->samplerName + " : register(s" + x.second->SamplerName() + "); \n");
 		}
 	}
 	void AddItemTextRTV(std::vector<std::string>* v) {
+		if (RTVData.size() == 0) { //means no compile to these happened yet
+			GenRTVFromExistingMap();
+		}
 		for (auto& x : RTVData) {
-			v->push_back("RWTexture2D<float4> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
+			v->push_back("RWTexture2D<unorm float4> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
 		}
 	}
 	void AddItemTextDEPTH(std::vector<std::string>* v) {
+		if (DEPTHData.size() == 0) { //means no compile to these happened yet
+			GenDEPTHFromExistingMap();
+		}
 		for (auto& x : DEPTHData) {
 			v->push_back("Texture2D<float> " + x.second->name + " : register(t" + x.second->SRVName() + "); \n");
 		}
@@ -730,14 +752,14 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			//
 
 			//uav buf
-			v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ");\n");
+			if (x.second->HasRW) v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ");\n");
 			v->push_back("StructuredBuffer<" + x.second->StructName + "> " + x.second->NameRW_SRV + " : register(t" + x.second->SRVName() + ");\n");
 
 			//TODO: add RW Object name
 		}
 
 	}
-
+#pragma endregion
 
 
 	void ClearAllPredefined() {
@@ -894,23 +916,32 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				}
 			}
 			//
-			MainDX11Objects::obj->SetNullRTV();
-			//TODO: SET RTV UAV and DSV UAV --> also make and associate UAV stuff
-			BindCSToUAV(RTVData);
-			BindCSToSRV(DEPTHData);
+			MainDX11Objects::obj->SetNullRTVandDEPTH();
+
 			if (!(*item)->PObj->TurnComputeOffToggle) {
+
+				BindCSToUAV(RTVData);
+				BindCSToSRV(DEPTHData);
+
 				for (int i = 0; i < (*item)->Compute.size(); i++) {
 					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
 						MainDX11Objects::obj->dxDeviceContext->CSSetShader((*item)->Compute[i].CDat, NULL, NULL);
 						MainDX11Objects::obj->TestForOptimize.ComputeShader = (*item)->Compute[i].CDat;
-
-
+					}
+					if ((*item)->Compute[i].AutoSetBlockToWindowSize == false) {
 						MainDX11Objects::obj->dxDeviceContext->Dispatch((*item)->Compute[i].DimX, (*item)->Compute[i].DimY, (*item)->Compute[i].DimZ);
 					}
+					else {
+						MainDX11Objects::obj->dxDeviceContext->Dispatch(int(MainDX11Objects::obj->MainWidth/ Renderable::BLOCK_X), int(MainDX11Objects::obj->MainHeight/Renderable::BLOCK_Y), 1);
+					}
+					
 				}
+
+				UnBindCSToUAV(RTVData);
+				UnBindCSToSRV(DEPTHData);
+			
 			}
-			UnBindCSToUAV(RTVData);
-			UnBindCSToSRV(DEPTHData);
+
 		}
 	}
 
@@ -926,6 +957,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			}
 		}
 	}
+
 
 	int CompileNewPipelineObject(const std::pair<const int, PipelineObj*>& Pobj) {
 
@@ -948,6 +980,11 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		int iter = 0;
 		for (const auto& i : (*item)->PObj->Compute) {
 			(*item)->Compute[iter].CName = i.second->name;
+			(*item)->Compute[iter].AutoSetBlockToWindowSize = i.second->AutoSetBlockToWindowSize;
+			(*item)->Compute[iter].DimX = i.second->BlockSizeX;
+			(*item)->Compute[iter].DimY = i.second->BlockSizeY;
+			(*item)->Compute[iter].DimZ = i.second->BlockSizeZ;
+
 			iter++;
 		}
 		iter = 0;
@@ -957,6 +994,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			return -1; 
 		}
 
+		//TODO: template do these 3 into 1 function
+		//compile Pixel Shader if not exist
 		if (PipelineObjectIntermediateStateDX11::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX11::PixelShaderMap.end()){
 			PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName] = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&BasePipeline::code[BasePipeline::PIXEL], Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
 		}
@@ -966,6 +1005,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			return -1;
 		}
 
+		//compile Vertex Shader if not exist
 		if (PipelineObjectIntermediateStateDX11::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX11::VertexShaderMap.end()) {
 			PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName] = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&BasePipeline::code[BasePipeline::VERTEX], Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
 		}
@@ -976,6 +1016,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			return -1;
 		}
 
+		//compile Compute shader if not exist
 		for (const auto& i : (*item)->PObj->Compute) {
 
 			if (PipelineObjectIntermediateStateDX11::ComputeShaderMap.find((*item)->Compute[iter].CName) == PipelineObjectIntermediateStateDX11::ComputeShaderMap.end()) {
@@ -999,16 +1040,17 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::obj->CompiledCode.push_back(itemP);
 	}
 
-
-	void ClearShaderCache() {
-		for (const auto& i : PipelineObjectIntermediateStateDX11::PixelShaderMap) {
+	template<class T> 
+	void ClearShaderMap(std::unordered_map<std::string,T>& map) {
+		for (const auto& i : map) {
 			if (i.second != nullptr) i.second->Release();
 		}
-		for (const auto& i : PipelineObjectIntermediateStateDX11::VertexShaderMap) {
-			if (i.second != nullptr) i.second->Release();
-		}	
-		PipelineObjectIntermediateStateDX11::PixelShaderMap.clear();
-		PipelineObjectIntermediateStateDX11::VertexShaderMap.clear();
+		map.clear();
+	}
+	void ClearShaderCache() {
+		ClearShaderMap(PipelineObjectIntermediateStateDX11::PixelShaderMap);
+		ClearShaderMap(PipelineObjectIntermediateStateDX11::VertexShaderMap);
+		ClearShaderMap(PipelineObjectIntermediateStateDX11::ComputeShaderMap);
 	}
 
 	void GenRTVFromExistingMap() {
@@ -1032,27 +1074,33 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 
-	void ReleaseRTVAndDepth() {
+	void ReleaseRTVAndDepthAndResizeTex() {
 		for (auto& i : RTVData) {
 			i.second->ReleaseBuffers();
 		}
 		for (auto& i : DEPTHData) {
 			i.second->ReleaseBuffers();
+		}
+		for (auto& i : ImageData) {
+			i.second->ReleaseBuffersNonSamp();
 		}
 	}
-	void MakeRTVAndDepth() {
+	void MakeRTVAndDepthAndResizeTex() {
 		for (auto& i : RTVData) {
 			i.second->MakeBuffers();
 		}
 		for (auto& i : DEPTHData) {
 			i.second->MakeBuffers();
+		}
+		for (auto& i : ImageData) {
+			i.second->MakeBuffers(nullptr);
 		}
 	}
 
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
 		RtvAndDepthBlock::ClearRTVAndDepth = [&]() {ClearRTVAndDepth(); };
-		RtvAndDepthBlock::ReleaseAllRTVAndDepth = [&]() {ReleaseRTVAndDepth(); };
-		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepth(); };
+		RtvAndDepthBlock::ReleaseAllRTVAndDepth = [&]() {ReleaseRTVAndDepthAndResizeTex(); };
+		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepthAndResizeTex(); };
 
 			
 		MainDX11Objects::obj->CompiledCode.clear();
@@ -1079,7 +1127,6 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		PipelineObjectIntermediateStateDX11::SelectedFinalRTV = RTVData[PipelineObj::SelectedFinalRTV]->t.Get();
 		//This was done to not add to ref counter since I acctually don't want to unknowingly not delete the resource -- I delete at 2 specific points known in time
 
-		
 		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects
 
 			CompileNewPipelineObject(i);

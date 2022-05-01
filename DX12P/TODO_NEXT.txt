@@ -1,35 +1,29 @@
-Fix the new window being hidden and not shown
+show compute errors 
 
-TODO: add the HAS_Write that some resources use so it works properly
+- add "Noise texture and sub menu" to create texture as a default easy bool toggle for generating an "empty"
 
-TODO: proof read for proper COM deletion so I stop leaking random mem- prob also make the non com thing a com and use .addressOf() instead of &
+?make default a voxel render of a 2d image?
 
-make sure to resize all and set all dst and rtv when resizing screen, also remove garbage depth stencil and RTV once done this.
+TODO:
+- stream option to link mpeg-dash video of shader code live
+- multi user program-ing on same shader <-- do after project file thing (add object copies to [proj dir which must be chosen before starting project - if proj format exists it runs that and loads, if not then does not load anything])
 
 add file saver PROJ file to save what you made
 
-make register changer/swapper functionality 
+add imgui save locations of window button
 
+TODO: proof read for proper COM deletion so I stop leaking random mem- prob also make the non com thing a com and use .addressOf() instead of &
 
-TODO:
-recreate RTV's if wrong size when compiling (only for new) and resize all buffers manually if resized manually
+make all selectable text tabs green
+^^ do always
 
-pipelineObj link is sent to a pipelineIntermediate to not allow easy dynamic change
-
-set in ToRun before everything the OM render target, since that is when it runs. it runs this change even if compute only and compute is off
-
-TODO: do same for depth stencil view
 
 
 --------
 
-test compute and binding
-
 print out RTV size in FILE_MANAGER
 
 add: check box and select,
- Texture-> COPY-TO-RTV 
- RTX -> COPY-TO-TEXTURE 
 
 ^^ add "auto map block size to current RTV size" which just does math on the spot to auto set  
 

@@ -10,6 +10,7 @@ struct ResourceObjectBase;
 //TODO: set Blend to many render targets all same later
 struct BlendTypeMapMadeData {
 
+
 	bool AlphaToCoverageEnable = false;
 	bool IndependentBlendEnable = false;
 	bool BlendEnable = false;
@@ -167,16 +168,22 @@ struct StencilTypeMapMadeData_hash
 
 
 struct Renderable {
+	inline static uint32_t BLOCK_X = 16;
+	inline static uint32_t BLOCK_Y = 16;
+	inline static uint32_t BLOCK_Z = 1;
+
+
 	bool AutoFileManagerCompile = true;
 
 	UINT REF_FOR_DEPTH_STENCIL = 1;
 
-	bool CompiledData = false;
-	bool CompiledCode = false;
-	bool ClearDepthEveryPass = true;
+	bool CompiledData = false; //is file manager up to date?
+	bool CompiledCode = false; //kinda redundant rn..
+	bool ClearDepthEveryPass = true; //main depth buffer clear var
+	bool BufferReset = true; //recompile the Compile Button of "PipelineWindow"
 
 	bool AutoCodeCompile = true;
-	float AutoCodeCompile_Wait = 1.5f;
+	float AutoCodeCompile_Wait = 1.0f;
 
 	inline static Renderable* DXM;
 
@@ -191,8 +198,6 @@ struct Renderable {
 
 	int* MainWidthR;
 	int* MainHeightR;
-
-	bool BufferReset = true;
 
 	virtual void ImGUINewFrameLogic() = 0;
 

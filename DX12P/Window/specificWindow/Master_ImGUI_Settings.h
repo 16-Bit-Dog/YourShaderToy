@@ -1,5 +1,5 @@
 #pragma once
-
+#include <filesystem>
 #include "3DCommons/3DCommon.h"
 #include "LuaObj.h"
 #include <vector>
@@ -16,29 +16,10 @@
 #include <../Window/Window_Type.h>
 #include <../imGUI/imgui_stdlib.h>
 #include <../imGUI/ImGUIFileDialog/ImGuiFileDialog.h>
+#include <../imGUI/ImGuiHelper.h>
 #include "PipelineMain.h"
 
 struct GLFW_Window_C;
-
-namespace ImGui {
-
-	void InputTextMultilineQuick(std::string Tag, std::string* S, ImGuiInputTextFlags* flags) {
-		ImGui::InputTextMultiline(Tag.c_str(), S, ImVec2(ImGui::GetWindowWidth(), GetWindowHeight()*0.5), *flags, NULL, nullptr);
-	}
-	static void HelpMarker(const char* desc)
-	{
-		ImGui::TextDisabled("(?)");
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-			ImGui::TextUnformatted(desc);
-			ImGui::PopTextWrapPos();
-			ImGui::EndTooltip();
-		}
-	}
-
-}
 
 //TODO: also allow switching what tab is what - option called - "Switch Tab" where it switches tab
 struct GroupData {
@@ -80,12 +61,17 @@ struct GroupData {
 
 struct MASTER_IM_GUI {
 	inline static MASTER_IM_GUI* obj;
-
+	inline static ImFont* CustomFont;
 	ImGuiContext* GUIContext; // global for global use
 	bool RendererMade = false;
 	GLFWwindow* window;
-
 	ImGuiStyle* style;
+
+	void SetCustomStyle() {
+		style->Alpha = 0.8f;
+	}
+
+
 
 	void SetGUIWindow(GLFWwindow* w) {
 		window = w;
@@ -133,14 +119,14 @@ struct MASTER_IM_GUI {
 
 			style = &ImGui::GetStyle();
 
-			//style->WindowRounding = 0.0f;
-			//
-
-
 			Renderable::DXM->ImGUIInit();
 
 			ImGui_ImplGlfw_InitForOther(window, true);
 			RendererMade = true;
+
+			SetCustomStyle();
+			CustomFont = GUIio.Fonts->AddFontFromFileTTF("./Fonts/Quicksand-SemiBold.ttf", 18.0f);
+			GUIio.FontDefault = CustomFont;
 
 			//	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
 			//	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);

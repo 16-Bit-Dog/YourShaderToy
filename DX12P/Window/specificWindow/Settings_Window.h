@@ -18,12 +18,30 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 		settingWindowSettingsMaker();
 	}
 
+	inline static uint32_t SetX1 = 400;
+	inline static uint32_t SetY1 = 400;
+
+	void HandleWindowSetSize() {
+		ImGui::GreenText("Window Size:");
+		ImGui::Indent();
+		ImGui::InputScalar("X Size ##window size X to change to", ImGuiDataType_U32, &MASTER_Setting::SetX1);
+		ImGui::SameLine();
+		ImGui::InputScalar("Y Size ##window size Y to change to", ImGuiDataType_U32, &MASTER_Setting::SetY1);
+		if (ImGui::Button("|Set Window Size|")) {
+			glfwSetWindowSize(GLFW_Window_C::MainWin->window, MASTER_Setting::SetX1, MASTER_Setting::SetY1);
+		}
+		ImGui::Unindent();
+
+	}
+
 	virtual void BasicViewDraw(GroupData* GD) {
 
 		if (DrawBasicWindow(this, GD, "Settings:")) {
 
-			ImGuiStyle style_T;
+			HandleWindowSetSize();
 
+			ImGuiStyle style_T;
+			
 			ImGui::Checkbox("Auto Code Compile", &Renderable::DXM->AutoCodeCompile);
 			if(Renderable::DXM->AutoCodeCompile) ImGui::InputFloat("Range Of Auto Code Compile", &Renderable::DXM->AutoCodeCompile_Wait);
 
@@ -31,8 +49,8 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			ImGui::Checkbox("ClearDepthEveryPass ##Check", &Renderable::DXM->ClearDepthEveryPass);
 
-			ImGui::InputFloat("Cam Forward Shift##Cam Forward Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftForwardAmount, 0.005, 0.01);
-			ImGui::InputFloat("Cam Side Shift##Cam Side Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftSideAmount, 0.005, 0.01);
+			ImGui::InputFloat("Cam Forward Shift##Cam Forward Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftForwardAmount, 0.005f, 0.01f);
+			ImGui::InputFloat("Cam Side Shift##Cam Side Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftSideAmount, 0.005f, 0.01f);
 				
 			if (ImGui::ShowStyleSelector("Colors##Selector"))
 				MASTER_IM_GUI::obj->style = &style_T;
@@ -62,7 +80,7 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 					if (ImGui::RadioButton("Opaque", alpha_flags == ImGuiColorEditFlags_None)) { alpha_flags = ImGuiColorEditFlags_None; } ImGui::SameLine();
 					if (ImGui::RadioButton("Alpha", alpha_flags == ImGuiColorEditFlags_AlphaPreview)) { alpha_flags = ImGuiColorEditFlags_AlphaPreview; } ImGui::SameLine();
 					if (ImGui::RadioButton("Both", alpha_flags == ImGuiColorEditFlags_AlphaPreviewHalf)) { alpha_flags = ImGuiColorEditFlags_AlphaPreviewHalf; } ImGui::SameLine();
-					HelpMarker(
+					ImGui::HelpMarker(
 						"In the color list:\n"
 						"Left-click on color square to open color picker,\n"
 						"Right-click to open edit options menu.");

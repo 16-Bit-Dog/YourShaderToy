@@ -15,6 +15,13 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::vector<std::string> AutoAddGlobalsConstants;
 
 	std::string Globals = std::string(
+		"#define BLOCK_X 16\n"
+		"#define BLOCK_Y 16\n"
+		"//Group size X is int(WINDOW_SIZE_X/BLOCK_X)\n"
+		"int GroupSizeX(){return int(WINDOW_SIZE_X/BLOCK_X); }\n"
+		"//Group size Y is int(WINDOW_SIZE_Y/BLOCK_Y)\n"
+		"int GroupSizeY(){return int(WINDOW_SIZE_Y/BLOCK_Y); }\n"
+
 		"float4 YPRToQuat(in float4 ypr){\n"
 		"//radians of yaw pitch roll to quat. NOT angle\n"
 		"return float4(sin(ypr.z / 2.0) * cos(ypr.y / 2.0) * cos(ypr.x / 2.0) - cos(ypr.z / 2.0) * sin(ypr.y / 2.0) * sin(ypr.x / 2.0),\n"
@@ -47,10 +54,10 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 		"VertexOut SimpleVS(Vertex IN){\n"
 		"VertexOut OUT;\n"
-		"matrix mvp = mul(ProjectionMatrix, ViewMatrix);" //todo, maybe add specifier for world mat, since this is just world rot
+		"matrix mvp = mul(ProjectionMatrix, ViewMatrix);\n" //todo, maybe add specifier for world mat, since this is just world rot
 		//"float2 track = float2((WINDOW_SIZE_X/2-MOUSE_POS_X)/90,(WINDOW_SIZE_Y/2-MOUSE_POS_Y)/90);"
-		"float4 t = float4((WINDOW_SIZE_X-MOUSE_POS_X)*3/WINDOW_SIZE_X,(WINDOW_SIZE_Y-MOUSE_POS_Y)*3/WINDOW_SIZE_Y,20,0);\n" 
-		"float4 s = float4(1,1,1,1);\n"
+		"float4 t = float4(1.0f,1.0f,sin(DELTA_LAST_KEY)+10.0f,1.0f);\n" 
+		"float4 s = float4(1.0f,1.0f,1.0f,1.0f);\n"
 		"float4 q = float4(sin(DELTA_LAST_KEY)*3.14,0,0,0);\n"
 		"OUT.position = ApplyTransQuatScale(mvp, float4(IN.position, 1), t, s, YPRToQuat(q));\n"
 		"OUT.color = float4(IN.uv.x,IN.uv.y,(IN.uv.x+IN.uv.y)/2.0f,1.0f);\n"
@@ -75,7 +82,24 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::string HsString = "";
 	std::string DsString = "";
 	std::string GsString = "";
-	std::string CsString = "";
+	std::string CsString = std::string(
+		"struct ComputeShaderInput\n"
+		"{\n"
+		"uint3 groupID : SV_GroupID;           // 3D index of the thread group in the dispatch.\n"
+		"uint3 groupThreadID : SV_GroupThreadID;     // 3D index of local thread ID in a thread group.\n"
+		"uint3 dispatchThreadID : SV_DispatchThreadID;  // 3D index of global thread ID in the dispatch.\n"
+		"uint  groupIndex : SV_GroupIndex;        // Flattened local index of the thread within a thread group.\n"
+		"};\n"
+		"\n"
+		"[numthreads(BLOCK_X,BLOCK_Y,1)]\n"
+		"void SimpleCS(ComputeShaderInput IN){\n"
+		"int2 texC = IN.dispatchThreadID.xy;\n"
+		"float4 tmp = RTV0[texC];\n"
+		"RTV0[texC] = tmp/(0.8/abs(sin(NET_TIME)));\n"
+		"\n"
+		"\n"
+		"}\n"
+	);
 	std::string MeshsString = "";
 	std::string AmpsString = "";
 	std::string RayGensString = "";
@@ -138,7 +162,6 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			"	Matrix ProjectionMatrix;\n"
 			"};\n"
 			
-			
 		);
 
 		for (const auto& i : AutoAddGlobalsRTV) {
@@ -181,17 +204,42 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	}
 
 	void DrawVertexShaderText() {
-		if (ImGui::CollapsingHeader("EditorVertexCollapse")) {
+		
+		if (ImGui::CollapsingHeaderOpenGreen("EditorVertexCollapse")) {
 			ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
-			HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
+			ImGui::HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
 			ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
 		}
 	}
 
 	void DrawPixelShaderText() {
-		if (ImGui::CollapsingHeader("EditorPixelCollapse")) {
+		if (ImGui::CollapsingHeaderOpenGreen("EditorPixelCollapse")) {
 			ImGui::Text("//PixelShaders");
 			ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
+		}
+	}
+	void DrawHullShaderText() {
+		if (ImGui::CollapsingHeaderOpenGreen("EditorHullCollapse")) {
+			ImGui::Text("//HullShaders");
+			ImGui::InputTextMultilineQuick("T3", &HsString, &TextType);
+		}
+	}
+	void DrawDomainShaderText() {
+		if (ImGui::CollapsingHeaderOpenGreen("EditorDomainCollapse")) {
+			ImGui::Text("//DomainShaders");
+			ImGui::InputTextMultilineQuick("T4", &DsString, &TextType);
+		}
+	}
+	void DrawGeometryShaderText() {
+		if (ImGui::CollapsingHeaderOpenGreen("EditorGeometryCollapse")) {
+			ImGui::Text("//GeometryShaders");
+			ImGui::InputTextMultilineQuick("T5", &GsString, &TextType);
+		}
+	}
+	void DrawComputeShaderText() {
+		if (ImGui::CollapsingHeaderOpenGreen("EditorComputeCollapse")) {
+			ImGui::Text("//ComputeShaders");
+			ImGui::InputTextMultilineQuick("T6", &CsString, &TextType);
 		}
 	}
 
@@ -204,7 +252,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("//HELP");
 			ImGui::SameLine();
-			HelpMarker("HELP:\n"
+			ImGui::HelpMarker("HELP:\n"
 				"Hold SHIFT or use mouse to select text.\n"
 				"CTRL+Left/Right to word jump.\n"
 				"CTRL+A or double-click to select all.\n"
@@ -233,25 +281,23 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 			ImGui::Text("////Tesslation Shader content");
 			ImGui::Text("//HullShaders - TODO");
-			ImGui::InputTextMultilineQuick("##T3", &HsString, &TextType);
+			DrawHullShaderText(); //TODO this logic
 			ImGui::Text("//DomainShaders - TODO");
-			ImGui::InputTextMultilineQuick("##T4", &DsString, &TextType);
+			DrawDomainShaderText(); //TODO this logic
 			ImGui::Text("////");
 
 			ImGui::Separator();
 			ImGui::Separator();
 
-			ImGui::Text("////GeometryShader Content");
-			ImGui::Text("//GeometryShaders - TODO");
-			ImGui::InputTextMultilineQuick("##T5", &GsString, &TextType);
+			ImGui::Text("////GeometryShader Content - TODO");
+			DrawGeometryShaderText();
 			ImGui::Text("////");
 
 			ImGui::Separator();
 			ImGui::Separator();
 
-			ImGui::Text("////ComputeShader Content - TODO");
-			ImGui::Text("//ComputeShaders - TODO");
-			ImGui::InputTextMultilineQuick("##T6", &CsString, &TextType);
+			ImGui::Text("////ComputeShader Content");
+			DrawComputeShaderText();
 			ImGui::Text("////");
 
 			ImGui::Separator();

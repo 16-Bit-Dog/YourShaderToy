@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Main_Window.h"
+#include "ImGui/ImGuiHelper.h"
 
 struct MASTER_CodeError : MASTER_Function_Inherit {
 	inline static MASTER_CodeError* obj;
@@ -29,9 +30,9 @@ struct MASTER_CodeError : MASTER_Function_Inherit {
 			ImGui::Text("Errors:");
 			
 			for (const auto& i : PipelineMain::obj->P) {
-
+				
 				if (ImGui::CollapsingHeader(i.second->GetName().c_str(), NULL)) {
-
+					
 					PrintError(i.second);
 
 				}

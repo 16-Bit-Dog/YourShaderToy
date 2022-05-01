@@ -30,9 +30,11 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	std::vector<BuiltConstant_c*> ConstantStore;
 
 	void AddNewRTV() {
+		Renderable::DXM->CompiledData = false;
 		RTV_DEPTH::RTV[RenderTarget_s::GetNextID()] = (new RenderTarget_s());
 	}
 	void AddNewDEPTH() {
+		Renderable::DXM->CompiledData = false;
 		RTV_DEPTH::DEPTH[DepthTarget_s::GetNextID()] = (new DepthTarget_s());
 	}
 
@@ -129,7 +131,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 
 	void DrawPREDEFINED() {
-		if (ImGui::CollapsingHeader("Predefined:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("Predefined:"))
 		{
 			ImGui::Indent();
 			ImGui::Text("Variables:");
@@ -147,8 +149,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		ImGui::Separator();
 	}
 
-	void FileSelector(std::string FileTypeToFind /*.exe, .png, .jpeg ## ect*/, ImGuiFileDialog* fd, std::string name) {
-		fd->OpenDialog("ChooseFileDlgKey", ("Choose " + name), FileTypeToFind.c_str(), ".");
+	void FileSelector(const std::string& FileTypeToFind /*.exe, .png, .jpeg ## ect*/, ImGuiFileDialog* fd, const std::string& name) {
+		fd->OpenDialog("ChooseFileDlgKey", ("Choose " + name), &FileTypeToFind[0], ".");
 	}
 
 	//Add custom vars
@@ -160,26 +162,26 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	//TODO, RW toggle after creation
 
-	void AddImageToList(std::string Path, std::string Name, bool IsPath, int sizeX, int sizeY, int channels, int bpp, bool UNORM_ELSE_FLOAT, d4* data) {
-		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, data));
+	void AddImageToList(const std::string& Path, const std::string& Name, const bool& IsPath, const int& sizeX, const int& sizeY, const int& channels, const int& bpp, const bool& UNORM_ELSE_FLOAT, const bool& LinkSizeToRTV, const d4* data) {
+		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, LinkSizeToRTV, data));
 		Renderable::DXM->CompiledData = false;
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
-	void AddModelToList(std::string Path, std::string Name, int Type) {
+	void AddModelToList(const std::string& Path, const std::string& Name, const int& Type) {
 		ModelStore.push_back(new BuiltModel_c(Path, Name, Type));
 		Renderable::DXM->CompiledData = false;
 	}
 
 	void AddImage() {
-		if (ImGui::BeginMenu("Add##Image")) {
-			if (ImGui::BeginMenu("Find Image##Image")) {
+		if (ImGui::BeginMenuGreen("Add##Image")) {
+			if (ImGui::BeginMenuGreen("Find Image##Image")) {
 				ImGui::InputText("Name: ##AddImageN", &ToAddImageName, ImGuiInputTextFlags_CharsNoBlank);
 				if (ImGui::Button("Search For File##Image")) {
 					FileSelector(".png,.jpeg,.jpg", &fImage, "Image");
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Custom Image ##Image")) {
+			if (ImGui::BeginMenuGreen("Custom Image ##Image")) {
 				ImGui::Text("Name: ");
 				ImGui::SameLine();
 				
@@ -197,9 +199,11 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				}
 
 				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &ObjectBuilder::UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
+				ImGui::Checkbox("Link texture size to RTV ##image texture setting selector", &ObjectBuilder::LinkSizeToRTV); ImGui::SameLine(); ImGui::HelpMarker("auto resize texture to RTV size when window size is adjusted");
+
 				if (ImGui::Button("Create ## RGBA Add image")) {
 					d4 idat(RGBA_sizeX, RGBA_sizeY, RGBA_bbp);
-					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, &idat);
+					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, ObjectBuilder::LinkSizeToRTV, &idat);
 				}
 				
 				ImGui::EndMenu();
@@ -219,7 +223,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				std::string path = fImage.GetFilePathName();
 				uint8_t* data = stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
 				d4 idat(data, width, height);
-				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, &idat);
+				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, false, &idat);
 				// action
 			}
 			// close
@@ -276,7 +280,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ToggleReadWrite(i);
 			
 			ImGui::Indent();
-			if (ImGui::CollapsingHeader(("Image Info:##" + sPad(i)).c_str(), NULL)) { //TODO test
+			if (ImGui::CollapsingHeaderOpenGreen(("Image Info:##" + sPad(i)).c_str())) { //TODO test
 				
 				ImGui::Text(("sizeX: " + std::to_string(ImageStore[i]->sizeX)).c_str());
 				ImGui::SameLine();
@@ -304,10 +308,17 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void ShowRTV() {
 		std::vector<uint64_t> ToRemove;
 
+		
 		for (auto& i : RTV_DEPTH::RTV) {
-			ImGui::Text("Name: "); ImGui::SameLine();
+			ImGui::Text("Name Of RWTexture2d: "); ImGui::SameLine();
 			ImGui::InputText(("##RTV name input" + i.second->Spacing()).c_str(), &i.second->name);
-			ImGui::Checkbox(("Clear Depth Every New Pass##Toggle clear DEPTH" + i.second->Spacing()).c_str(), &i.second->ClearEveryNewPass);
+			
+			ImGui::Checkbox(("Clear RTV Every New Pass##Toggle clear RTV" + i.second->Spacing()).c_str(), &i.second->ClearEveryNewPass);
+			if (i.second->ClearEveryNewPassOld != i.second->ClearEveryNewPass) {
+				Renderable::DXM->BufferReset = true;
+			}
+			i.second->ClearEveryNewPassOld = i.second->ClearEveryNewPass;
+
 			if (ImGui::Button(("-##Remove RTV" + i.second->Spacing()).c_str())) {
 				if (RTV_DEPTH::RTV.size() > 1) {
 					ToRemove.push_back(i.first);
@@ -323,11 +334,12 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void AddRTV() {
 		if (ImGui::Button("+##Add new RTV")) {
+
 			AddNewRTV();
 		}
 	}
 	void DrawRTV() {
-		if (ImGui::CollapsingHeader("RTV:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("RTV:"))
 		{
 
 			AddRTV();
@@ -341,13 +353,18 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	void ShowDEPTH() {
 		std::vector<uint64_t> ToRemove;
-
+		
 		for (auto& i : RTV_DEPTH::DEPTH) {
 			
-			ImGui::Text("Name: "); ImGui::SameLine();
+			ImGui::Text("Name Of RWTexture2d: "); ImGui::SameLine();
 			ImGui::InputText(("##DEPTH name input" + i.second->Spacing()).c_str(), &i.second->name);
+			
 			ImGui::Checkbox(("Clear Depth Every New Pass##Toggle clear DEPTH" + i.second->Spacing()).c_str(), &i.second->ClearEveryNewPass);
-
+			if (i.second->ClearEveryNewPassOld != i.second->ClearEveryNewPass) {
+				Renderable::DXM->BufferReset = true;
+			}
+			i.second->ClearEveryNewPassOld = i.second->ClearEveryNewPass;
+			
 			if (ImGui::Button(("-##Remove DEPTH" + i.second->Spacing()).c_str())) {
 				if (RTV_DEPTH::DEPTH.size() > 1) {
 					ToRemove.push_back(i.first);
@@ -367,7 +384,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 	}
 	void DrawDEPTH() {
-		if (ImGui::CollapsingHeader("DEPTH:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("DEPTH:"))
 		{
 			AddDEPTH();
 
@@ -376,7 +393,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		ImGui::Separator();
 	}
 	void DrawIMAGE() {
-		if (ImGui::CollapsingHeader("Images:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("Images:"))
 		{
 			AddImage();
 			//TODO: draw ImageStore and allow info expansion to show dimentions, and such
@@ -388,8 +405,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 
 	void AddModel() {
-		if (ImGui::BeginMenu("Add ##Model")) {
-			if (ImGui::BeginMenu("Find .FBX Model##Model")) {
+		if (ImGui::BeginMenuGreen("Add ##Model")) {
+			if (ImGui::BeginMenuGreen("Find .FBX Model##Model")) {
 				ImGui::InputText("Name: ##AddModelName", &ToAddModelName, ImGuiInputTextFlags_CharsNoBlank);
 				ImGui::InputInt("Name: ##AddModelName", &ToAddModelType);
 				/*
@@ -445,7 +462,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 	}
 	void DrawMODEL() {
-		if (ImGui::CollapsingHeader("Models:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("Models:"))
 		{
 
 			AddModel();
@@ -484,8 +501,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	std::string StructCreateName = "";
 	void AddConstant() {
-		if (ImGui::BeginMenu("Add ##Const")) {
-			if (ImGui::BeginMenu("Create Struct##CreatConstantMenu")) {
+		if (ImGui::BeginMenuGreen("Add ##Const")) {
+			if (ImGui::BeginMenuGreen("Create Struct##CreatConstantMenu")) {
 				
 				ImGui::InputText("Create Struct##ConstantMaker", &StructCreateName, ImGuiInputTextFlags_CharsNoBlank);
 
@@ -558,7 +575,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 			ImGui::SameLine();
 			ImGui::Text(ConstantStore[i]->StructName.c_str());
 			
-			if (ImGui::CollapsingHeader(("Constant's Info:##" + sPad(i)).c_str(), NULL)) {  
+			if (ImGui::CollapsingHeaderOpenGreen(("Constant's Info:##" + sPad(i)).c_str())) {
 				ImGui::Indent();
 				ShowUintIntFloat(i);
 				ImGui::Unindent();
@@ -568,7 +585,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				continue;
 				i -= 1;
 			}
-			if (ImGui::BeginMenu(("Add Constant##CreateConstantMenu   " + sPad(i)).c_str())) {
+			if (ImGui::BeginMenuGreen(("Add Constant##CreateConstantMenu   " + sPad(i)).c_str())) {
 
 				ImGui::InputText(("Name: ##ConstantCreateVar" +sPad(i)).c_str(), &ToAddConstantMenuName, ImGuiInputTextFlags_CharsNoBlank);
 				ImGui::InputInt(("Def. Int: ##ConstantCreateVar" + sPad(i)).c_str(), &ToAddConstantInt);
@@ -596,7 +613,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		//TODO allow modification of defaults here, and name
 	}
 	void DrawCONSTANTS() {
-		if (ImGui::CollapsingHeader("Constants:", NULL))
+		if (ImGui::CollapsingHeaderOpenGreen("Constants:"))
 		{
 			AddConstant();
 			ShowConstant();

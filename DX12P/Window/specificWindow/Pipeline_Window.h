@@ -27,7 +27,29 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	MASTER_Pipeline() {
 		settingWindowSettingsMaker();
 	}
+	
+	
+	static void RecompileCode() {
+		Renderable::DXM->BufferReset = false;
 
+		GLFW_Window_C::DeltaOfLastPress_CompileReset = -2.0f;
+
+		if (Renderable::DXM->AutoFileManagerCompile && Renderable::DXM->CompiledData == false) {
+			MASTER_FileManager::obj->BuildAllObjectsItem();
+		}
+
+		Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);
+		Renderable::DXM->CompiledCode = true;
+	}
+
+	static void CheckToRecompileCodeAuto() {
+		if (Renderable::DXM->BufferReset == true || Renderable::DXM->AutoCodeCompile && Renderable::DXM->AutoCodeCompile_Wait < GLFW_Window_C::DeltaOfLastPress_CompileReset) {
+
+			RecompileCode();
+
+		}
+	}
+	
 	void DrawPipelineDiagram() {
 		/*
 		START ->
@@ -38,19 +60,13 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 		shows how program is running
 		*/
-		if (Renderable::DXM->CompiledData == false) ImGui::TextColored({ 1.0f, 0.1f, 0.1f, 1.0f }, "WARNING - FILE-MANAGER DATA NOT COMPILED");
+
+		if (Renderable::DXM->CompiledData == false) ImGui::RedText("WARNING - FILE-MANAGER DATA NOT COMPILED");
 		
 		bool button = ImGui::Button("Pipeline & Code Compile##StartCodeCompile");
 
-		if (Renderable::DXM->BufferReset || button || Renderable::DXM->AutoCodeCompile && Renderable::DXM->AutoCodeCompile_Wait < GLFW_Window_C::DeltaOfLastPress_CompileReset) {
-			Renderable::DXM->BufferReset = false;
-
-			GLFW_Window_C::DeltaOfLastPress_CompileReset = -2.0f;
-
-			if (Renderable::DXM->AutoFileManagerCompile && Renderable::DXM->CompiledData == false) MASTER_FileManager::obj->BuildAllObjectsItem();
-
-			Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);
-			Renderable::DXM->CompiledCode = true;
+		if (button) {
+			RecompileCode();
 		}
 
 		ImGui::Text("Start->");
@@ -72,6 +88,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::SameLine();
 
 		if (ImGui::Button(("+##[NewPipeline]"+s).c_str())) {
+			Renderable::DXM->BufferReset = true;
+
 			PipelineAddQueue.push_back([=]() {
 				PipelineMain::obj->AddNewPipelineToPosition(PosInsert); }
 			);
@@ -86,12 +104,14 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::Text("Remove This Pipeline");
 		ImGui::SameLine();
 		if (ImGui::Button(("-##Remove This Pipeline" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+			Renderable::DXM->BufferReset = true;
+
 			PipelineMain::obj->P[i]->killP = true;
 		}
 	}
 
 	void DrawPipelineOrder(const int& i) {
-		if (ImGui::BeginMenu(("<Hover To Swap>##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("<Hover To Swap Pipeline Run Order>##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			for (const auto& x : PipelineMain::obj->P) {
 				if (ImGui::Button((x.second->name + " ").c_str())) {
 					MapTools::Swap(x.first, i, PipelineMain::obj->P);
@@ -127,11 +147,13 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 
 	void DrawPipelineIfTrueComputeOnlyToggle(const int& i) {
 		//TODO: draw only compute shader stuff alone
+		PipelineMain::obj->P[i]->DrawCompute();
+
 	}
 
 	void DrawSelectModel(const int& i) {
 		ImGui::Text("     "); ImGui::SameLine();
-		if (ImGui::BeginMenu(("Select Model:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("Select Model:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			for (const auto& x : MASTER_FileManager::obj->ModelStore) {
 				if (ImGui::Button((x->Name + "##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 					Renderable::DXM->ROB->SetDataToPipelineVertex(x, PipelineMain::obj->P[i]->Vertex);
@@ -144,7 +166,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void DrawFaceToRenderSelect(const int& i) {
 		ImGui::Checkbox(("Use Fill" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.ToFill);
 		ImGui::Checkbox(("AA Line" + PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.RasterToMake.AAL);
-		if (ImGui::BeginMenu(("Select Face To Render:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("Select Face To Render:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			bool AllFace = false;
 			bool BackFace = false;
 			bool FrontFace = false; //.cull means to cull out
@@ -296,7 +318,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
 
 			ImGui::Text("     "); ImGui::SameLine(); ImGui::HelpMarker("Only Blend Control 14-15 use these values"); ImGui::SameLine();
-			if (ImGui::BeginMenu(("Set Blend Factor:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+			if (ImGui::BeginMenuGreen(("Set Blend Factor:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 
 				BlendFactorControlInput(("Red Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[0]);
 				BlendFactorControlInput(("Green Blend" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendFactor[1]);
@@ -306,7 +328,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			}
 
 			ImGui::Text("     "); ImGui::SameLine();
-			if (ImGui::BeginMenu(("Select Blend Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+			if (ImGui::BeginMenuGreen(("Select Blend Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 
 				BlendControlInput(("[SrcBlend] How PS Blends RGB" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.SrcBlend);
 				BlendControlInput(("[DestBlend] How RTV Blends" + PipelineMain::obj->P[i]->Spacing()), &PipelineMain::obj->P[i]->Vertex.BlendToMake.DestBlend);
@@ -334,7 +356,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		ImGui::SameLine(); ImGui::HelpMarker("Compare resultant fragments");
 
 		ImGui::Text("     "); ImGui::SameLine();
-		if (ImGui::BeginMenu(("Select Depth-Stencil Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("Select Depth-Stencil Specifics:##" + PipelineMain::obj->P[i]->Spacing()).c_str())) {
 			
 			ImGui::Checkbox(("Depth Write Mask"+PipelineMain::obj->P[i]->Spacing()).c_str(), &PipelineMain::obj->P[i]->Vertex.StencilToMake.DepthWriteMask);
 			ImGui::SameLine(); ImGui::HelpMarker("no check = don't write to depth buffer\ncheck = write to depth buffer");
@@ -362,11 +384,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		PipelineMain::obj->P[i]->Vertex.Input();
 
 		DrawSelectModel(i);
-		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Rasterizer Settings:");
+		ImGui::Text("Rasterizer Settings:");
 		DrawFaceToRenderSelect(i);
-		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Depth-Stencil:");
+		ImGui::Text("Depth-Stencil:");
 		DrawCompFunctionSelect(i);
-		ImGui::TextColored({ 0.1f,1.0f,0.1f,1.0f }, "Blend:");
+		ImGui::Text("Blend:");
 		DrawBlendSelect(i);
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
@@ -383,10 +405,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void DrawRTV(PipelineObj* i) {
 		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &i->RTV_Selected);
 		ImGui::Text(("RTV Bound: "+ RTV_DEPTH::RTV[i->RTV_Selected]->name).c_str());
-		if (ImGui::BeginMenu(("Change RTV Bound For Stage: ##Change RTV for PObj"+i->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("Change RTV Bound For Stage: ##Change RTV for PObj"+i->Spacing()).c_str())) {
 			for (auto& x : RTV_DEPTH::RTV) {
 				if (ImGui::Button((x.second->name+"##ButtonToChangeRTVBound"+i->Spacing()+x.second->Spacing()).c_str())) {
 					i->RTV_Selected = x.first;
+					GLFW_Window_C::StartPipelineCompileTimer();
 				}
 			}
 			ImGui::EndMenu();
@@ -395,10 +418,11 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void DrawDEPTH(PipelineObj* i) {
 		MapTools::CheckIfSelectedExists(RTV_DEPTH::DEPTH, &i->DEPTH_Selected);
 		ImGui::Text(("DEPTH Bound: " + RTV_DEPTH::DEPTH[i->DEPTH_Selected]->name).c_str());
-		if (ImGui::BeginMenu(("Change DEPTH Bound For Stage: ##Change DEPTH for PObj" + i->Spacing()).c_str())) {
+		if (ImGui::BeginMenuGreen(("Change DEPTH Bound For Stage: ##Change DEPTH for PObj" + i->Spacing()).c_str())) {
 			for (auto& x : RTV_DEPTH::DEPTH) {
 				if (ImGui::Button((x.second->name + "##ButtonToChangeDEPTHBound" + i->Spacing() + x.second->Spacing()).c_str())) {
 					i->DEPTH_Selected = x.first;
+					GLFW_Window_C::StartPipelineCompileTimer();
 				}
 			}
 			ImGui::EndMenu();
@@ -408,15 +432,19 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 	void SelectRTVToDrawFrom() {
 		ImGui::Text(("Current RTV With Goal of Output: " + RTV_DEPTH::RTV[PipelineObj::SelectedFinalRTV]->name).c_str());
 		
-		if (ImGui::BeginMenu("Change RTV Bound For Output: ##Change RTV for final out")) {
+		if (ImGui::BeginMenuGreen("Change RTV Bound For Output: ##Change RTV for final out")) {
 			for (auto& x : RTV_DEPTH::RTV) {
 				if (ImGui::Button((x.second->name + "##ButtonToChangeRTVFinalBound" + x.second->Spacing()).c_str())) {
 					PipelineObj::SelectedFinalRTV = x.first;
+					GLFW_Window_C::StartPipelineCompileTimer();
 				}
 			}
 			ImGui::EndMenu();
 		}
-	
+		ImGui::Separator();
+		ImGui::Separator();
+		ImGui::NewLine();
+
 		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &PipelineObj::SelectedFinalRTV);
 	
 	}
@@ -437,15 +465,14 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 			for (const auto& i : PipelineMain::obj->P) {
 				ImGui::Text((i.second->name).c_str());
 				ImGui::SameLine();
-				if (ImGui::CollapsingHeader(("##"+i.second->Spacing()).c_str(), NULL))
+				if (ImGui::CollapsingHeaderOpenGreen(("##"+i.second->Spacing()).c_str()))
 				{
-					DrawRTV(i.second);
+					DrawPipelineAdd(i.first, i.second->Spacing() + "B");
+					DrawPipelineSub(i.first);
 					ImGui::NewLine();
+					DrawRTV(i.second);
 					DrawDEPTH(i.second);
 					ImGui::NewLine();
-					DrawPipelineAdd(i.first, i.second->Spacing()+ "B");
-					ImGui::NewLine();
-					DrawPipelineSub(i.first);
 					DrawPipelineOrder(i.first);
 					DrawPipelineName(i.first);
 					DrawPipelineOnToggle(i.first);

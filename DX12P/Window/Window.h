@@ -25,12 +25,12 @@ struct GroupData;
 
 struct AllWin {
 	//window holder struct
-
+	inline static std::vector<std::function<void()>> toRun; 
 	inline static UINT CurrWindow = 0;
 	inline static std::vector<GLFW_Window_C*> WinList;
 
 	inline static void LoopRunAllContext();
-
+	inline static void PreambleGlobalRun();
 };
 
 void GLFW_Window_C::RemoveAssociatedGUIFromWindowObj() {
@@ -169,14 +169,24 @@ void CheckAndModifyCam() {
 	}
 }
 
+void AllWin::PreambleGlobalRun() {
+	for (const auto i : toRun) {
+		i();
+	}
+}
+
+
 void AllWin::LoopRunAllContext() {
 
 	glfwSwapInterval(1); //vsync
 
 	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(WinList[0]->window);
-
+	
 	glfwSetKeyCallback(GLFW_Window_C::MainWin->window, GLFW_Window_C::key_callback);
 	//run all main big GLFW windows with associate sub imgui inside
+
+	AllWin::toRun.push_back(MASTER_Pipeline::CheckToRecompileCodeAuto); //add recompile code as a to run preamble
+
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
 		//check if main GLFW should close
@@ -198,6 +208,7 @@ void AllWin::LoopRunAllContext() {
 		//win list runner
 		for (int i = 0; i < WinList.size(); i++) { //I expect 1 frame in the current state of the program
 
+			
 			CurrWindow = i; //set current window int 
 
 			//set curr context to gather input data from TODO test: maybe set main window as the current GLFW context
@@ -215,8 +226,10 @@ void AllWin::LoopRunAllContext() {
 				Renderable::DXM->CAM->UpdateCheck();
 			}
 
-			//run GLFW window
-			WinList[i]->RunWindowLogic();
+
+			PreambleGlobalRun(); //handles global always run checks and logic
+
+			WinList[i]->RunWindowLogic(); //run mini windows logic for this GLFW window
 
 
 		}
