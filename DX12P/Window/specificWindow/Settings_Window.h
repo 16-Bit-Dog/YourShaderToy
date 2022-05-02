@@ -42,8 +42,13 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			ImGuiStyle style_T;
 			
+			if (ImGui::Button("SAVE WINDOWING SETTINGS##save ini file for ImGui")) {
+				ImGui::SaveIniSettingsToDisk("");
+			}
+			ImGui::Checkbox("Save ImGUI Settings on Program shutdown##save ini after shut off", &GLFW_Window_C::SaveImGuiAfterShutdown);
+
 			ImGui::Checkbox("Auto Code Compile", &Renderable::DXM->AutoCodeCompile);
-			if(Renderable::DXM->AutoCodeCompile) ImGui::InputFloat("Range Of Auto Code Compile", &Renderable::DXM->AutoCodeCompile_Wait);
+			if(Renderable::DXM->AutoCodeCompile) ImGui::InputFloat("Time until Auto Code Compile", &Renderable::DXM->AutoCodeCompile_Wait);
 
 			ImGui::Checkbox("Auto FileManager Compile With Code Compile", &Renderable::DXM->AutoFileManagerCompile);
 
@@ -53,7 +58,7 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 			ImGui::InputFloat("Cam Side Shift##Cam Side Shift Amount Adjustment", &Renderable::DXM->CAM->ShiftSideAmount, 0.005f, 0.01f);
 				
 			if (ImGui::ShowStyleSelector("Colors##Selector"))
-				MASTER_IM_GUI::obj->style = &style_T;
+				ImGuiMainStyle = &style_T;
 
 			if (ImGui::Button("Save Style Theme"))
 
@@ -63,8 +68,8 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 
 			if (ImGui::Button("Revert Style"))
 				ImGui::StyleColorsDark();
-			MASTER_IM_GUI::obj->style = &ImGui::GetStyle();
-			MASTER_IM_GUI::obj->style->Colors[ImGuiCol_WindowBg].w = 1.0f;
+			ImGuiMainStyle = &ImGui::GetStyle();
+			ImGuiMainStyle->Colors[ImGuiCol_WindowBg].w = 1.0f;
 
 			ImGui::Separator();
 
@@ -94,9 +99,9 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 						if (!filter.PassFilter(name))
 							continue;
 						ImGui::PushID(i);
-						ImGui::ColorEdit4("##color", (float*)&MASTER_IM_GUI::obj->style->Colors[i], ImGuiColorEditFlags_AlphaBar);
+						ImGui::ColorEdit4("##color", (float*)&ImGuiMainStyle->Colors[i], ImGuiColorEditFlags_AlphaBar);
 
-						ImGui::SameLine(0.0f, MASTER_IM_GUI::obj->style->ItemInnerSpacing.x);
+						ImGui::SameLine(0.0f, ImGuiMainStyle->ItemInnerSpacing.x);
 						ImGui::TextUnformatted(name);
 						ImGui::PopID();
 					}

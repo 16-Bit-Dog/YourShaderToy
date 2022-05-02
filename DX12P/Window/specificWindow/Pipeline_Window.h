@@ -392,7 +392,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		DrawBlendSelect(i);
 		ImGui::Spacing();
 		PipelineMain::obj->P[i]->Pixel.Input();
-
+		ImGui::NewLine();
 		PipelineMain::obj->P[i]->DrawCompute();
 
 

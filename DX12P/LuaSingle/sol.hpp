@@ -24,6 +24,8 @@
 // This header was generated with sol  (revision )
 // https://github.com/ThePhD/sol2
 
+#pragma warning (push:0)
+
 #ifndef SOL_SINGLE_INCLUDE_HPP
 #define SOL_SINGLE_INCLUDE_HPP
 
@@ -28841,3 +28843,4 @@ namespace sol {
 // end of sol/sol.hpp
 
 #endif // SOL_SINGLE_INCLUDE_HPP
+#pragma warning (pop)

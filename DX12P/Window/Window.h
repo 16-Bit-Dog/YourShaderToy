@@ -55,10 +55,11 @@ void GLFW_Window_C::FillDXMWithNewGLFW() {
 	Renderable::DXM->MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), Width, Height);
 }
 
-int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType = 1) {
+int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, const std::string& Stitle, int WinType = 1) {
 	//kept this as a back bone from what I prev' did for window creation -> this is a default window creation loader
 	if (Created == false) {
 
+		C_GUI_Win.push_back(new GroupData(this));
 		C_GUI_Win.push_back(new GroupData(this));
 		C_GUI_Win.push_back(new GroupData(this));
 		C_GUI_Win.push_back(new GroupData(this));
@@ -75,6 +76,8 @@ int GLFW_Window_C::CreateWindowM(int Swidth, int Sheight, std::string Stitle, in
 		C_GUI_Win[3]->ID = GLOBAL_WINDOW_ID_I();
 		C_GUI_Win[4]->LinkToFileManager();
 		C_GUI_Win[4]->ID = GLOBAL_WINDOW_ID_I();
+		C_GUI_Win[5]->LinkBasedOnInt(6); //code error link
+		C_GUI_Win[5]->ID = GLOBAL_WINDOW_ID_I();
 
 
 		Width = Swidth;
@@ -187,6 +190,8 @@ void AllWin::LoopRunAllContext() {
 
 	AllWin::toRun.push_back(MASTER_Pipeline::CheckToRecompileCodeAuto); //add recompile code as a to run preamble
 
+	ImGui::LoadIniSettingsFromDisk(""); //load ImGUI settings
+
 	while (WinList.size() > 0 && !glfwWindowShouldClose(WinList[0]->window)) {
 
 		//check if main GLFW should close
@@ -236,4 +241,7 @@ void AllWin::LoopRunAllContext() {
 		//finish render logic
 		MASTER_IM_GUI::obj->EndRender();
 	}
+
+	if(GLFW_Window_C::SaveImGuiAfterShutdown) 	ImGui::SaveIniSettingsToDisk("");
+
 }

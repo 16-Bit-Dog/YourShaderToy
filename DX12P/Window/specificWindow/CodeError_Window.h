@@ -21,6 +21,9 @@ struct MASTER_CodeError : MASTER_Function_Inherit {
 	void PrintError(PipelineObj* P) {
 		P->Vertex.PrintError();
 		P->Pixel.PrintError();
+		for (const auto i : P->Compute) {
+			i.second->PrintError();
+		}
 	}
 
 	virtual void BasicViewDraw(GroupData* GD) {

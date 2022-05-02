@@ -1,16 +1,15 @@
-show compute errors 
 
-- add "Noise texture and sub menu" to create texture as a default easy bool toggle for generating an "empty"
+TODO: add more noise parameters
 
-?make default a voxel render of a 2d image?
+TODO: test shader with noise
 
 TODO:
 - stream option to link mpeg-dash video of shader code live
 - multi user program-ing on same shader <-- do after project file thing (add object copies to [proj dir which must be chosen before starting project - if proj format exists it runs that and loads, if not then does not load anything])
 
-add file saver PROJ file to save what you made
+TODO: maybe adapt some stuff to node system?
 
-add imgui save locations of window button
+add file saver PROJ file to save what you made
 
 TODO: proof read for proper COM deletion so I stop leaking random mem- prob also make the non com thing a com and use .addressOf() instead of &
 

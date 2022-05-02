@@ -22,6 +22,10 @@ struct MASTER_Editor;
 struct MASTER_Objects;
 struct GroupData;
 
+inline static ImGuiStyle* ImGuiMainStyle;
+inline static ImFont* CustomFont;
+inline static ImFont* CustomFontSmall;
+
 struct GLFW_Window_C {
 	//generic glfw class 
 
@@ -53,6 +57,8 @@ struct GLFW_Window_C {
 	inline static double DeltaOfLastPress;
 	inline static double DeltaOfLastPress_CompileReset;
 
+	inline static bool SaveImGuiAfterShutdown = true;
+
 	static void StartPipelineCompileTimer() { DeltaOfLastPress_CompileReset = 0.0f; }
 
 
@@ -69,7 +75,7 @@ struct GLFW_Window_C {
 
 	void FillDXMWithNewGLFW();
 
-	int CreateWindowM(int Swidth, int Sheight, std::string Stitle, int WinType);
+	int CreateWindowM(int Swidth, int Sheight, const std::string& Stitle, int WinType);
 
 	int RunWindowLogic();
 

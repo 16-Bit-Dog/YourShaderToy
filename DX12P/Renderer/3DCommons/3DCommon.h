@@ -47,13 +47,13 @@ struct TopBoneWeight {
 //Vertex
 struct VNT
 {
-	XMFLOAT3 Position;
-	XMFLOAT3 Normal;
-	XMFLOAT3 BiNormal;
-	XMFLOAT3 Tangent;
-	XMFLOAT2 Tex;
-	TopBoneIDs tbi; //uint 4
-	TopBoneWeight tbw; //float 4
+	XMFLOAT3 Position = XMFLOAT3();
+	XMFLOAT3 Normal = XMFLOAT3();
+	XMFLOAT3 BiNormal = XMFLOAT3();
+	XMFLOAT3 Tangent = XMFLOAT3();
+	XMFLOAT2 Tex = XMFLOAT2();
+	TopBoneIDs tbi = TopBoneIDs(); //uint 4
+	TopBoneWeight tbw = TopBoneWeight(); //float 4
 };
 
 //bone joint manager struct

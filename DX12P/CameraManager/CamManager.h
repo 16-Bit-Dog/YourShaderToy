@@ -26,10 +26,10 @@ struct CameraManager : CamVirtualSetup {
 	float LERP_DROP = 0.05f;
 
 
-	XMMATRIX dxWorldMatrix;
-	XMMATRIX dxViewMatrix;
-	XMMATRIX dxProjectionMatrix;
-	XMMATRIX camRotationMatrix;
+	XMMATRIX dxWorldMatrix = XMMATRIX();
+	XMMATRIX dxViewMatrix = XMMATRIX();
+	XMMATRIX dxProjectionMatrix = XMMATRIX();
+	XMMATRIX camRotationMatrix = XMMATRIX();
 
 	XMVECTOR DefaultForward = XMVectorZero();
 	XMVECTOR DefaultRight = XMVectorZero();
@@ -66,8 +66,8 @@ public:
 	float RotAxisAngleTmp = 1.0f;//randians
 
 	//how much you are to be pushed in direction vars
-	float ShiftForwardAmount = 0.050; 
-	float ShiftSideAmount = 0.050;
+	float ShiftForwardAmount = 0.050f; 
+	float ShiftSideAmount = 0.050f;
 
 	virtual void UpdateCheck() {
 

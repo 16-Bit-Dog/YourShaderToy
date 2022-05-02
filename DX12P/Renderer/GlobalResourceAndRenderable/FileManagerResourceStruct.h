@@ -11,6 +11,7 @@
 #include "RenderableManager.h"
 #include "Renderable.h"
 #include "Window_Struct.h"
+#include <random>
 
 static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLOCK_Y", "PROGRAM_CONSTANTS", "", "Vertex",
 
@@ -93,9 +94,9 @@ struct d4 {
 	uint64_t* data64 = nullptr; //64 not included yet
 	void* dataV = nullptr; //random accsess ptr
 
-	int sizeX_c;
-	int sizeY_c;
-	int bpp_c;
+	int sizeX_c = 0;
+	int sizeY_c = 0;
+	int bpp_c = 0;
 
 	d4() {
 
@@ -157,10 +158,94 @@ void DupNameHandle(std::set<std::string>* usedName, std::string* Name) {
 }
 */
 
+struct NoiseDat_Obj {
+	bool UseNoise = true;
+	uint8_t MinCol = 0;
+	uint8_t MaxCol = 255;
+};
+
 struct ObjectBuilder {
 	
-	inline static bool UNORM_ELSE_FLOAT_Driver;
-	inline static bool LinkSizeToRTV;
+	inline static bool UNORM_ELSE_FLOAT_Driver = true;
+	inline static bool LinkSizeToRTV = true;
+	
+	inline static NoiseDat_Obj NoiseDat = NoiseDat_Obj();
+	inline static bool MadeTMP = false;
+	inline static std::vector<std::vector<std::array<uint8_t,4>>> noiseTMPmem;
+
+	inline static void DrawAndHandleMinAndMaxSize() {
+		if (ImGui::InputScalar("Min color (0-255):", ImGuiDataType_U8, &ObjectBuilder::NoiseDat.MinCol)) {
+			MadeTMP = false;
+			noiseTMPmem.clear();
+		}
+		if (ImGui::InputScalar("Max color (0-255):", ImGuiDataType_U8, &ObjectBuilder::NoiseDat.MaxCol)) {
+
+		}
+		if (ObjectBuilder::NoiseDat.MinCol > ObjectBuilder::NoiseDat.MaxCol) NoiseDat.MinCol = NoiseDat.MaxCol;
+	}
+
+
+	inline static std::vector<std::vector<std::array<uint8_t, 4>>> GenerateNoiseWithParam(uint64_t seed, uint32_t sizeX, uint32_t sizeY) {
+		std::vector<uint8_t> dataBase;
+		std::vector<std::vector<std::array<uint8_t, 4>>> VecIn;
+		VecIn.resize(sizeY);
+		if (seed > 1000000000000000) seed = 1;
+		for (int i = 0; i < sizeY; i++) {
+			VecIn[i].resize(sizeX);
+
+			dataBase.resize(ObjectBuilder::NoiseDat.MaxCol + 1);
+			std::iota(dataBase.begin(), dataBase.end(), ObjectBuilder::NoiseDat.MinCol);
+
+
+			std::default_random_engine randomGen(seed);
+
+			std::shuffle(dataBase.begin(), dataBase.end(), randomGen);
+
+			for (int z = 0; z < sizeX; z++) {
+				VecIn[i][z] = { dataBase[z], dataBase[z], dataBase[z], 255};
+			}
+			
+			dataBase.clear();
+
+			seed += 1;
+		}
+
+		return std::move(VecIn);
+
+	}
+	
+	
+	inline static void MakeAndSetNoiseWithParamForPreview(uint64_t seed) {
+		if (ImGui::BeginMenuGreen("Preview Noise##preview noise menu")) {
+			if (MadeTMP == false) noiseTMPmem = GenerateNoiseWithParam(seed, 50, 50);
+
+			
+			ImGui::PushFont(CustomFontSmall);
+			float c = 0.0f;
+			ImVec2 tmpv;
+			for (int y = 0; y < noiseTMPmem.size(); y++) {
+
+				for (int x = 0; x < noiseTMPmem[y].size(); x++) {
+					//		ImVec2 tmpv_t = { tmpv.x+x,tmpv.y+y};
+					//		ImVec2 tmpvM_t = { tmpvM.x+x,tmpvM.y+y };
+
+							//ImU32* t = (ImU32*)&noiseTMPmem[y][x][0];
+
+					c = float(noiseTMPmem[y][x][0]) / 255.0f;
+					ImGui::TextColored({ c,c,c,1.0f }, "#");
+					ImGui::SameLine();
+					tmpv = ImGui::GetCursorScreenPos();
+					ImGui::SetCursorScreenPos({ tmpv.x - ImGui::GetFontSize()-1, tmpv.y });
+				}
+				ImGui::NewLine();
+				tmpv = ImGui::GetCursorScreenPos();
+				ImGui::SetCursorScreenPos({ tmpv.x ,tmpv.y-ImGui::GetFontSize()-1});
+
+			}
+			ImGui::PopFont();
+			ImGui::EndMenu();
+		}
+	}
 
 	virtual void BuildItem() = 0;
 
@@ -352,27 +437,43 @@ struct BuiltImage_c : ObjectBuilder {
 
 	d4 data;
 
-	int bpp;
-	int sizeX;
-	int sizeY;
-	int channels; 
+	int bpp = 8;
+	int sizeX = 1;
+	int sizeY = 1;
+	int channels = 4; 
 	bool ReadWrite = true;
-	bool IsPath;
+	bool IsPath = false;
 	bool UNORM_ELSE_FLOAT = true;
 	//d4 data;
 	bool LinkSizeToRTV = false;
+
+	NoiseDat_Obj ndo;
 
 	void BuildItem() {
 		Renderable::ROB->LoadImageFromData(this);
 	}
 
 
-	BuiltImage_c(const std::string& p, std::string s, const bool& IsPath, const int& sizeX_tmp, const int& sizeY_tmp, const int& channels_tmp, const int& bpp_tmp, const bool& UNORM_ELSE_FLOAT_tmp, const bool& LinkSizeToRTV, const d4* data_tmp) {
+	BuiltImage_c(const std::string& p, std::string s, const bool& IsPath, const int& sizeX_tmp, const int& sizeY_tmp, const int& channels_tmp, const int& bpp_tmp, const bool& UNORM_ELSE_FLOAT_tmp, const bool& LinkSizeToRTV_tmp, const NoiseDat_Obj ndo_tmp, const d4* data_tmp) {
 		//set name
-		
-		this->LinkSizeToRTV = LinkSizeToRTV;
+		sizeX = sizeX_tmp;
+		sizeY = sizeY_tmp;
+		channels = channels_tmp;
 
-		data = *data_tmp;
+		LinkSizeToRTV = LinkSizeToRTV_tmp;
+
+		ndo = ndo_tmp;
+
+		if (ndo.UseNoise == false) {
+			data = *data_tmp;
+		}
+		else {
+			auto vecTmp = ObjectBuilder::GenerateNoiseWithParam(std::floor(GLFW_Window_C::time), sizeX, sizeY); //moved so pointer cost only
+			uint64_t sizeOfMem = vecTmp.size() * vecTmp[0].size() * 4 * 8;
+			uint8_t* dat = (uint8_t*)malloc(sizeOfMem);
+			memcpy(dat, &vecTmp[0][0][0], sizeof(sizeOfMem));
+			data = d4(dat, sizeX, sizeY);
+		}
 
 		UNORM_ELSE_FLOAT = UNORM_ELSE_FLOAT_tmp;
 		this->IsPath = IsPath;
@@ -388,11 +489,6 @@ struct BuiltImage_c : ObjectBuilder {
 		DealWithNameConflict(&usedNameCont, &NameRW, "TEX_RW");
 		SamplerName = Name + "_SAMPLE";
 		DealWithNameConflict(&usedNameCont, &SamplerName, "_SAMPLE");
-
-		sizeX = sizeX_tmp;
-		sizeY = sizeY_tmp;
-		channels = channels_tmp;
-
 
 	}
 	~BuiltImage_c() {

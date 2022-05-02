@@ -26,7 +26,7 @@ struct BasePipeline {
 		COMPUTE = 2,
 	};
 
-	inline static uint64_t globalCont; // global pipeline counter to iterate id of pipeline
+	inline static uint64_t globalCont = 0; // global pipeline counter to iterate id of pipeline
 
 	uint64_t control = 0; //the id of pipeline
 	
@@ -43,7 +43,7 @@ struct BasePipeline {
 
 	std::string ErrorMessage_s = ""; //err of pipeline compile
 
-	bool CompileError;
+	bool CompileError = false;
 
 	BasePipeline() {
 		control = globalCont;
@@ -83,7 +83,7 @@ struct BasePipeline {
 	
 	}
 
-	bool tmpHeaderHandle;
+	bool tmpHeaderHandle = false;
 
 	void PrintError() {
 		
@@ -94,7 +94,7 @@ struct BasePipeline {
 		ImGui::Indent();
 
 		bool tmpHeaderHandle = ImGui::CollapsingHeader(GetName().c_str(), NULL); //TODO: indent these future items
-		
+		ImGui::Indent();
 		if (ErrorMessage_s.size() > 2) {
 			ImGui::PopStyleColor();
 		}
@@ -102,14 +102,15 @@ struct BasePipeline {
 		if (tmpHeaderHandle) {
 			GetAndShowErrorMessage();
 		}
-		
+		ImGui::Unindent();
+
 		ImGui::Unindent();
 
 	}
 
 	void Input() {
 		ImGui::Text((ShaderTypeName + " Function Name: ").c_str());
-		ImGui::InputText(("##"+ ShaderTypeName + Spacing()).c_str(), &name, ImGuiInputTextFlags_CharsNoBlank);
+		ImGui::InputText(("##Name the Shader Function to run"+ ShaderTypeName + Spacing()).c_str(), &name, ImGuiInputTextFlags_CharsNoBlank);
 	}
 
 };

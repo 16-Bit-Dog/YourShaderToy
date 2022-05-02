@@ -61,14 +61,12 @@ struct GroupData {
 
 struct MASTER_IM_GUI {
 	inline static MASTER_IM_GUI* obj;
-	inline static ImFont* CustomFont;
 	ImGuiContext* GUIContext; // global for global use
 	bool RendererMade = false;
 	GLFWwindow* window;
-	ImGuiStyle* style;
 
 	void SetCustomStyle() {
-		style->Alpha = 0.8f;
+		ImGuiMainStyle->Alpha = 0.8f;
 	}
 
 
@@ -117,7 +115,7 @@ struct MASTER_IM_GUI {
 			GUIio.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 			GUIio.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-			style = &ImGui::GetStyle();
+			ImGuiMainStyle = &ImGui::GetStyle();
 
 			Renderable::DXM->ImGUIInit();
 
@@ -128,6 +126,8 @@ struct MASTER_IM_GUI {
 			CustomFont = GUIio.Fonts->AddFontFromFileTTF("./Fonts/Quicksand-SemiBold.ttf", 18.0f);
 			GUIio.FontDefault = CustomFont;
 
+			CustomFontSmall = GUIio.Fonts->AddFontFromFileTTF("./Fonts/Quicksand-SemiBold.ttf", 8.0f);
+			
 			//	const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
 			//	ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
 			//	ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);

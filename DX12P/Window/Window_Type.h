@@ -30,7 +30,7 @@ UINT GLOBAL_WINDOW_ID_I() {
 	return WIN_TYPE::GLOBAL_WINDOW_ID - 1;
 }
 
-int Add_New_Win_Type(std::function<void(GroupData*)> InitializationFunction, std::string name) { //returns new win type
+int Add_New_Win_Type(std::function<void(GroupData*)> InitializationFunction, const std::string& name) { //returns new win type
 	for (int i = WIN_TYPE::Win_Type_ID_Vector.size() + 1; i > 0; i++) {
 		if (WIN_TYPE::Win_Type_ID_Vector.count(i) == 0) {
 

@@ -162,14 +162,18 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	//TODO, RW toggle after creation
 
-	void AddImageToList(const std::string& Path, const std::string& Name, const bool& IsPath, const int& sizeX, const int& sizeY, const int& channels, const int& bpp, const bool& UNORM_ELSE_FLOAT, const bool& LinkSizeToRTV, const d4* data) {
-		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, LinkSizeToRTV, data));
+	void AddImageToList(const std::string& Path, const std::string& Name, const bool& IsPath, const int& sizeX, const int& sizeY, const int& channels, const int& bpp, const bool& UNORM_ELSE_FLOAT, const bool& LinkSizeToRTV, const NoiseDat_Obj& ndo, const d4* data) {
+		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, LinkSizeToRTV, ndo, data));
 		Renderable::DXM->CompiledData = false;
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
 	void AddModelToList(const std::string& Path, const std::string& Name, const int& Type) {
 		ModelStore.push_back(new BuiltModel_c(Path, Name, Type));
 		Renderable::DXM->CompiledData = false;
+	}
+
+	void DrawNoiseMiniPreview() {
+		ObjectBuilder::MakeAndSetNoiseWithParamForPreview(std::floor(GLFW_Window_C::time));
 	}
 
 	void AddImage() {
@@ -200,10 +204,19 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 				ImGui::Checkbox("UNORM/FLOAT ##image texture setting selector", &ObjectBuilder::UNORM_ELSE_FLOAT_Driver); ImGui::SameLine(); ImGui::HelpMarker("checkmark = unorm texture -- else it is float");
 				ImGui::Checkbox("Link texture size to RTV ##image texture setting selector", &ObjectBuilder::LinkSizeToRTV); ImGui::SameLine(); ImGui::HelpMarker("auto resize texture to RTV size when window size is adjusted");
+				
+				ImGui::Checkbox("Fill with Noise (opens up preview and menu to customize)", &ObjectBuilder::NoiseDat.UseNoise);
+				if (ObjectBuilder::NoiseDat.UseNoise) {
+					ObjectBuilder::DrawAndHandleMinAndMaxSize();
+
+					DrawNoiseMiniPreview();
+
+					RGBA_bbp = 8;
+				}
 
 				if (ImGui::Button("Create ## RGBA Add image")) {
 					d4 idat(RGBA_sizeX, RGBA_sizeY, RGBA_bbp);
-					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, ObjectBuilder::LinkSizeToRTV, &idat);
+					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, ObjectBuilder::LinkSizeToRTV, ObjectBuilder::NoiseDat, &idat);
 				}
 				
 				ImGui::EndMenu();
@@ -223,7 +236,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				std::string path = fImage.GetFilePathName();
 				uint8_t* data = stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
 				d4 idat(data, width, height);
-				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, false, &idat);
+				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, false, NoiseDat_Obj(), &idat);
 				// action
 			}
 			// close
