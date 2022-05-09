@@ -467,6 +467,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 				ImGui::SameLine();
 				if (ImGui::CollapsingHeaderOpenGreen(("##"+i.second->Spacing()).c_str()))
 				{
+					ImGui::BeginChildBorderFixedSize("##Child" + i.second->Spacing());
+
 					DrawPipelineAdd(i.first, i.second->Spacing() + "B");
 					DrawPipelineSub(i.first);
 					ImGui::NewLine();
@@ -481,6 +483,8 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 					else DrawPipelineIfFalseComputeOnlyToggle(i.first);
 					ImGui::NewLine();
 					DrawPipelineAdd(i.first+1, i.second->Spacing() + "A", "Add Pipeline After");
+
+					ImGui::EndChild();
 				}
 				ImGui::Separator();
 			}

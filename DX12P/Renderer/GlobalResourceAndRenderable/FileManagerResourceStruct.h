@@ -13,138 +13,6 @@
 #include "Window_Struct.h"
 #include <random>
 
-static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLOCK_Y", "PROGRAM_CONSTANTS", "", "Vertex",
-
-"ProjectionMatrixS", "ViewMatrixS", "WorldMatrixS",
-"ProjectionMatrix", "ViewMatrix", "WorldMatrix",
- 
-"DefaultProjectionMatrixS", "DefaultViewMatrixS", "DefaultWorldMatrixS",
-"DefaultProjectionMatrix", "DefaultViewMatrix", "DefaultWorldMatrix"
-};
-
-/*
-struct MatrixTypeAndName_c {
-	XMFLOAT4X4 val;
-	std::string n;
-	std::string nRW;
-	MatrixTypeAndName_c(std::string* s, std::string* sRW, float* MatV[4][]) {
-		n = *s;
-		nRW = *sRW;
-		val = *MatV;
-	}
-	~MatrixTypeAndName_c() {
-		usedNameCont.erase(n);
-		usedNameCont.erase(nRW);
-	}
-};*/
-struct IntTypeAndName_c {
-	int32_t val = 0;
-	std::string n;
-	std::string nRW;
-	IntTypeAndName_c(std::string* s, std::string* sRW, const int32_t& intV) {
-		n = *s;
-		nRW = *sRW;
-		val = intV;
-	}
-	~IntTypeAndName_c() {
-		usedNameCont.erase(n);
-		usedNameCont.erase(nRW);
-	}
-};
-struct UintTypeAndName_c {
-	uint32_t val = 0;
-	std::string n;
-	std::string nRW;
-	UintTypeAndName_c(std::string* s, std::string* sRW, const uint32_t& uintV) {
-		n = *s;
-		nRW = *sRW;
-		val = uintV;
-	}
-	~UintTypeAndName_c() {
-		usedNameCont.erase(n);
-		usedNameCont.erase(nRW);
-	}
-};
-struct FloatTypeAndName_c {
-	float val = 0.0f;
-	std::string n;
-	std::string nRW;
-	FloatTypeAndName_c(std::string* s, std::string* sRW, const float& floatV) {
-		n = *s;
-		nRW = *sRW;
-		val = floatV;
-	}
-	~FloatTypeAndName_c() {
-		usedNameCont.erase(n);
-		usedNameCont.erase(nRW);
-	}
-};
-
-struct TypeStorageMass {
-	std::vector< IntTypeAndName_c > IT;
-	std::vector< UintTypeAndName_c > UT;
-	std::vector< FloatTypeAndName_c > FT;
-//	std::vector< MatrixTypeAndName_c > MT;
-};
-
-struct d4 {
-	uint8_t* data8 = nullptr; //only 1 is non null
-	uint16_t* data16 = nullptr;
-	uint32_t* data32 = nullptr;
-	uint64_t* data64 = nullptr; //64 not included yet
-	void* dataV = nullptr; //random accsess ptr
-
-	int sizeX_c = 0;
-	int sizeY_c = 0;
-	int bpp_c = 0;
-
-	d4() {
-
-	}
-
-	d4(uint8_t* data8t, const int& sizeX, const int& sizeY) {
-		sizeX_c = sizeX;
-		sizeY_c = sizeY;
-		bpp_c = 8;
-		data8 = data8t;
-		dataV = (void*)data8t;
-	}
-	d4(const int& sizeX, const int& sizeY, const int& bpp) {
-		sizeX_c = sizeX;
-		sizeY_c = sizeY;
-		bpp_c = bpp;
-		if (bpp == 8) {
-			data8 = new uint8_t[sizeY * sizeX];
-			dataV = (void*)data8;
-		}
-		else if (bpp == 16) {
-			data16 = new uint16_t[sizeY * sizeX];
-			dataV = (void*)data16;
-		}
-		else if (bpp == 32) {
-			data32 = new uint32_t[sizeY * sizeX];
-			dataV = (void*)data32;
-		}
-		else if (bpp == 64) {
-			data64 = new uint64_t[sizeY * sizeX];
-			dataV = (void*)data64;
-		}
-		else {
-			throw("wrong format");
-		}
-	}
-	void* dataReturn() {
-		return dataV;
-	}
-	~d4() {
-//		if(dataV != nullptr) delete[] dataV;
-		if (data8 != nullptr) delete[] data8;
-		if (data16 != nullptr) delete[] data16;
-		if (data32 != nullptr) delete[] data32;
-		if (data64 != nullptr) delete[] data64;
-	}
-};
-
 void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, const std::string& suffixConflict);
 
 
@@ -167,42 +35,65 @@ struct NoiseDat_Obj {
 struct ObjectBuilder {
 	
 	inline static bool UNORM_ELSE_FLOAT_Driver = true;
-	inline static bool LinkSizeToRTV = true;
+	inline static bool LinkSizeToRTV = false;
 	
 	inline static NoiseDat_Obj NoiseDat = NoiseDat_Obj();
 	inline static bool MadeTMP = false;
-	inline static std::vector<std::vector<std::array<uint8_t,4>>> noiseTMPmem;
+	inline static std::vector<std::vector<std::array<uint8_t,4>>>* noiseTMPmem = nullptr;
+
+	inline static void MakeNewArrOfDat() {
+		MadeTMP = false;
+		noiseTMPmem->clear();
+	}
 
 	inline static void DrawAndHandleMinAndMaxSize() {
 		if (ImGui::InputScalar("Min color (0-255):", ImGuiDataType_U8, &ObjectBuilder::NoiseDat.MinCol)) {
-			MadeTMP = false;
-			noiseTMPmem.clear();
+			MakeNewArrOfDat();
 		}
 		if (ImGui::InputScalar("Max color (0-255):", ImGuiDataType_U8, &ObjectBuilder::NoiseDat.MaxCol)) {
-
+			MakeNewArrOfDat();
 		}
 		if (ObjectBuilder::NoiseDat.MinCol > ObjectBuilder::NoiseDat.MaxCol) NoiseDat.MinCol = NoiseDat.MaxCol;
 	}
 
+	inline static void fillVec(std::vector<uint8_t>& v) {
+		
+		int m = ObjectBuilder::NoiseDat.MinCol;
+		int index = 0;
+		
+		for (int i = ObjectBuilder::NoiseDat.MinCol; true; i++) {
+			if (i > ObjectBuilder::NoiseDat.MaxCol) i = NoiseDat.MinCol;
 
-	inline static std::vector<std::vector<std::array<uint8_t, 4>>> GenerateNoiseWithParam(uint64_t seed, uint32_t sizeX, uint32_t sizeY) {
+			if (index == v.size()) return;
+
+			v[index] = i;
+			index += 1;
+
+		}
+		
+	}
+
+	inline static std::vector<std::vector<std::array<uint8_t, 4>>>* GenerateNoiseWithParam(uint64_t seed, uint32_t sizeX, uint32_t sizeY) {
 		std::vector<uint8_t> dataBase;
-		std::vector<std::vector<std::array<uint8_t, 4>>> VecIn;
-		VecIn.resize(sizeY);
+		std::vector<std::vector<std::array<uint8_t, 4>>>* VecIn = new std::vector<std::vector<std::array<uint8_t, 4>>>();
+		VecIn->resize(sizeY);
 		if (seed > 1000000000000000) seed = 1;
 		for (int i = 0; i < sizeY; i++) {
-			VecIn[i].resize(sizeX);
+			(*VecIn)[i].resize(sizeX);
 
-			dataBase.resize(ObjectBuilder::NoiseDat.MaxCol + 1);
-			std::iota(dataBase.begin(), dataBase.end(), ObjectBuilder::NoiseDat.MinCol);
+			if (sizeX < ObjectBuilder::NoiseDat.MaxCol-ObjectBuilder::NoiseDat.MinCol) dataBase.resize(ObjectBuilder::NoiseDat.MaxCol - ObjectBuilder::NoiseDat.MinCol); //if not encapsulating all colors desiered add them into the fray
+			else dataBase.resize(sizeX);
 
+
+	
+			fillVec(dataBase);
 
 			std::default_random_engine randomGen(seed);
 
 			std::shuffle(dataBase.begin(), dataBase.end(), randomGen);
 
 			for (int z = 0; z < sizeX; z++) {
-				VecIn[i][z] = { dataBase[z], dataBase[z], dataBase[z], 255};
+				(*VecIn)[i][z] = { dataBase[z], dataBase[z], dataBase[z], 255};
 			}
 			
 			dataBase.clear();
@@ -217,21 +108,25 @@ struct ObjectBuilder {
 	
 	inline static void MakeAndSetNoiseWithParamForPreview(uint64_t seed) {
 		if (ImGui::BeginMenuGreen("Preview Noise##preview noise menu")) {
-			if (MadeTMP == false) noiseTMPmem = GenerateNoiseWithParam(seed, 50, 50);
+			if (MadeTMP == false) {
+				if (noiseTMPmem != nullptr) delete noiseTMPmem;
+				noiseTMPmem = GenerateNoiseWithParam(seed, 50, 50);
+				MadeTMP = true;
+			}
 
 			
 			ImGui::PushFont(CustomFontSmall);
 			float c = 0.0f;
 			ImVec2 tmpv;
-			for (int y = 0; y < noiseTMPmem.size(); y++) {
+			for (int y = 0; y < (*noiseTMPmem).size(); y++) {
 
-				for (int x = 0; x < noiseTMPmem[y].size(); x++) {
+				for (int x = 0; x < (*noiseTMPmem)[y].size(); x++) {
 					//		ImVec2 tmpv_t = { tmpv.x+x,tmpv.y+y};
 					//		ImVec2 tmpvM_t = { tmpvM.x+x,tmpvM.y+y };
 
 							//ImU32* t = (ImU32*)&noiseTMPmem[y][x][0];
 
-					c = float(noiseTMPmem[y][x][0]) / 255.0f;
+					c = float((*noiseTMPmem)[y][x][0]) / 255.0f;
 					ImGui::TextColored({ c,c,c,1.0f }, "#");
 					ImGui::SameLine();
 					tmpv = ImGui::GetCursorScreenPos();
@@ -424,6 +319,27 @@ struct BuiltPredefined_c : ObjectBuilder {
 
 };
 
+static uint8_t* ScaleBuffersToSizeCPU(uint8_t* oldMem, const int& currY, const int& currX, const int& channels, const int& bpp, const int& newW, const int& newH) {
+	int bppl = int(bpp / 8); //take in new data regardless of size and fix to scale
+	uint8_t* newMem = (uint8_t*)malloc(newH * newW * channels * bpp); //new uint8_t[newH][newW][channels][int(bpp/8)];
+	
+	float ratioX = float(currX)/float(newW);
+	float ratioY = float(currY)/float(newH);
+
+	for (float y = 0; y < newH; y++) {
+		for (float x = 0; x < newW; x++) {
+			for (int c = 0; c < channels; c++) {
+				for (int b = 0; b < bpp; b++) {
+					newMem[int(y) * int(x) * c * b] = oldMem[int(y * ratioY) * int(x * ratioX) * c * b]; //trunicate works as well as round down
+				}
+			}
+		}
+	}
+	delete[] oldMem;
+	return newMem;
+	//memcpy(pSysMem, newMem, newH * newW * channels * bpp);
+	
+}
 
 struct BuiltImage_c : ObjectBuilder {
 	//I read data immedeatly since it is simple, fast, and I want to make a TODO: preview option of image once loaded
@@ -454,10 +370,12 @@ struct BuiltImage_c : ObjectBuilder {
 	}
 
 
-	BuiltImage_c(const std::string& p, std::string s, const bool& IsPath, const int& sizeX_tmp, const int& sizeY_tmp, const int& channels_tmp, const int& bpp_tmp, const bool& UNORM_ELSE_FLOAT_tmp, const bool& LinkSizeToRTV_tmp, const NoiseDat_Obj ndo_tmp, const d4* data_tmp) {
+	BuiltImage_c(const std::string& p, std::string s, const bool& IsPath, const int& sizeX_tmp, const int& sizeY_tmp, const int& channels_tmp, const int& bpp_tmp, const bool& UNORM_ELSE_FLOAT_tmp, const bool& LinkSizeToRTV_tmp, const NoiseDat_Obj ndo_tmp, d4* data_tmp) {
 		//set name
+
 		sizeX = sizeX_tmp;
 		sizeY = sizeY_tmp;
+		
 		channels = channels_tmp;
 
 		LinkSizeToRTV = LinkSizeToRTV_tmp;
@@ -468,12 +386,16 @@ struct BuiltImage_c : ObjectBuilder {
 			data = *data_tmp;
 		}
 		else {
-			auto vecTmp = ObjectBuilder::GenerateNoiseWithParam(std::floor(GLFW_Window_C::time), sizeX, sizeY); //moved so pointer cost only
-			uint64_t sizeOfMem = vecTmp.size() * vecTmp[0].size() * 4 * 8;
-			uint8_t* dat = (uint8_t*)malloc(sizeOfMem);
-			memcpy(dat, &vecTmp[0][0][0], sizeof(sizeOfMem));
-			data = d4(dat, sizeX, sizeY);
+
+			std::vector<std::vector<std::array<uint8_t,4>>>* vecTmp = ObjectBuilder::GenerateNoiseWithParam(std::floor(GLFW_Window_C::time), sizeX, sizeY); //moved so pointer cost only
+			bpp = 8;
+			channels = 4;
+
+			data = d4((uint8_t*)vecTmp, sizeX, sizeY, channels);
+
 		}
+
+
 
 		UNORM_ELSE_FLOAT = UNORM_ELSE_FLOAT_tmp;
 		this->IsPath = IsPath;

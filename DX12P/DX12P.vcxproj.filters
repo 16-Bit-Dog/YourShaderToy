@@ -266,5 +266,8 @@
     <ClInclude Include="imGUI\ImGuiHelper.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\HLSLBuilder.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

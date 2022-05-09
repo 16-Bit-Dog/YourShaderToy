@@ -2,106 +2,28 @@
 #ifndef DX11_H_RESOURCE_OBJ
 #define DX11_H_RESOURCE_OBJ
 
+#include "HLSLBuilder.h"
 #include "ResourceObjectBase.h"
 #include "DX11IncludeMain.h"
-#include "FileManagerResourceStruct.h"
 #include "3DDX11Obj.h"
 #include "RenderableManager.h"
 #include "DX11H.h"
 #include "DX11ShaderFuncs.h"
 #include "Renderable.h"
-#include "Type_Enum.h"
 #include "StaticObjectsDX11.h"
 #include "Editor_Window.h"
-
-//ResourceToHLSL - COMPILE CODE STRING SECTION
-
-struct RegisterMaps {
-	inline static std::set<int> UAV_R;
-	inline static std::set<int> SRV_R;
-	inline static std::set<int> CB_R {0,1,2,3, 4,5}; //for default matrixes
-	inline static std::set<int> S_R;
-
-	int uav_num = -1; //TODO: set all uav and srv and cb nums with func
-	int srv_num = -1; //TODO: set all uav and srv and cb nums with func
-	int cb_num = -1;
-	int sampler_num = -1;
-
-	std::string CBName() {
-		return std::move(std::to_string(cb_num));
-	}
-	std::string SRVName() {
-		return std::move(std::to_string(srv_num));
-	}
-	std::string UAVName() {
-		return std::move(std::to_string(uav_num));
-	}
-	std::string SamplerName() {
-		return std::move(std::to_string(sampler_num));
-	}
+#include "FileManagerResourceStruct.h"
 
 
-	int AddUAVNum() {
-		for (int i = 0; i < UAV_R.size()+1; i++) {
-			if (UAV_R.count(i) == 0) {
-				UAV_R.insert(i);
-				uav_num = i;
-				return i;
-			}
-		}
-	}
-	int AddSRVNum() {
-		for (int i = 0; i < SRV_R.size() + 1; i++) {
-			if (SRV_R.count(i) == 0) {
-				SRV_R.insert(i);
-				srv_num = i;
-				return i;
-			}
-		}
-	}
-	int AddCBNum() {
-		for (int i = 0; i < CB_R.size() + 1; i++) {
-			if (CB_R.count(i) == 0) {
-				CB_R.insert(i);
-				cb_num = i;
-				return i;
-			}
-		}
-	}
-	
-	int AddSNum() {
-		for (int i = 0; i < S_R.size() + 1; i++) {
-			if (S_R.count(i) == 0) {
-				S_R.insert(i);
-				sampler_num = i;
-				return i;
-			}
-		}
-	}
-	void RemoveUAVNum() {
-		UAV_R.erase(uav_num);
-	}
-	void RemoveSRVNum() {
-		SRV_R.erase(srv_num);
-	}
-	void RemoveCBNum() {
-		CB_R.erase(cb_num);
-	}
-	void RemoveSNum() {
-		S_R.erase(sampler_num);
-	}
-};
 
-struct RTVData_s : RegisterMaps {
+struct RTVData_DX11 : RTVData_Base {
 	ComPtr<ID3D11RenderTargetView> rtv = nullptr;
 	ComPtr<ID3D11Texture2D> t = nullptr;
 	ComPtr<ID3D11UnorderedAccessView> uav = nullptr;
-	std::string name;
-
+	
 	bool ClearEveryNewPass = true;
 
 	void ReleaseBuffers() {
-		
 		t.Reset(); 
 		rtv.Reset();
 		uav.Reset();
@@ -144,25 +66,22 @@ struct RTVData_s : RegisterMaps {
 		MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(t.Get(), &UAVDesc, &uav);
 
 	}
-	RTVData_s(RenderTarget_s* r) {
-		AddUAVNum();
+	RTVData_DX11(RenderTarget_s* r) {
+		
 		name = r->name;
 		ClearEveryNewPass = r->ClearEveryNewPass;
 		MakeBuffers();
 	
 	}
-	~RTVData_s() {
-		RemoveUAVNum();
+	~RTVData_DX11() {
 		ReleaseBuffers();
 	}
 };
 
-struct DEPTHData_s : RegisterMaps {
+struct DEPTHData_DX11 : DEPTHData_Base {
 	ComPtr<ID3D11DepthStencilView> dsv = nullptr;
 	ComPtr<ID3D11Texture2D> t = nullptr;
 	ComPtr<ID3D11ShaderResourceView> srv = nullptr;
-
-	std::string name;
 
 	bool ClearEveryNewPass = true;
 
@@ -214,34 +133,31 @@ struct DEPTHData_s : RegisterMaps {
 		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(t.Get(), &SRVDesc, &srv);
 
 	}
-	DEPTHData_s(DepthTarget_s* d) {
+	DEPTHData_DX11(DepthTarget_s* d) {
 		AddSRVNum();
 		name = d->name;
 		ClearEveryNewPass = d->ClearEveryNewPass;
 		MakeBuffers();
 	}
-	~DEPTHData_s() {
+	~DEPTHData_DX11() {
 		RemoveSRVNum();
 	}
 };
 
-struct ImageObjectToRendererDX11 : RegisterMaps{
+struct ImageObjectToRendererDX11 : ImageObjectToRenderer_Base {
 
 	ComPtr<ID3D11ShaderResourceView> srv;
 	ComPtr<ID3D11UnorderedAccessView> uav;
 	ComPtr<ID3D11SamplerState> Samp;
-	bool HasRW = false;
-	bool LinkSizeToRTV = false;
+	D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
+	uint8_t* pSysMem = nullptr;
 
 	DXGI_FORMAT format;
 
-	std::string formatString = "";
-
-	std::string name;
-	
-	std::string nameRW;
-	
-	std::string samplerName;
+	int sizeY = 0; //source given sizeY for pSysMem
+	int sizeX = 0; //source given sizeX for pSysMem
+	int channels = 0;
+	int bpp = 0;
 
 	void ReleaseBuffersNonSamp() {
 		SafeRelease(uav);
@@ -249,10 +165,7 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 		SafeRelease(srv);
 	}
 	void MakeBuffers(BuiltImage_c* data) {
-		ComPtr<ID3D11Texture2D> r;
-
-		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
-		if(data != nullptr)	defaultResourceData.pSysMem = data->data.dataReturn();
+		ComPtr<ID3D11Texture2D> r = NULL;
 
 		D3D11_TEXTURE2D_DESC gpuTexDesc;
 		ZeroMemory(&gpuTexDesc, sizeof(D3D11_TEXTURE2D_DESC));
@@ -262,8 +175,14 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 			gpuTexDesc.Height = data->data.sizeY_c;
 		}
 		else {
+			pSysMem = ScaleBuffersToSizeCPU(pSysMem, sizeY, sizeX, channels, bpp, MainDX11Objects::obj->MainWidth, MainDX11Objects::obj->MainHeight);
+			defaultResourceData.pSysMem = pSysMem;
 			gpuTexDesc.Width = MainDX11Objects::obj->MainWidth;
 			gpuTexDesc.Height = MainDX11Objects::obj->MainHeight;
+
+			defaultResourceData.SysMemPitch = MainDX11Objects::obj->MainWidth * channels * bpp;
+			defaultResourceData.SysMemSlicePitch = MainDX11Objects::obj->MainHeight * MainDX11Objects::obj->MainWidth * channels * bpp;
+
 		}
 		gpuTexDesc.MipLevels = 1;
 		gpuTexDesc.ArraySize = 1;
@@ -275,11 +194,10 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 		gpuTexDesc.CPUAccessFlags = 0;
 		gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
 
-
 		MainDX11Objects::obj->dxDevice->CreateTexture2D(
 			&gpuTexDesc,
 			&defaultResourceData,
-			&r);
+			r.GetAddressOf());
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		//UAVDesc.Texture2D
@@ -297,9 +215,7 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 	}
 	
 	ImageObjectToRendererDX11(BuiltImage_c* data) {
-		AddUAVNum();
-		AddSRVNum();
-		AddSNum();
+
 		//TODO: sampler options
 		LinkSizeToRTV = data->LinkSizeToRTV;
 		nameRW = data->NameRW;
@@ -331,6 +247,19 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 				formatString = "float4";
 			}
 		}
+		this->sizeY = data->sizeY;
+		this->sizeX = data->sizeX;
+		this->channels = data->channels;
+		this->bpp = data->bpp;
+
+		int dataS = data->data.size();
+		pSysMem = (uint8_t*)malloc(dataS);
+		(*pSysMem) = (*((uint8_t*)data->data.dataV));
+		
+
+		defaultResourceData.pSysMem = pSysMem;
+		defaultResourceData.SysMemPitch = sizeX * channels * bpp;
+		defaultResourceData.SysMemSlicePitch = sizeY * sizeX * channels * bpp;
 
 		MakeBuffers(data);
 
@@ -350,10 +279,8 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 
 	}
 	~ImageObjectToRendererDX11() {
-		RemoveSRVNum();
-		RemoveUAVNum();
-		RemoveSNum();
-		
+		delete[] pSysMem;
+
 		SafeRelease(srv);
 		SafeRelease(uav);
 		SafeRelease(Samp);
@@ -362,34 +289,15 @@ struct ImageObjectToRendererDX11 : RegisterMaps{
 };
 
 
-struct StructObjectToRendererDX11 : RegisterMaps{
+struct StructObjectToRendererDX11 : StructObjectToRenderer_Base{
 	ComPtr<ID3D11Buffer> con;
 	
 	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object data for a const pair and not const
 	ComPtr<ID3D11UnorderedAccessView> uav;
 	ComPtr<ID3D11ShaderResourceView> srv;
 
-	std::string Name;
-	std::string NameRW;
-	std::string NameRW_SRV;
-	std::string StructName;
-	std::string StructElementName = "s";
-	std::string StructElementNameRW = "s";
-
-	std::vector<int> typesInOrder = { };
-	std::vector<std::string> typesInOrderName = { }; //TODO: remove and change to fill with constructor
-	//std::vector<std::string> typesInOrderNameRW = { }; //TODO: remove and change to fill with constructor
-
-
-	TypeStorageMass ReferToData; //copy of type storage mass since you have compiled data here with names
-
-	bool HasRW = false;
-
 	StructObjectToRendererDX11(BuiltConstant_c* data) {
-		AddUAVNum();
-		AddCBNum();
-		AddSRVNum();
-
+		
 		Name = data->Name;
 		NameRW = data->NameRW;
 		NameRW_SRV = data->NameRW_SRV;
@@ -447,32 +355,34 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 
 		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
 
-		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = memSize;
-		bufDesc.StructureByteStride = sizeof(float);
-		bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
-
-		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-		ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-		SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
-		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-		SRVDesc.Buffer.FirstElement = 0;
-		SRVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
 		
-
-		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-		//UAVDesc.Texture2D
-		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-		UAVDesc.Format = DXGI_FORMAT_UNKNOWN; //
-		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-		UAVDesc.Buffer.FirstElement = 0;
-		UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
-
 		if (data->ReadWrite) {
+			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+			ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+			SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+			SRVDesc.Buffer.FirstElement = 0;
+			SRVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
+
+
+			D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+			//UAVDesc.Texture2D
+			ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+			UAVDesc.Format = DXGI_FORMAT_UNKNOWN; //
+			UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+			UAVDesc.Buffer.FirstElement = 0;
+			UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
+
+			ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
+			bufDesc.Usage = D3D11_USAGE_DEFAULT;
+			bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+			bufDesc.CPUAccessFlags = 0;
+			bufDesc.ByteWidth = memSize;
+			bufDesc.StructureByteStride = sizeof(float);
+			bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+			MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
+
 			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
 			MainDX11Objects::obj->dxDevice->CreateShaderResourceView(uavB.Get(), &SRVDesc, &srv);
 
@@ -484,61 +394,45 @@ struct StructObjectToRendererDX11 : RegisterMaps{
 	}
 
 	~StructObjectToRendererDX11() {
-		RemoveUAVNum();
-		RemoveSRVNum();
-		RemoveCBNum();
+//		if(this->HasRW)
+//			SafeRelease(uavB);
 
-		SafeRelease(uav);
-		SafeRelease(srv);
-		SafeRelease(uavB);
-		SafeRelease(con);
+//		SafeRelease(con);
+
 	}
 	
 };
 
-struct ModelToRendererDX11 : RegisterMaps{
-	DX11M3DR Model;
-	std::string Name;
-	std::string NameRW;
-
+struct ModelToRendererDX11 : ModelToRenderer_Base{
+	DX11M3DR* Model;
+	
 	ModelToRendererDX11(BuiltModel_c* data) {
-		AddUAVNum();
-		AddSRVNum();
-
+		
 		Name = data->Name;
 		NameRW = data->NameRW;
 
-		if (data->Type == 0 || data->Type > StaticObjectPass.size() - 1) {
-			Model = DX11M3DR(data->Path);
+		if (data->Type == - 1) {
+			Model = new DX11M3DR(data->Path);
 		}
-		else {
-			Model = DX11M3DR(StaticObjectPass[data->Type].second());
+		else if (data->Type >-1 && data->Type<StaticObjectPass.size()) {
+			Model = new DX11M3DR(StaticObjectPass[data->Type].second());
 		}
 #ifdef GET_OBJECT_STATIC
 		OutputStringToFileForCopyPata(&Model);
 #endif
 	}
 	~ModelToRendererDX11() {
-		RemoveSRVNum();
-		RemoveUAVNum();
+		delete Model;
 	}
 };
 
-struct PredefinedToRendererDX11 : RegisterMaps{
-	std::vector<int> typesInOrder = { UINT_OBJ, UINT_OBJ, UINT_OBJ, UINT_OBJ,
-		UINT_OBJ, UINT_OBJ, UINT_OBJ,
-		FLOAT_OBJ, FLOAT_OBJ }; //PRE DEFINED TYPES
-	std::vector<std::string> typesInOrderName = { "WINDOW_SIZE_X", "WINDOW_SIZE_Y", "MOUSE_POS_X", "MOUSE_POS_Y",
-		"LEFT_CLICK_STATE", "RIGHT_CLICK_STATE", "MIDDLE_CLICK_STATE",
-		"NET_TIME", "DELTA_LAST_KEY" };
-	
+struct PredefinedToRendererDX11 : PredefinedToRenderer_Base{
+
 	ComPtr<ID3D11Buffer> Cdata;
-	std::string Name = "PROGRAM_CONSTANTS";
 	
 
 	PredefinedToRendererDX11(BuiltPredefined_c* data) {
-		AddCBNum();
-
+		
 		D3D11_BUFFER_DESC bufDesc;
 		ZeroMemory(&bufDesc, sizeof(bufDesc));
 		bufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -558,7 +452,7 @@ struct PredefinedToRendererDX11 : RegisterMaps{
 	}
 
 	~PredefinedToRendererDX11() {
-		RemoveCBNum();
+		
 	}
 
 	void update(BuiltPredefined_c* bI) {
@@ -583,8 +477,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	std::unordered_map<std::string /*name to identify model*/, ModelToRendererDX11*/*data*/> ModelData;
 	std::unordered_map<std::string /*name to identify struct*/, StructObjectToRendererDX11*/*data*/> ConstantData;
 
-	std::unordered_map<uint64_t, RTVData_s*> RTVData;
-	std::unordered_map<uint64_t, DEPTHData_s*> DEPTHData;
+	std::unordered_map<uint64_t, RTVData_DX11*> RTVData;
+	std::unordered_map<uint64_t, DEPTHData_DX11*> DEPTHData;
 
 
 	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
@@ -594,11 +488,11 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 			ModelToRendererDX11* md_tmp = ModelData[data->Name];
 
-			vp.Vdata.resize(md_tmp->Model.VBuf.size());
-			vp.Idata.resize(md_tmp->Model.IBuf.size());
-			vp.Icount.resize(md_tmp->Model.Indice.size());
+			vp.Vdata.resize(md_tmp->Model->VBuf.size());
+			vp.Idata.resize(md_tmp->Model->IBuf.size());
+			vp.Icount.resize(md_tmp->Model->Indice.size());
 			
-			DX11M3DR* tmpM3 = &ModelData[data->Name]->Model;
+			DX11M3DR* tmpM3 = ModelData[data->Name]->Model;
 
 			for (int x = 0; x < tmpM3->VBuf.size(); x++) {
 				vp.Vdata[x] = (void*)tmpM3->VBuf[x].Get();
@@ -675,92 +569,6 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		PreBindDefault();
 
 	}
-
-#pragma region ResourceToHLSL
-	
-	void AddItemTextDefault(std::vector<std::string>* v) {
-
-		v->push_back("cbuffer " + PredefinedData->Name + ": register(b"+PredefinedData->CBName()+") { \n");
-		for (int i = 0; i < PredefinedData->typesInOrderName.size(); i++) {
-			if (PredefinedData->typesInOrder[i] == INT_OBJ) {
-				v->push_back("	int "+ PredefinedData->typesInOrderName[i] +";\n");
-			}
-			else if (PredefinedData->typesInOrder[i] == UINT_OBJ) {
-				v->push_back("	uint " + PredefinedData->typesInOrderName[i] + ";\n");
-			}
-			else if (PredefinedData->typesInOrder[i] == FLOAT_OBJ) {
-				v->push_back("	float " + PredefinedData->typesInOrderName[i] + ";\n");
-			}
-		}
-		v->push_back("};\n");
-
-	}
-	void AddItemTextImages(std::vector<std::string>*  v) {
-
-		for (const auto& x : ImageData) {
-			v->push_back("Texture2D " + x.second->name + " : register(t" + x.second->SRVName() + ");\n");
-			if(x.second->HasRW) v->push_back("RWTexture2D<" + x.second->formatString + "> " + x.second->nameRW + " : register(u" + x.second->UAVName() + "); \n");
-			v->push_back("sampler " + x.second->samplerName + " : register(s" + x.second->SamplerName() + "); \n");
-		}
-	}
-	void AddItemTextRTV(std::vector<std::string>* v) {
-		if (RTVData.size() == 0) { //means no compile to these happened yet
-			GenRTVFromExistingMap();
-		}
-		for (auto& x : RTVData) {
-			v->push_back("RWTexture2D<unorm float4> " + x.second->name + " : register(u" + x.second->UAVName() + "); \n");
-		}
-	}
-	void AddItemTextDEPTH(std::vector<std::string>* v) {
-		if (DEPTHData.size() == 0) { //means no compile to these happened yet
-			GenDEPTHFromExistingMap();
-		}
-		for (auto& x : DEPTHData) {
-			v->push_back("Texture2D<float> " + x.second->name + " : register(t" + x.second->SRVName() + "); \n");
-		}
-	}
-
-	void AddItemTextModels(std::vector<std::string>* v) {
-
-		//nothig, since these are the VetexShaderInput -- set these as input using name in Pipeline Input - TODO:
-
-	}
-
-	void AddItemTextConstants(std::vector<std::string>* v) {
-
-		for (const auto& x : ConstantData) {
-			//draw structs:
-			v->push_back("struct " + x.second->StructName + "{\n");
-			for (int y = 0; y < x.second->typesInOrder.size();y++) {
-				if (x.second->typesInOrder[y] == INT_OBJ) {
-					v->push_back("	int " + x.second->typesInOrderName[y] + ";\n");
-				}
-				else if (x.second->typesInOrder[y] == UINT_OBJ) {
-					v->push_back("	uint " + x.second->typesInOrderName[y] + ";\n");
-				}
-				else if (x.second->typesInOrder[y] == FLOAT_OBJ) {
-					v->push_back("	float " + x.second->typesInOrderName[y] + ";\n");
-				}
-			}
-			v->push_back("};\n");
-			//
-			
-			//constant buf
-			v->push_back("cbuffer " + x.second->Name + ": register(b" + x.second->CBName() + ") { \n");
-			v->push_back(x.second->StructName + " " + x.second->StructElementName+";\n");
-			v->push_back("};\n");
-			//
-
-			//uav buf
-			if (x.second->HasRW) v->push_back("RWStructuredBuffer<"+ x.second->StructName +"> " + x.second->NameRW + " : register(u" + x.second->UAVName() + ");\n");
-			v->push_back("StructuredBuffer<" + x.second->StructName + "> " + x.second->NameRW_SRV + " : register(t" + x.second->SRVName() + ");\n");
-
-			//TODO: add RW Object name
-		}
-
-	}
-#pragma endregion
-
 
 	void ClearAllPredefined() {
 		if(PredefinedData != nullptr)
@@ -1060,7 +868,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		RTVData.clear();
 
 		for (auto& i : RTV_DEPTH::RTV) {
-			RTVData[i.first] = new RTVData_s(i.second);
+			RTVData[i.first] = new RTVData_DX11(i.second);
 		}
 	}
 	void GenDEPTHFromExistingMap() {
@@ -1070,7 +878,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		DEPTHData.clear();
 
 		for (auto& i : RTV_DEPTH::DEPTH) {
-			DEPTHData[i.first] = new DEPTHData_s(i.second);
+			DEPTHData[i.first] = new DEPTHData_DX11(i.second);
 		}
 	}
 
@@ -1096,6 +904,37 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			i.second->MakeBuffers(nullptr);
 		}
 	}
+
+	void AddItemTextDefault(std::vector<std::string>* v) {
+		
+		HLSLBuilder::AddItemTextDefault(v, PredefinedData);
+	}
+	void AddItemTextImages(std::vector<std::string>* v) {
+		for (const auto& x : ImageData)
+		HLSLBuilder::AddItemTextImages(v, x.second);
+	}
+	void AddItemTextModels(std::vector<std::string>* v) {
+		for (const auto& x : ModelData)
+		HLSLBuilder::AddItemTextModels(v, x.second);
+	}
+	void AddItemTextConstants(std::vector<std::string>* v) {
+		for( const auto& x : ConstantData)
+		HLSLBuilder::AddItemTextConstants(v,  x.second);
+	}
+	void AddItemTextRTV(std::vector<std::string>* v) {
+		if (RTVData.size() == 0) { //means no compile to these happened yet
+			GenRTVFromExistingMap();
+		}
+		for (const auto& x : RTVData)
+		HLSLBuilder::AddItemTextRTV(v, x.second);
+	}
+	void AddItemTextDEPTH(std::vector<std::string>* v) {
+		if (DEPTHData.size() == 0) { //means no compile to these happened yet
+			GenDEPTHFromExistingMap();
+		}
+		for (const auto& x : DEPTHData)
+		HLSLBuilder::AddItemTextDEPTH(v, x.second);
+	} 
 
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
 		RtvAndDepthBlock::ClearRTVAndDepth = [&]() {ClearRTVAndDepth(); };

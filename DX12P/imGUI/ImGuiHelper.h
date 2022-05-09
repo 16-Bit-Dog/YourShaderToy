@@ -88,5 +88,12 @@ namespace ImGui {
 			return false;
 		}
 	}
+	static float GetContentRegionHere() {
+		return ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y;
+	}
+	static bool BeginChildBorderFixedSize(const std::string& s) { //has a max
+
+		return ImGui::BeginChild(s.c_str(), {0,ImGui::GetWindowContentRegionMax().y/2.0f}, true);
+	}
 
 }

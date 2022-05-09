@@ -1,4 +1,10 @@
 
+add a get tex to check if I can show it
+
+stream line the addition of d3d12 stuff
+
+(draw all resources in a big node --> which all are in a smaller node same for pipeline ?)
+
 TODO: add more noise parameters
 
 TODO: test shader with noise

@@ -255,17 +255,12 @@ struct DX11M3DR : M3DR{
 		VertexStride = sizeof(VNT);
 
 		RESIZE_VECTORS_OBJ_LOAD(1);
-
 		CreateArmatureCBuf();
-
 		modelDat[0] = *V;
-
 		AutoFillIndice(0);
-
 		VertexPostProcess();
 
 		LoadVertexIndiceData();
-
 		DefaultCBuf();
 		SetupBlendStateDefault();
 		DefaultSampler();

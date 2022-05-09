@@ -201,6 +201,7 @@
     <ClInclude Include="Renderer\DX12\DX12IncludeMain.h" />
     <ClInclude Include="Renderer\DXSafeInclude.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\FileManagerResourceStruct.h" />
+    <ClInclude Include="Renderer\GlobalResourceAndRenderable\HLSLBuilder.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\Renderable.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\RenderableManager.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\ResourceObjectBase.h" />

@@ -85,20 +85,15 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		Renderable::DXM->ROB->AddItemTextDefault(&MASTER_Editor::obj->AutoAddGlobalsPredefined);
 	}
 	void FillEditorTextImages() {
-		for (int i = 0; i < ImageStore.size(); i++) {
-			Renderable::DXM->ROB->AddItemTextImages(&MASTER_Editor::obj->AutoAddGlobalsImages);
-		}
+		Renderable::DXM->ROB->AddItemTextImages(&MASTER_Editor::obj->AutoAddGlobalsImages);
 	}
 	void FillEditorTextModels() {
-		for (int i = 0; i < ModelStore.size(); i++) {
-			Renderable::DXM->ROB->AddItemTextModels(&MASTER_Editor::obj->AutoAddGlobalsModels);
-		}
+		Renderable::DXM->ROB->AddItemTextModels(&MASTER_Editor::obj->AutoAddGlobalsModels);
 	}
 	void FillEditorTextConstants() {
-		for (int i = 0; i < ConstantStore.size(); i++) {
-			Renderable::DXM->ROB->AddItemTextConstants(&MASTER_Editor::obj->AutoAddGlobalsConstants);
-		}
+		Renderable::DXM->ROB->AddItemTextConstants(&MASTER_Editor::obj->AutoAddGlobalsConstants);
 	}
+
 	void FillEditor() {
 		MASTER_Editor::obj->AutoAddGlobalsPredefined.clear();
 		MASTER_Editor::obj->AutoAddGlobalsImages.clear();
@@ -162,7 +157,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 
 	//TODO, RW toggle after creation
 
-	void AddImageToList(const std::string& Path, const std::string& Name, const bool& IsPath, const int& sizeX, const int& sizeY, const int& channels, const int& bpp, const bool& UNORM_ELSE_FLOAT, const bool& LinkSizeToRTV, const NoiseDat_Obj& ndo, const d4* data) {
+	void AddImageToList(const std::string& Path, const std::string& Name, const bool& IsPath, const int& sizeX, const int& sizeY, const int& channels, const int& bpp, const bool& UNORM_ELSE_FLOAT, const bool& LinkSizeToRTV, const NoiseDat_Obj& ndo, d4* data) {
 		ImageStore.push_back(new BuiltImage_c(Path, Name, IsPath, sizeX, sizeY, channels, bpp, UNORM_ELSE_FLOAT, LinkSizeToRTV, ndo, data));
 		Renderable::DXM->CompiledData = false;
 		//TODO add image with string name, make new object, and make the show-er for it
@@ -215,7 +210,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				}
 
 				if (ImGui::Button("Create ## RGBA Add image")) {
-					d4 idat(RGBA_sizeX, RGBA_sizeY, RGBA_bbp);
+					d4 idat(RGBA_sizeX, RGBA_sizeY, RGBA_bbp, 4);
 					AddImageToList(RGBA_nameOfString, RGBA_nameOfString, false, RGBA_sizeX, RGBA_sizeY, 4, RGBA_bbp, ObjectBuilder::UNORM_ELSE_FLOAT_Driver, ObjectBuilder::LinkSizeToRTV, ObjectBuilder::NoiseDat, &idat);
 				}
 				
@@ -235,7 +230,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				int width, height, channels;
 				std::string path = fImage.GetFilePathName();
 				uint8_t* data = stbi_load(path.c_str(), &width, &height, &channels, 4); //force assume 4 channels (TODO: check if this force assumes 4 and forces padding to 4)
-				d4 idat(data, width, height);
+				d4 idat(data, width, height, 4);
 				AddImageToList(path, ToAddImageName, true, width, height, channels, 8, true, false, NoiseDat_Obj(), &idat);
 				// action
 			}
@@ -308,7 +303,6 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				ImGui::Text("|");
 				if (ImageStore[i]->IsPath) {
 					ImGui::Text("Path:"); ImGui::SameLine(); 
-					ImGui::Text(ImageStore[i]->Path.c_str());
 				}
 				//TODO: show info tab collapsing header
 				
@@ -354,10 +348,13 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void DrawRTV() {
 		if (ImGui::CollapsingHeaderOpenGreen("RTV:"))
 		{
+			ImGui::BeginChildBorderFixedSize("RTV:##Child");
 
 			AddRTV();
 
 			ShowRTV();
+
+			ImGui::EndChild();
 
 		}
 		ImGui::Separator();
@@ -399,20 +396,30 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void DrawDEPTH() {
 		if (ImGui::CollapsingHeaderOpenGreen("DEPTH:"))
 		{
+			ImGui::BeginChildBorderFixedSize("Depth:##Child");
+
 			AddDEPTH();
 
 			ShowDEPTH();
+
+			ImGui::EndChild();
 		}
 		ImGui::Separator();
 	}
 	void DrawIMAGE() {
+		
+		
+
 		if (ImGui::CollapsingHeaderOpenGreen("Images:"))
 		{
+			ImGui::BeginChildBorderFixedSize("Images:##Child");
+
 			AddImage();
 			//TODO: draw ImageStore and allow info expansion to show dimentions, and such
 			ShowImage();
 
 
+			ImGui::EndChild();
 		}
 		ImGui::Separator();
 	}
@@ -469,20 +476,29 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				i -= 1;
 			}
 			if(true) {
-				ImGui::Text("Path:"); ImGui::SameLine(); 
-				ImGui::Text(ModelStore[i]->Path.c_str());
+
+				if (ModelStore[i]->Type == -1) {
+					ImGui::Text("Path:"); ImGui::SameLine();
+					ImGui::Text(ModelStore[i]->Path.c_str());
+				}
+				else {
+					ImGui::Text("Static Object:"); ImGui::SameLine();
+					ImGui::Text(StaticObjectPass[ModelStore[i]->Type].first.c_str());
+				}
 			}
 		}
 	}
 	void DrawMODEL() {
 		if (ImGui::CollapsingHeaderOpenGreen("Models:"))
 		{
+			ImGui::BeginChildBorderFixedSize("Models:##Child");
 
 			AddModel();
 			ShowModel();
 			//Options: import animation
 			//Options: Load As R/W Buffer Under Name: ____
 
+			ImGui::EndChild();
 		}
 		ImGui::Separator();
 	}
@@ -628,8 +644,12 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	void DrawCONSTANTS() {
 		if (ImGui::CollapsingHeaderOpenGreen("Constants:"))
 		{
+			ImGui::BeginChildBorderFixedSize("Constants:##Child");
+
 			AddConstant();
 			ShowConstant();
+
+			ImGui::EndChild();
 		}
 		ImGui::Separator();
 	}
