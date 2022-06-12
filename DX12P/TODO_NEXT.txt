@@ -1,3 +1,17 @@
+CropPathToGetDir
+
+add deccer texture to loader, load from my .d data variable if has texture is true- then test my HasError Bool if it works for mesage
+
+
+
+//TODO: use ambient factor
+
+fill MatData in 3DCommon, and set Mat size inside DX113D
+pass const buffer to mat dat to shader thing, 1 const buf per model
+
+make material preview and editor
+
+make toggle: "use vertex colors" bool
 
 add a get tex to check if I can show it
 

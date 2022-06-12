@@ -6,15 +6,82 @@
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx12.h>
+#include "PipelineObj.h"
 
 using namespace DirectX;
 
-struct MainDX12Objects : Renderable{
-    MainDX12Objects() {
+struct PipelineObjectIntermediateStateDX12 {
 
+    struct ComputeDataHolder {
+        std::string CName;
+        D3D12_SHADER_BYTECODE* CDat;
+        bool AutoSetBlockToWindowSize = false;
+        uint32_t DimX;
+        uint32_t DimY;
+        uint32_t DimZ;
+    };
+
+    inline static ID3D12Resource* SelectedFinalRTV = nullptr;
+
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE> VertexShaderMap;
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE> PixelShaderMap;
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE> ComputeShaderMap;
+
+    uint64_t RTV_Num = 0;
+    uint64_t DEPTH_Num = 0;
+
+    std::string VName = "";
+    D3D12_SHADER_BYTECODE* VDat = nullptr;
+
+    std::string PName = "";
+    D3D12_SHADER_BYTECODE* PDat = nullptr;
+
+    std::vector<ComputeDataHolder> Compute;
+
+    void setCSize(const int& size) {
+        Compute.resize(size);
     }
 
+    PipelineObj* PObj;
+    //TODO: add compute shader stuff -- std::vector 
+    std::function<void()> ToRunLogic;
+
+};
+
+struct MainDX12Objects : Renderable{
+    struct InUseTest {
+        D3D12_RASTERIZER_DESC RasterObject = {};
+        D3D12_DEPTH_STENCIL_DESC DepthStencilObject = {};
+        D3D12_BLEND_DESC BlendObject = {};
+        std::array<float, 4> BlendFactor = { -1.0f,-1.0f, -1.0f, -1.0f };
+
+        D3D12_SHADER_BYTECODE* VertexShader = nullptr;
+        D3D12_SHADER_BYTECODE* PixelShader = nullptr;
+        D3D12_SHADER_BYTECODE* ComputeShader = nullptr;
+
+        void* Model = nullptr;
+
+        void SetNull() {
+            RasterObject = {};
+            VertexShader = {};
+            PixelShader = {};
+            ComputeShader = {};
+            Model = {};
+        }
+    };
+    InUseTest TestForOptimize;
+
+    D3D12_RASTERIZER_DESC RasterObject = {};
+    D3D12_DEPTH_STENCIL_DESC DepthStencilObject = {};
+    D3D12_BLEND_DESC BlendObject = {};
+
+    //CameraManagerD3D12* CAM_S;
+
+    std::vector<PipelineObjectIntermediateStateDX12*> CompiledCode; //use this ordered to pass through code states
+
     inline static MainDX12Objects* obj;
+
+    D3D12_INPUT_LAYOUT_DESC dxIL;
 
     bool UseWarpDev = false;
 

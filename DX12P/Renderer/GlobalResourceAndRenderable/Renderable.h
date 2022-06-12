@@ -4,8 +4,19 @@
 #include <../GLFW/glfw3native.h>
 #include "ResourceObjectBase.h"
 #include "CamManager.h"
+#include <functional>
+#include <array>
+
+
+
 
 struct ResourceObjectBase;
+
+struct RtvAndDepthBlock {
+	inline static std::function<void()> ClearRTVAndDepth;
+	inline static std::function<void()> ReleaseAllRTVAndDepth;
+	inline static std::function<void()> MakeRTVAndDepth;
+};
 
 //TODO: set Blend to many render targets all same later
 struct BlendTypeMapMadeData {
@@ -168,11 +179,30 @@ struct StencilTypeMapMadeData_hash
 
 
 struct Renderable {
+
+	inline static std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
+
+	inline static int BLOCK_SIZE = 8;
+
+	inline static int TargetFrameRate = 69; //TODO - use THIS
+
 	inline static uint32_t BLOCK_X = 16;
 	inline static uint32_t BLOCK_Y = 16;
 	inline static uint32_t BLOCK_Z = 1;
 
+	inline static bool UseWarpDev = false;
+	
+	///////////////////////
+	
+	HWND hwnd;
+	GLFWwindow* window;
 
+	bool bFullScreen = false;
+
+	DXGI_RATIONAL refreshRateStatic;
+
+	bool ClearRTV = true;
+	
 	bool AutoFileManagerCompile = true;
 
 	UINT REF_FOR_DEPTH_STENCIL = 1;

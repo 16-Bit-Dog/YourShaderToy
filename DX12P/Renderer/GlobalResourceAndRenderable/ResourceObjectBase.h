@@ -13,13 +13,24 @@ struct BuiltConstant_c;
 struct BuiltPredefined_c;
 struct DX11M3DR;
 
+
+static bool HasCodeCompileError = false;
+static std::vector<std::string > CodeCompileErrorNames;
+
+void resetCodeCompile() {
+	HasCodeCompileError = false;
+	CodeCompileErrorNames.clear();
+}
+
 static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLOCK_Y", "PROGRAM_CONSTANTS", "", "Vertex",
 
 "ProjectionMatrixS", "ViewMatrixS", "WorldMatrixS",
 "ProjectionMatrix", "ViewMatrix", "WorldMatrix",
 
 "DefaultProjectionMatrixS", "DefaultViewMatrixS", "DefaultWorldMatrixS",
-"DefaultProjectionMatrix", "DefaultViewMatrix", "DefaultWorldMatrix"
+"DefaultProjectionMatrix", "DefaultViewMatrix", "DefaultWorldMatrix",
+
+"ModelInfoBuf"
 };
 
 /*
@@ -142,7 +153,7 @@ struct TypeStorageMass {
 struct RegisterMaps {
 	inline static std::set<int> UAV_R;
 	inline static std::set<int> SRV_R;
-	inline static std::set<int> CB_R{ 0,1,2,3, 4,5 }; //for default matrixes
+	inline static std::set<int> CB_R{ 0,1,2,3,4,5,6 }; //for default matrixes
 	inline static std::set<int> S_R;
 
 	int uav_num = -1; //TODO: set all uav and srv and cb nums with func

@@ -434,7 +434,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				*/
 				bool addFR = ImGui::Button("Add File##Model");
 				ImGui::SameLine();
-				ImGui::HelpMarker(ToAddStaticObjectString);
+				ImGui::HelpMarker(ToAddStaticObjectString.c_str());
 
 				if (addFR) {
 					if (ToAddModelType<0 || ToAddModelType>StaticObjectPass.size()-1) {
@@ -483,7 +483,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				}
 				else {
 					ImGui::Text("Static Object:"); ImGui::SameLine();
-					ImGui::Text(StaticObjectPass[ModelStore[i]->Type].first.c_str());
+					ImGui::Text(std::get<0>(StaticObjectPass[ModelStore[i]->Type]).c_str());
 				}
 			}
 		}

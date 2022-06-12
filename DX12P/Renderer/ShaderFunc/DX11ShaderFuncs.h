@@ -5,6 +5,7 @@
 
 
 #include "DX11IncludeMain.h"
+#include "3DDX11Obj.h"
 #include "DXSafeInclude.h"
 #include <string>
 
@@ -148,22 +149,11 @@ struct ShaderCDX11 {
             pVertexShader = nullptr;
         }
 
-        D3D11_INPUT_ELEMENT_DESC dxVertexLayoutDesc[] =
-        {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "BLENDID", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        };
-
         //SafeRelease(dxIL); //stop mem leak if overwrite previously used layout
 
         hr = dxDevice->CreateInputLayout( //make input layout - global change to input Layout
-            dxVertexLayoutDesc, //vertex shader - input assembler data
-            _countof(dxVertexLayoutDesc), //number of elements
+            DX11M3DR::dxVertexLayoutDesc, //vertex shader - input assembler data
+            _countof(DX11M3DR::dxVertexLayoutDesc), //number of elements
             pShaderBlob->GetBufferPointer(),  //vertex shader buffer
             pShaderBlob->GetBufferSize(), //vetex shader blob size 
             dxIL); //input layout to output to

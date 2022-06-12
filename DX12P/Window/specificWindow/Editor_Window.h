@@ -46,6 +46,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		"mat[3][3] = 1;\n"
 		"}\n"
 
+
 	);
 
 	std::string VsString = std::string(
@@ -60,7 +61,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		"float4 s = float4(1.0f,1.0f,1.0f,1.0f);\n"
 		"float4 q = float4(sin(DELTA_LAST_KEY)*3.14,0,0,0);\n"
 		"OUT.position = ApplyTransQuatScale(mvp, float4(IN.position, 1), t, s, YPRToQuat(q));\n"
-		"OUT.color = float4(IN.uv.x,IN.uv.y,(IN.uv.x+IN.uv.y)/2.0f,1.0f);\n"
+		"OUT.color = IN.color;\n"
 		"OUT.PositionWS = float4(IN.position,1.0f);\n"
 		"OUT.uv = IN.uv;\n"
 		"return OUT;\n"
@@ -71,10 +72,10 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 		"float4 SimplePS(VertexOut IN) : SV_TARGET{\n"
 		"float4 Color;\n"
-		"Color.r = IN.color.x;\n"
-		"Color.g = IN.color.y;\n"
-		"Color.b = IN.color.z;\n"
-		"Color.w = IN.color.a;\n"
+		"Color.r = MInfo.Diffuse.x;\n"
+		"Color.g = MInfo.Diffuse.y;\n"
+		"Color.b = MInfo.Diffuse.z;\n"
+		"Color.w = MInfo.Opacity;\n"
 		"return Color;\n"
 		"}\n"
 
@@ -126,8 +127,43 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		std::string s = std::string( //defaults
 			"////Globals\n"
 			"//Auto_Added_Globals\n"
+
+			"struct MatHasTex{\n"
+			"\nint HasAmbientTexture;"
+			"\nint HasEmissiveTexture;"
+			"\nint HasDiffuseTexture;"
+			"\nint HasSpecularTexture;"
+			"\nint HasSpecularPowerTexture; //shineiness as well\n" 
+			"\nint HasNormalTexture;"
+			"\nint HasReflectanceTexture;"
+			"\nint HasOpacityTexture;"
+			"};\n"
+
+			"struct ModelInfo{\n"
+			"float4 Emissive;\n"
+			"float4 Ambient;\n"
+			"float4 Diffuse;\n"
+			"float4 Specular;\n"
+			"float4 Reflectance;\n"
+			
+			"float Opacity;\n"
+			"float SpecularStr;\n"
+			"float SpecularScale;\n"
+			"float IndexOfRefraction;\n"
+
+			"float BumpIntensity;"
+			"float AlphaClipThreshold;"
+			"uint Lit; //0 is off"
+			"uint UseVertexColor; //0 is off"
+
+			"MatHasTex HasTex;\n"
+
+			"\n"
+
+			"};\n"
 			"struct Vertex{\n"
 			"	float3 position : POSITION;\n"
+			"   float4 color : COLOR;\n"
 			"	float3 normal : NORMAL;\n"
 			"	float3 binormal : BINORMAL;\n"
 			"	float3 tangent : TANGENT;\n"
@@ -161,7 +197,10 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			"cbuffer ProjectionMatrixS : register(b5){\n"
 			"	Matrix ProjectionMatrix;\n"
 			"};\n"
-			
+			"cbuffer ModelInfoBuf : register(b6){\n //nothing in compute shader\n"
+			"ModelInfo MInfo;\n"
+			"};\n"
+
 		);
 
 		for (const auto& i : AutoAddGlobalsRTV) {

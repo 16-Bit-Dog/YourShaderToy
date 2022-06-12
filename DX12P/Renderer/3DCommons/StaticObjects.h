@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <tuple>
 //TODO: implemnet model static loader and more statics
 
 /*
@@ -180,6 +181,23 @@ static std::vector<VNT>* ReturnCube() {
 	
 
 }
+
+std::vector<VNT>* ReturnDeccerCubeBlank() {
+	std::string* tmp = new std::string("Deccer_Cubes\\SM_Deccer_Cubes.fbx");
+	return (std::vector<VNT>*)(tmp);
+}
+std::vector<VNT>* ReturnDeccerCubeColor() {
+	std::string* tmp = new std::string("Deccer_Cubes\\SM_Deccer_Cubes_Colored.fbx");
+	return (std::vector<VNT>*)(tmp);
+}
+std::vector<VNT>* ReturnDeccerCubeTex() {
+	std::string* tmp = new std::string("Deccer_Cubes\\SM_Deccer_Cubes_Textured.fbx");
+	return (std::vector<VNT>*)(tmp);
+}
+std::vector<VNT>* ReturnNOT_PART_OF_DECCER_CUBES_1() {
+	std::string* tmp = new std::string("Deccer_Cubes\\NOT_PART_OF_DECCER_CUBES_1.fbx");
+	return (std::vector<VNT>*)(tmp);
+}
 /*
 static std::vector<VNT>* ReturnPlane() {
 
@@ -189,11 +207,26 @@ static std::vector<VNT>* ReturnFullScreenTri() {
 }
 */
 
-static std::vector<  std::pair< std::string, std::function<std::vector<VNT>*()> >  > StaticObjectPass{ //vector to static objects
-	{"Cube", ReturnCube},
-//	{"Plane", ReturnPlane},
-//	{"Fullscreen-Tri", ReturnFullScreenTri},
+static std::vector<  std::tuple< std::string, std::function<std::vector<VNT>* ()>, char, float>  > StaticObjectPass{ //vector to static objects
+	{"Cube", ReturnCube, 'd', 1.0f},
+	{"Deccer Cube Blank", ReturnDeccerCubeBlank, 's', 0.01f},
+	{"Deccer Cube Color", ReturnDeccerCubeColor, 's', 0.01f},
+	{"Deccer Cube Texture", ReturnDeccerCubeTex, 's',  0.01f},
+	{"NOT_PART_OF_DECCER_CUBES_1", ReturnNOT_PART_OF_DECCER_CUBES_1, 's', 0.01f},
+
 };
 
+const std::string stringSet() {
+
+	std::string ToAdd = "";
+
+	for (int i = 0; i < StaticObjectPass.size(); i++) {
+		ToAdd += "\n" + std::to_string(i) + " is add " + std::get<0>(StaticObjectPass[i]);
+	}
+
+	return 	std::string("-1 is add through.fbx file selector" + ToAdd);
+
+}
+
 //string to pass to describe all constant objects built into program code
-static const char* ToAddStaticObjectString = "-1 is add through.fbx file selector\n0 is add Cube";//\n1 is add Plane\n2 is add FullScreen-Tri";
+static std::string ToAddStaticObjectString = stringSet();

@@ -1,60 +1,83 @@
-
+//this lib should work as a lone pair with 3DCommon and DXSafeInclude for anyone coding
 
 #ifndef DX11OBJ_LOADER
 #define DX11OBJ_LOADER
+#define WIN32_LEAN_AND_MEAN
+using namespace Microsoft::WRL;
+// DirectX 11 & windows specific headers/lib.
+#pragma comment(lib, "Dwmapi.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "winmm.lib")
+#pragma comment(lib, "dxguid.lib")
 
-#include "DX11IncludeMain.h"
+#include <Windows.h>
+#include <dwmapi.h>
+#include <d3d11.h>
+#include <d3d11_3.h>
+#include <d3d11_4.h>
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <DirectXColors.h>
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <dxgi1_2.h>
+#include <wrl.h>
+#include <AtlBase.h>
+#include <atlconv.h>
+#include <objidl.h>
+#include <wincodec.h>
+#include <algorithm>
+#include "DXSafeInclude.h"
+
+
 #include "3DCommons/3DCommon.h"
 //#include "RenderableManager.h"
 
 //TODO: load texture with WCI loader
 
-
-
 struct DX11M3DR : M3DR{
-	struct MaterialData { //seperate struct to send to resource
 
-	/*
-
-		&MatData.HasAmbientTexture 0
-		&MatData.HasEmissiveTexture, 1
-		&MatData.HasDiffuseTexture, 2
-		&MatData.HasSpecularTexture, 3
-		&MatData.HasSpecularPowerTexture, 4
-		&MatData.HasNormalTexture, 5
-		&MatData.HasBumpTexture, 6
-		&MatData.HasOpacityTexture, 7
-
-
-	*/
-
-		XMFLOAT4 Emissive = { 0,0,0,1 };
-		XMFLOAT4 BaseColor = { 1,1,1,1 }; //uses if no texture - emulates a texture of 1 color only
-		XMFLOAT4 Ambient = { 1,1,1,1 };
-		XMFLOAT4 Diffuse = { 0.1,0.1,0.1,1 };
-		XMFLOAT4 Specular = { 0.1,0.1,0.1,1 };
-		XMFLOAT4 Reflectance = { 1.0f,1.0f,1.0f,1.0f };
-
-		float Opacity = 1.0f;
-		float SpecularStr = { 128 };
-		float IndexOfRefraction = 0;
-		INT32 TexOn[8] = { 0,0,0,0,0,0,0,0 };
-		float BumpIntensity = 0.0f;
-
-		float SpecularScale = 1.0f;
-		float AlphaThreshold = 0.0f;
-		UINT Lit = false;
-		float pad;
+	inline static D3D11_INPUT_ELEMENT_DESC dxVertexLayoutDesc[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BLENDID", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+
+	struct TextureObject {
+		ComPtr<ID3D11ShaderResourceView> TexSRV[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		ComPtr<ID3D11UnorderedAccessView> TexUAV[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		ComPtr<ID3D11Texture2D> TexR[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+	
+		void Load_Texture(int num, MaterialDataNamePair& mdnp) {
+			TODO: load texture from path inside mdnp
+		}
+	
+	};
+
+	std::vector<TextureObject> TexObj;
+
+
+	void LoadTextures() {
+		TexObj.resize(MatData.size());
+
+		for(int i = 0; i < MatData.size(); i++) {
+			for (int ii = 0; ii < TEX_COUNT; i++) {
+				if (MatData[i].TexOn[ii]) TexObj[i].Load_Texture(ii, MatDataName[i].Tex[ii]);
+			}
+		}
+	}
+
 	struct MaterialDX11 {
 
 		bool UpdateMat = false;
-
-		ComPtr<ID3D11ShaderResourceView> TexSRV[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
-
-		ComPtr<ID3D11Texture2D> TexR[8] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
-
-		MaterialData MatData;
 
 		ComPtr<ID3D11Buffer> MatDataBuf;
 
@@ -71,6 +94,7 @@ struct DX11M3DR : M3DR{
 	}
 
 	std::vector<MaterialDX11> Mat = {};
+	
 	ComPtr<ID3D11SamplerState> Sampler = NULL;
 	ComPtr<ID3D11BlendState> BlendState = NULL;
 
@@ -80,6 +104,7 @@ struct DX11M3DR : M3DR{
 	std::vector < ComPtr<ID3D11Buffer> > VBuf;
 	std::vector < ComPtr<ID3D11UnorderedAccessView> > VBufUAV;
 	std::vector < ComPtr<ID3D11Buffer> > IBuf;
+
 
 
 	void CreateArmatureCBuf() {
@@ -116,10 +141,11 @@ struct DX11M3DR : M3DR{
 
 		dxDevice->CreateBuffer(&bufDesc, nullptr, &Mat[i].MatDataBuf);
 
-		dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf.Get(), 0, nullptr, &Mat[i].MatData, 0, 0);
+		dxDeviceContext->UpdateSubresource(Mat[i].MatDataBuf.Get(), 0, nullptr, &MatData[i], 0, 0);
 	}
 
 	void DefaultAllMatBuf() {
+		Mat.resize(MatData.size());
 		for (int i = 0; i < Mat.size(); i++) {
 			DefaultMatBuf(i);
 		}
@@ -250,7 +276,8 @@ struct DX11M3DR : M3DR{
 	}
 
 
-	DX11M3DR(std::vector<VNT>* V, bool ClearPtr = true) {
+	DX11M3DR(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
+		ScaleVertex = ScaleVertex_t;
 
 		VertexStride = sizeof(VNT);
 
@@ -266,11 +293,14 @@ struct DX11M3DR : M3DR{
 		DefaultSampler();
 		DefaultAllMatBuf();
 
+
+
 		if (ClearPtr) delete V;
 
 	}
-	DX11M3DR(std::string path = "") {
+	DX11M3DR(std::string path = "", float ScaleVertex_t = 1.0f) {
 		//SetupTexLinkResource();
+		ScaleVertex = ScaleVertex_t;
 
 		VertexStride = sizeof(VNT);
 

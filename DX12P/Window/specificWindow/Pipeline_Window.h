@@ -28,8 +28,24 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		settingWindowSettingsMaker();
 	}
 	
-	
+	static void CheckAndSetValidModelBind(PipelineObj* i) {
+		for (const auto& x : MASTER_FileManager::obj->ModelStore) {
+			if (x == i->Vertex.modelData)//data exists by being same root and real
+				return;
+		}
+		Renderable::DXM->ROB->SetDataToPipelineVertex(nullptr, i->Vertex); //vertex data is not existing
+	}
+
+	static void checkIfValidVertexBind() {
+		
+		for (const auto& i : PipelineMain::obj->P) {
+			if (i.second->Vertex.modelData == nullptr) continue;
+			CheckAndSetValidModelBind(i.second);
+		}
+	}
+
 	static void RecompileCode() {
+		
 		Renderable::DXM->BufferReset = false;
 
 		GLFW_Window_C::DeltaOfLastPress_CompileReset = -2.0f;
@@ -37,7 +53,7 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		if (Renderable::DXM->AutoFileManagerCompile && Renderable::DXM->CompiledData == false) {
 			MASTER_FileManager::obj->BuildAllObjectsItem();
 		}
-
+		checkIfValidVertexBind(); //make sure source was not deleted else bind to default nothing
 		Renderable::DXM->ROB->CompileCodeLogic(PipelineMain::obj);
 		Renderable::DXM->CompiledCode = true;
 	}
@@ -62,7 +78,13 @@ struct MASTER_Pipeline : MASTER_Function_Inherit {
 		*/
 
 		if (Renderable::DXM->CompiledData == false) ImGui::RedText("WARNING - FILE-MANAGER DATA NOT COMPILED");
-		
+		if (HasCodeCompileError == true) {
+			ImGui::RedText("ERROR IN CODE - PLEASE CHECK: ");
+			for (const auto& i : CodeCompileErrorNames) {
+				ImGui::RedText(("\t>>" + i).c_str());
+			}
+		}
+
 		bool button = ImGui::Button("Pipeline & Code Compile##StartCodeCompile");
 
 		if (button) {

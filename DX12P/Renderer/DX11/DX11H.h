@@ -1,10 +1,6 @@
+#pragma once 
 
-#ifndef DX11_H
-#define DX11_H
-
-//#include "DX11ShaderFuncs.h"
 #include "Renderable.h"
-//#include "D3D11ResourceObjects.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
 #include <../imGUI/imgui_impl_dx11.h>
@@ -12,26 +8,20 @@
 #include "PipelineObj.h"
 #include "CamManagerD3D11.h"
 #include <functional>
+
 using namespace DirectX;
 
-struct ComputeDataHolder {
-    std::string CName;
-    ID3D11ComputeShader* CDat;
-    bool AutoSetBlockToWindowSize = false;
-    uint32_t DimX;
-    uint32_t DimY;
-    uint32_t DimZ;
-};
-
-struct RtvAndDepthBlock {
-    inline static std::function<void()> ClearRTVAndDepth;
-    inline static std::function<void()> ReleaseAllRTVAndDepth;
-    inline static std::function<void()> MakeRTVAndDepth;
-
-    
-};
-
 struct PipelineObjectIntermediateStateDX11 {
+    
+    struct ComputeDataHolder {
+        std::string CName;
+        ID3D11ComputeShader* CDat;
+        bool AutoSetBlockToWindowSize = false;
+        uint32_t DimX;
+        uint32_t DimY;
+        uint32_t DimZ;
+    };
+
     inline static ID3D11Resource* SelectedFinalRTV = nullptr; 
 
     inline static std::unordered_map<std::string, ComPtr<ID3D11VertexShader>> VertexShaderMap;
@@ -61,9 +51,6 @@ struct PipelineObjectIntermediateStateDX11 {
 
 
 struct MainDX11Objects : Renderable{
-
-
-    std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
 
     struct InUseTest {
         ID3D11RasterizerState* RasterObject = nullptr;
@@ -98,25 +85,6 @@ struct MainDX11Objects : Renderable{
     inline static MainDX11Objects* obj;
 
     ComPtr<ID3D11InputLayout> dxIL;
-
-    int BLOCK_SIZE = 8;
-
-    bool ClearRTV = true;
-
-    int CurrentFrameRate = 23;
-
-    int TargetFrameRate = 69;
-
-    int SampleSize = 1; 
-
-    bool UseWarpDev = false;
-
-    HWND hwnd;
-    GLFWwindow* window;
-
-    bool bFullScreen = false;
-
-    DXGI_RATIONAL refreshRateStatic;
 
     //Pipeline Objects
     
@@ -508,5 +476,3 @@ struct MainDX11Objects : Renderable{
     }
 
 };
-
-#endif 

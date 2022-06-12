@@ -3,11 +3,17 @@
 #include "PipelineBase.h"
 #include "Renderable.h"
 
+struct BuiltModel_c;
+
 struct VertexShaderPipeline : BasePipeline {
 	//Abstract pipeline to repisent Vertex pipeline object and settings
 
 	//TODO: blend state associated with vertex shader
+	int ModelType = 0;
 
+	BuiltModel_c* modelData;
+
+	std::vector<void*> MatInfo; //vertex data generic pointer
 	std::vector<void*> Vdata; //vertex data generic pointer
 	std::string LoadedModelName = "";
 

@@ -1,7 +1,7 @@
 #pragma once
 //finally I will try to use com_ptr's
 #define WIN32_LEAN_AND_MEAN
-
+using namespace Microsoft::WRL;
 // DirectX 11 & windows specific headers.
 #include <Windows.h>
 #include <dwmapi.h>
@@ -20,12 +20,10 @@
 #include <objidl.h>
 #include <wincodec.h>
 #include <algorithm>
+#include "DXSafeInclude.h"
 #include <DX11ShaderFuncs.h>
-//#include <gdiplus.h>
-//using namespace Gdiplus;
-//#pragma comment (lib,"Gdiplus.lib")
 
-using namespace Microsoft::WRL;
+
 
 
 #pragma comment(lib, "Dwmapi.lib")
@@ -35,4 +33,3 @@ using namespace Microsoft::WRL;
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "dxguid.lib")
 
-#include "DXSafeInclude.h"

@@ -211,7 +211,7 @@ struct ImageObjectToRendererDX11 : ImageObjectToRenderer_Base {
 
 		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
 		//send data to SRV and UAV
-
+		
 	}
 	
 	ImageObjectToRendererDX11(BuiltImage_c* data) {
@@ -405,24 +405,29 @@ struct StructObjectToRendererDX11 : StructObjectToRenderer_Base{
 
 struct ModelToRendererDX11 : ModelToRenderer_Base{
 	DX11M3DR* Model;
-	
+	int Type = -1;
+
 	ModelToRendererDX11(BuiltModel_c* data) {
 		
 		Name = data->Name;
 		NameRW = data->NameRW;
+		Type = data->Type;
 
 		if (data->Type == - 1) {
 			Model = new DX11M3DR(data->Path);
 		}
 		else if (data->Type >-1 && data->Type<StaticObjectPass.size()) {
-			Model = new DX11M3DR(StaticObjectPass[data->Type].second());
+			StaticDX11Object::obj->MakeOBJ(data->Type);
+			Model = StaticDX11Object::obj->items[data->Type];
 		}
 #ifdef GET_OBJECT_STATIC
 		OutputStringToFileForCopyPata(&Model);
 #endif
 	}
 	~ModelToRendererDX11() {
-		delete Model;
+		if (Type == -1) {
+			delete Model;
+		}
 	}
 };
 
@@ -482,27 +487,41 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 
 	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
+		if (data == nullptr) {
+			vp.modelData = nullptr;
+			vp.Vdata.clear(); //run default cube if invalid data
+			vp.MatInfo.clear();
+			return;
+		}
+		if (ModelData.count(data->Name) > 0) { //check if valid model exists
 
-		if (ModelData.count(data->Name) > 0) {
+			vp.modelData = data;
+
 			vp.LoadedModelName = data->Name;
+			vp.ModelType = data->Type;
+
 
 			ModelToRendererDX11* md_tmp = ModelData[data->Name];
 
+			vp.MatInfo.resize(md_tmp->Model->MatData.size());
 			vp.Vdata.resize(md_tmp->Model->VBuf.size());
 			vp.Idata.resize(md_tmp->Model->IBuf.size());
 			vp.Icount.resize(md_tmp->Model->Indice.size());
-			
+
 			DX11M3DR* tmpM3 = ModelData[data->Name]->Model;
 
 			for (int x = 0; x < tmpM3->VBuf.size(); x++) {
 				vp.Vdata[x] = (void*)tmpM3->VBuf[x].Get();
 			}
-
+			for (int x = 0; x < tmpM3->MatData.size(); x++) {
+				vp.MatInfo[x] = (void*)tmpM3->Mat[x].MatDataBuf.Get();
+			}
 			for (int x = 0; x < tmpM3->IBuf.size(); x++) {
 				vp.Idata[x] = (void*)tmpM3->IBuf[x].Get();
 				vp.Icount[x] = tmpM3->Indice[x].size();
 			}
 			vp.VertexStride = tmpM3->VertexStride;
+
 		}
 	}
 
@@ -521,7 +540,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(ID->sampler_num, 1, &ID->Samp);
 //		MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources();
 //		MainDX11Objects::obj->dxDeviceContext->PSSetSamplers();
-
+		
 		MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, &ID->uav, &NOneP);
 		MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(ID->sampler_num, 1, &ID->Samp);
 	}
@@ -697,9 +716,13 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 				if ((*item)->PObj->Vertex.Vdata.size() != 0) {
 
+					
 					for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
 
 						if (MainDX11Objects::obj->TestForOptimize.Model != (*item)->PObj->Vertex.Vdata[i]) {
+							MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
+							MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
+
 							MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, &OffsetDef);
 							MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)((*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, OffsetDef);
 							MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
@@ -711,12 +734,12 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				}
 				else {
 					//run if no vertex data load default cube
-					StaticDX11Object::obj->MakeCube();
-					void* tmpAddress = (void*)StaticDX11Object::obj->CUBE->VBuf[0].Get();
+					StaticDX11Object::obj->MakeOBJ(0);
+					void* tmpAddress = (void*)StaticDX11Object::obj->items[0]->VBuf[0].Get();
 					if (MainDX11Objects::obj->TestForOptimize.Model != tmpAddress) {
-						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&tmpAddress, &StaticDX11Object::obj->CUBE->VertexStride, &OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->CUBE->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->CUBE->Indice[0].size(), 0, 0);
+						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&tmpAddress, &StaticDX11Object::obj->items[0]->VertexStride, &OffsetDef);
+						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->items[0]->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
+						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->items[0]->Indice[0].size(), 0, 0);
 
 						MainDX11Objects::obj->TestForOptimize.Model = tmpAddress;
 					}
@@ -766,11 +789,17 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 	}
 
+	void SetErrorShowIfHasError(BasePipeline& t, PipelineObj* po) {
+		if (t.CheckIfHasError()) {
+			HasCodeCompileError = true;
+			CodeCompileErrorNames.push_back(po->name+" - "+t.ShaderTypeName);
+		}
+	}
 
 	int CompileNewPipelineObject(const std::pair<const int, PipelineObj*>& Pobj) {
-
+		
 		PreBindAllResources();
-
+		
 		PipelineObjectIntermediateStateDX11* itemP = new PipelineObjectIntermediateStateDX11();
 		PipelineObjectIntermediateStateDX11** item = &itemP;
 		
@@ -806,6 +835,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		//compile Pixel Shader if not exist
 		if (PipelineObjectIntermediateStateDX11::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX11::PixelShaderMap.end()){
 			PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName] = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&BasePipeline::code[BasePipeline::PIXEL], Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+			SetErrorShowIfHasError(Pobj.second->Pixel, Pobj.second);
 		}
 		(*item)->PDat = PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName].Get();
 		if ((*item)->PDat == nullptr) { 
@@ -816,6 +846,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		//compile Vertex Shader if not exist
 		if (PipelineObjectIntermediateStateDX11::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX11::VertexShaderMap.end()) {
 			PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName] = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&BasePipeline::code[BasePipeline::VERTEX], Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+			SetErrorShowIfHasError(Pobj.second->Vertex, Pobj.second);
 		}
 		(*item)->VDat = PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName].Get();
 
@@ -829,6 +860,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 			if (PipelineObjectIntermediateStateDX11::ComputeShaderMap.find((*item)->Compute[iter].CName) == PipelineObjectIntermediateStateDX11::ComputeShaderMap.end()) {
 				PipelineObjectIntermediateStateDX11::ComputeShaderMap[(*item)->Compute[iter].CName] = ShaderCDX11::obj->LoadShader<ID3D11ComputeShader>(&BasePipeline::code[BasePipeline::COMPUTE], i.second->name, "latest", &i.second->ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+				SetErrorShowIfHasError(*i.second, Pobj.second);
 			}
 			(*item)->Compute[iter].CDat = PipelineObjectIntermediateStateDX11::ComputeShaderMap[(*item)->Compute[iter].CName].Get();
 
@@ -937,6 +969,8 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	} 
 
 	void CompileCodeLogic(PipelineMain* OrderedPipelineState) {
+		resetCodeCompile();
+
 		RtvAndDepthBlock::ClearRTVAndDepth = [&]() {ClearRTVAndDepth(); };
 		RtvAndDepthBlock::ReleaseAllRTVAndDepth = [&]() {ReleaseRTVAndDepthAndResizeTex(); };
 		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepthAndResizeTex(); };
