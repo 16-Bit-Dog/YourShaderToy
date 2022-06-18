@@ -173,17 +173,18 @@ struct ImageObjectToRendererDX11 : ImageObjectToRenderer_Base {
 		if (LinkSizeToRTV == false) {
 			gpuTexDesc.Width = data->data.sizeX_c;
 			gpuTexDesc.Height = data->data.sizeY_c;
+			defaultResourceData.pSysMem = data->data.dataV;
 		}
 		else {
 			pSysMem = ScaleBuffersToSizeCPU(pSysMem, sizeY, sizeX, channels, bpp, MainDX11Objects::obj->MainWidth, MainDX11Objects::obj->MainHeight);
 			defaultResourceData.pSysMem = pSysMem;
 			gpuTexDesc.Width = MainDX11Objects::obj->MainWidth;
 			gpuTexDesc.Height = MainDX11Objects::obj->MainHeight;
-
-			defaultResourceData.SysMemPitch = MainDX11Objects::obj->MainWidth * channels * bpp;
-			defaultResourceData.SysMemSlicePitch = MainDX11Objects::obj->MainHeight * MainDX11Objects::obj->MainWidth * channels * bpp;
-
 		}
+
+		defaultResourceData.SysMemPitch = gpuTexDesc.Width * channels * bpp;
+		defaultResourceData.SysMemSlicePitch = gpuTexDesc.Height * gpuTexDesc.Width * channels * bpp;
+
 		gpuTexDesc.MipLevels = 1;
 		gpuTexDesc.ArraySize = 1;
 		gpuTexDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |
@@ -507,8 +508,10 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			vp.Vdata.resize(md_tmp->Model->VBuf.size());
 			vp.Idata.resize(md_tmp->Model->IBuf.size());
 			vp.Icount.resize(md_tmp->Model->Indice.size());
-
+			
 			DX11M3DR* tmpM3 = ModelData[data->Name]->Model;
+
+			vp.RawModel = tmpM3;
 
 			for (int x = 0; x < tmpM3->VBuf.size(); x++) {
 				vp.Vdata[x] = (void*)tmpM3->VBuf[x].Get();
@@ -549,12 +552,31 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 			PreBindImageData(i.second);
 		}
 	}
-	void PreBindModelData(ModelToRendererDX11* MD) {
-		//TODO: add this section
+	void BindModelData(DX11M3DR* Model, int Obj) {
+		
+		ID3D11UnorderedAccessView* tmpF =  NULL;
+
+		for (int i = 0; i < MaterialEnum::TEX_COUNT; i++) {
+			if (Model->MatData[Obj].TexOn[i]) {
+				MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
+				MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
+				MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, &tmpF, &NOneP);
+
+			}
+		}
+		
 	}
-	void PreBindAllModelData() {
-		for (const auto& i : ModelData) {
-			PreBindModelData(i.second);
+
+	void BindModelDataCS(DX11M3DR* Model, int Obj) {
+
+		ID3D11ShaderResourceView* tmpF = NULL;
+
+		for (int i = 0; i < MaterialEnum::TEX_COUNT; i++) {
+			if (Model->MatData[Obj].TexOn[i]) {
+				MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, &tmpF);
+				MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, &tmpF);
+				MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, Model->TexObj[Obj].TexUAV[i].GetAddressOf(), &NOneP);
+			}
 		}
 	}
 	void PreBindConstantData(StructObjectToRendererDX11* ID) {
@@ -583,7 +605,6 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	void PreBindAllResources() {
 
 		PreBindAllImageData();
-		PreBindAllModelData();
 		PreBindAllConstantData();
 		PreBindDefault();
 
@@ -716,12 +737,16 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 				if ((*item)->PObj->Vertex.Vdata.size() != 0) {
 
-					
+					DX11M3DR* Model = (DX11M3DR*)((DX11M3DR*)((*item)->PObj->Vertex.RawModel));
+					MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
+					MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
+
 					for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
 
 						if (MainDX11Objects::obj->TestForOptimize.Model != (*item)->PObj->Vertex.Vdata[i]) {
 							MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
 							MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
+							BindModelData( Model, i );
 
 							MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, &OffsetDef);
 							MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)((*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, OffsetDef);
@@ -775,7 +800,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		}
 	}
-
+	int SizeOfRTV() {
+		return RTVData.size();
+	}
 	void ClearRTVAndDepth() {
 		for (auto& i : RTVData) {
 			if (i.second->ClearEveryNewPass) {
@@ -974,7 +1001,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		RtvAndDepthBlock::ClearRTVAndDepth = [&]() {ClearRTVAndDepth(); };
 		RtvAndDepthBlock::ReleaseAllRTVAndDepth = [&]() {ReleaseRTVAndDepthAndResizeTex(); };
 		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepthAndResizeTex(); };
-
+		RtvAndDepthBlock::SizeOfRTV = [&]() {return SizeOfRTV();};
 			
 		MainDX11Objects::obj->CompiledCode.clear();
 
@@ -982,9 +1009,9 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
 
 		std::string Globals = MASTER_Editor::obj->GetStringWithGlobalsText();
-		std::string VGlobals = Globals + MASTER_Editor::obj->VsString;
-		std::string PGlobals = Globals + MASTER_Editor::obj->PsString;
-		std::string CGlobals = Globals + MASTER_Editor::obj->CsString;
+		std::string VGlobals = MASTER_Editor::obj->GetStringVandPLocked() + Globals + MASTER_Editor::obj->VsString;
+		std::string PGlobals = MASTER_Editor::obj->GetStringVandPLocked() + Globals + MASTER_Editor::obj->PsString;
+		std::string CGlobals = MASTER_Editor::obj->GetStringCLocked() + Globals + MASTER_Editor::obj->CsString;
 		BasePipeline::code[BasePipeline::VERTEX] = VGlobals;
 		BasePipeline::code[BasePipeline::PIXEL] = PGlobals;
 		BasePipeline::code[BasePipeline::COMPUTE] = CGlobals;

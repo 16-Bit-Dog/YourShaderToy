@@ -16,6 +16,7 @@ struct RtvAndDepthBlock {
 	inline static std::function<void()> ClearRTVAndDepth;
 	inline static std::function<void()> ReleaseAllRTVAndDepth;
 	inline static std::function<void()> MakeRTVAndDepth;
+	inline static std::function<int()> SizeOfRTV;
 };
 
 //TODO: set Blend to many render targets all same later

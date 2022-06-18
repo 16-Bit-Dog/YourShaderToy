@@ -225,7 +225,10 @@ struct MainDX11Objects : Renderable{
         for (const auto& i : CompiledCode) {
             i->ToRunLogic();
         }
-        CopyRTVFinalBuffer();
+
+        if (RtvAndDepthBlock::SizeOfRTV() > 0) {
+            CopyRTVFinalBuffer();
+        }
 
         dxDeviceContext->OMSetRenderTargets(1, dxRenderTargetView.GetAddressOf(), dxDepthStencilView.Get()); //TODO: allow setting own depth stencil [new Depth Stencil] to allow fun stuff
     }

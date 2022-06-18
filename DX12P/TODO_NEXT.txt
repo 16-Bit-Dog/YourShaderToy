@@ -1,7 +1,14 @@
-CropPathToGetDir
+
+textures loading crashes due to sub reosurce data
+
+make texture for deccer test <-- I have bug causing offset from create texture to crash
 
 add deccer texture to loader, load from my .d data variable if has texture is true- then test my HasError Bool if it works for mesage
 
+show width and height and stats of deccer object somehow in model view -make it for all object types as well
+test
+
+default data crashes
 
 
 //TODO: use ambient factor

@@ -22,6 +22,7 @@ void resetCodeCompile() {
 	CodeCompileErrorNames.clear();
 }
 
+
 static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLOCK_Y", "PROGRAM_CONSTANTS", "", "Vertex",
 
 "ProjectionMatrixS", "ViewMatrixS", "WorldMatrixS",
@@ -30,7 +31,9 @@ static std::set<std::string> usedNameCont{ "ComputeShaderInput", "BLOCK_X", "BLO
 "DefaultProjectionMatrixS", "DefaultViewMatrixS", "DefaultWorldMatrixS",
 "DefaultProjectionMatrix", "DefaultViewMatrix", "DefaultWorldMatrix",
 
-"ModelInfoBuf"
+"ModelInfoBuf",
+"AMBIENT_TEX", "EMISSIVE_TEX",  "DIFFUSE_TEX", "SPECULAR_TEX", "SPECULAR_POW_TEX", "NORMAL_TEX", "REFLECTANCE_TEX", "OPACITY_TEX",
+"SAMPLER",
 };
 
 /*
@@ -151,10 +154,10 @@ struct TypeStorageMass {
 };
 
 struct RegisterMaps {
-	inline static std::set<int> UAV_R;
-	inline static std::set<int> SRV_R;
+	inline static std::set<int> UAV_R{0,1,2,3,4,5,6,7};
+	inline static std::set<int> SRV_R{0,1,2,3,4,5,6,7};
 	inline static std::set<int> CB_R{ 0,1,2,3,4,5,6 }; //for default matrixes
-	inline static std::set<int> S_R;
+	inline static std::set<int> S_R{0};
 
 	int uav_num = -1; //TODO: set all uav and srv and cb nums with func
 	int srv_num = -1; //TODO: set all uav and srv and cb nums with func

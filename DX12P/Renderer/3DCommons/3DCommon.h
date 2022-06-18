@@ -173,11 +173,14 @@ struct MaterialDataNamePair : MaterialEnum{
 	uint8_t* d = nullptr;
 	int width = 0;
 	int height = 0;
-	int channels = 0;
+	int channels = 4;
 };
 
 struct MaterialDataName : MaterialEnum{ //seperate struct to send to resource
-	MaterialDataNamePair Tex[TEX_COUNT] = {};
+	std::vector<MaterialDataNamePair> Tex;
+	MaterialDataName() {
+		Tex.resize(TEX_COUNT);
+	}
 };
 
 void XM4Pass(XMFLOAT4& dat, const ofbx::Color& other) {
@@ -190,11 +193,17 @@ bool StringToOFBXDataViewPass(MaterialDataNamePair& mdn, const ofbx::DataView& v
 	mdn.s.resize(MAX_PATH);
 	char charTMP[MAX_PATH];
 	v.toString(charTMP);
-	mdn.s.copy(&charTMP[0], MAX_PATH);
+	mdn.s = std::string(charTMP);
+
+	int index = mdn.s.size()-1;
+	while (mdn.s[index] != '\\') {
+		index -= 1;
+	}
+	mdn.s = mdn.s.substr(index, mdn.s.size() - 1);
 
 	if (std::filesystem::exists(DirPath + mdn.s)) {
 		mdn.d = stbi_load((DirPath + mdn.s).c_str(), &mdn.width, &mdn.height, &mdn.channels, 4);
-
+		mdn.channels = 4;
 		return true;
 	}
 
@@ -536,7 +545,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 					}
 					matTexDat = matDatTmp->getTexture(ofbx::Texture::REFLECTION);
 					if (matTexDat != nullptr) {
-						MatData[i].TexOn[MaterialData::REFLECTANCE] = StringToOFBXDataViewPass(MatDataName[i].Tex[REFLECTANCE, matTexDat->getFileName(), DirPath);
+						MatData[i].TexOn[MaterialData::REFLECTANCE] = StringToOFBXDataViewPass(MatDataName[i].Tex[REFLECTANCE], matTexDat->getFileName(), DirPath);
 						
 					}
 
@@ -877,7 +886,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 			counter -= 1;
 		}
 
-		out.copy(&path[0], counter);
+		out = path.substr(0, counter);
 	}
 	void LoadFBXFileWithVertex(std::string path) {
 		FilePath = path;

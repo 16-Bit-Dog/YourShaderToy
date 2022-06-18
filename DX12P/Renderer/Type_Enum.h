@@ -7,3 +7,9 @@ enum {
 	UINT_OBJ = 3
 
 };
+
+enum ShaderTypeEnum {
+	VERTEX = 0,
+	PIXEL,
+	COMPUTE,
+};

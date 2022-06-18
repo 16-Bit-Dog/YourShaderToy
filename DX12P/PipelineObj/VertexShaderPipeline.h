@@ -20,6 +20,8 @@ struct VertexShaderPipeline : BasePipeline {
 	std::vector<void*> Idata; //indice data generic pointer
 	std::vector<int> Icount; // indice count to draw
 	UINT VertexStride = 0; // stride until next vertex --> set by model loader dynamically
+
+	void* RawModel = nullptr;
 	//
 	//for choosing raster by map
 	RasterTypeMapMadeData RasterToMake;

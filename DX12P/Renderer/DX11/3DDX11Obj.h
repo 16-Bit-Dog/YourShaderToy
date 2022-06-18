@@ -52,25 +52,77 @@ struct DX11M3DR : M3DR{
 	};
 
 	struct TextureObject {
-		ComPtr<ID3D11ShaderResourceView> TexSRV[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
-		ComPtr<ID3D11UnorderedAccessView> TexUAV[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
-		ComPtr<ID3D11Texture2D> TexR[TEX_COUNT] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, };
+		std::array<ComPtr<ID3D11ShaderResourceView>, TEX_COUNT> TexSRV;
+		std::array<ComPtr<ID3D11UnorderedAccessView>, TEX_COUNT > TexUAV;
+		std::array <ComPtr<ID3D11Texture2D>, TEX_COUNT> TexR;
 	
 		void Load_Texture(int num, MaterialDataNamePair& mdnp) {
-			TODO: load texture from path inside mdnp
+			
+			D3D11_SUBRESOURCE_DATA defaultResourceData;
+			defaultResourceData.pSysMem = mdnp.d;
+			defaultResourceData.SysMemPitch = mdnp.width * mdnp.channels;
+			defaultResourceData.SysMemSlicePitch = mdnp.height * mdnp.width * mdnp.channels;
+
+			/*
+			std::vector<uint8_t> a;
+			a.resize(defaultResourceData.SysMemSlicePitch);
+			memcpy(&a[0], &mdnp.d[0], defaultResourceData.SysMemSlicePitch);
+			int b = a[defaultResourceData.SysMemSlicePitch-1];
+			*/
+
+			D3D11_TEXTURE2D_DESC gpuTexDesc;
+			ZeroMemory(&gpuTexDesc, sizeof(D3D11_TEXTURE2D_DESC));
+			gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		
+			gpuTexDesc.Width = mdnp.width;
+			gpuTexDesc.Height = mdnp.height;
+		
+			gpuTexDesc.MipLevels = 1;
+			gpuTexDesc.ArraySize = 1;
+			gpuTexDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |
+				D3D11_BIND_SHADER_RESOURCE;
+			gpuTexDesc.SampleDesc.Count = 1;
+			gpuTexDesc.SampleDesc.Quality = 0;
+			gpuTexDesc.MiscFlags = 0;
+			gpuTexDesc.CPUAccessFlags = 0;
+			gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
+
+			D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+			//UAVDesc.Texture2D
+			ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+			UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
+			UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+			
+			dxDevice->CreateTexture2D(
+					&gpuTexDesc,
+					&defaultResourceData,
+					&TexR[num]);
+
+			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), &UAVDesc, &TexUAV[num]);
+
+			auto hr = dxDevice->CreateShaderResourceView(TexR[num].Get(), nullptr, &TexSRV[num]);
+
+			//SafeRelease(TexR[num]);
+			//delete[] defaultResourceData.pSysMem;
 		}
 	
 	};
 
 	std::vector<TextureObject> TexObj;
+	
+	void DefaultSamp() {
 
+	}
 
 	void LoadTextures() {
+		DefaultSamp();
 		TexObj.resize(MatData.size());
 
 		for(int i = 0; i < MatData.size(); i++) {
-			for (int ii = 0; ii < TEX_COUNT; i++) {
-				if (MatData[i].TexOn[ii]) TexObj[i].Load_Texture(ii, MatDataName[i].Tex[ii]);
+			for (int ii = 0; ii < TEX_COUNT; ii++) {
+				if (MatData[i].TexOn[ii]){
+					TexObj[i].Load_Texture(ii, MatDataName[i].Tex[ii]);
+				}
 			}
 		}
 	}
@@ -293,7 +345,7 @@ struct DX11M3DR : M3DR{
 		DefaultSampler();
 		DefaultAllMatBuf();
 
-
+		LoadTextures();
 
 		if (ClearPtr) delete V;
 
@@ -316,7 +368,7 @@ struct DX11M3DR : M3DR{
 		DefaultCBuf();
 		DefaultSampler();
 		DefaultAllMatBuf();
-
+		LoadTextures();
 	}
 	~DX11M3DR() {
 		//TODO: make deconstructor

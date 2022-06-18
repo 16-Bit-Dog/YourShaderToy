@@ -48,10 +48,11 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 
 
 	);
+	
 
 	std::string VsString = std::string(
 		
-		
+		""
 
 		"VertexOut SimpleVS(Vertex IN){\n"
 		"VertexOut OUT;\n"
@@ -71,12 +72,14 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::string PsString = std::string(
 
 		"float4 SimplePS(VertexOut IN) : SV_TARGET{\n"
-		"float4 Color;\n"
-		"Color.r = MInfo.Diffuse.x;\n"
-		"Color.g = MInfo.Diffuse.y;\n"
-		"Color.b = MInfo.Diffuse.z;\n"
-		"Color.w = MInfo.Opacity;\n"
-		"return Color;\n"
+		"float4 Color = float4(MInfo.Diffuse.x, MInfo.Diffuse.y, MInfo.Diffuse.z, MInfo.Diffuse.w);\n"
+		"if (MInfo.HasTex.HasDiffuseTexture) {\n"
+			"return Color*DIFFUSE_TEX.Sample(SAMPLER, IN.uv); \n"
+		"}\n"
+		"else {\n"
+			"return Color;\n"
+		"}\n"
+
 		"}\n"
 
 	);
@@ -121,6 +124,42 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		settingWindowSettingsMaker();
 	}
 
+	std::string GetStringVandPLocked() {
+		return std::string( //defaults
+			"////Globals\n"
+			"//Auto_Added_Globals\n"
+
+			"sampler SAMPLER : register(s0);\n"
+			"Texture2D AMBIENT_TEX : register(t0);//bound Vertex and Pixel Shader\n"
+			"Texture2D EMISSIVE_TEX : register(t1);//bound Vertex and Pixel Shader\n"
+			"Texture2D DIFFUSE_TEX : register(t2);//bound Vertex and Pixel Shader\n"
+			"Texture2D SPECULAR_TEX : register(t3);//bound Vertex and Pixel Shader\n"
+			"Texture2D SPECULAR_POW_TEX : register(t4);//bound Vertex and Pixel Shader\n"
+			"Texture2D NORMAL_TEX : register(t5);//bound Vertex and Pixel Shader\n"
+			"Texture2D REFLECTANCE_TEX : register(t6);//bound Vertex and Pixel Shader\n"
+			"Texture2D OPACITY_TEX : register(t7); //bound Vertex and Pixel Shader\n"
+		);
+	}
+
+	std::string GetStringCLocked() {
+		return std::string(
+			"////Globals\n"
+			"//Auto_Added_Globals\n"
+
+			"sampler SAMPLER : (s0);\n"
+			"RWTexture2D<unorm float4> AMBIENT_TEX : register(u0);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> EMISSIVE_TEX : register(u1);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> DIFFUSE_TEX : register(u2);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> SPECULAR_TEX : register(u3);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> SPECULAR_POW_TEX : register(u4);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> NORMAL_TEX : register(u5);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> REFLECTANCE_TEX : register(u6);//bound Compute Shader\n"
+			"RWTexture2D<unorm float4> OPACITY_TEX : register(u7); //bound Compute Shader\n"
+
+
+		);
+
+	}
 	std::string GetStringWithNoGlobals() {
 		//get default global string with other pre defined globals,
 		//DONT get user added globals
@@ -151,10 +190,10 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 			"float SpecularScale;\n"
 			"float IndexOfRefraction;\n"
 
-			"float BumpIntensity;"
-			"float AlphaClipThreshold;"
-			"uint Lit; //0 is off"
-			"uint UseVertexColor; //0 is off"
+			"float BumpIntensity;\n"
+			"float AlphaClipThreshold;\n"
+			"uint Lit; //0 is off\n"
+			"uint UseVertexColor; //0 is off\n"
 
 			"MatHasTex HasTex;\n"
 
@@ -227,6 +266,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	std::string GetStringWithGlobalsText() {
 
 		std::string s = "";
+
 		s += GetStringWithNoGlobals();
 		s += Globals;
 		return std::move(s);
@@ -246,6 +286,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 		
 		if (ImGui::CollapsingHeaderOpenGreen("EditorVertexCollapse")) {
 			ImGui::Text("//VertexShaders"); //add - hint: use 'Vertex' as your input structure type. Auto_Added_Globals shows the variables features for ALL vertex buffers loaded
+			ImGui::Text(GetStringVandPLocked().c_str());
 			ImGui::HelpMarker("Input to Vertex Shader\nMUST be 'Vertex'\n\n");
 			ImGui::InputTextMultilineQuick("T1", &VsString, &TextType);
 		}
@@ -254,6 +295,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	void DrawPixelShaderText() {
 		if (ImGui::CollapsingHeaderOpenGreen("EditorPixelCollapse")) {
 			ImGui::Text("//PixelShaders");
+			ImGui::Text(GetStringVandPLocked().c_str());
 			ImGui::InputTextMultilineQuick("T2", &PsString, &TextType);
 		}
 	}
@@ -277,6 +319,7 @@ struct MASTER_Editor : MASTER_Function_Inherit {
 	}
 	void DrawComputeShaderText() {
 		if (ImGui::CollapsingHeaderOpenGreen("EditorComputeCollapse")) {
+			ImGui::Text(GetStringCLocked().c_str());
 			ImGui::Text("//ComputeShaders");
 			ImGui::InputTextMultilineQuick("T6", &CsString, &TextType);
 		}
