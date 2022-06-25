@@ -230,3 +230,38 @@ const std::string stringSet() {
 
 //string to pass to describe all constant objects built into program code
 static std::string ToAddStaticObjectString = stringSet();
+
+
+struct StaticObject {
+	inline static StaticObject* obj;
+
+	std::vector<bool> bools;
+	std::vector<M3DR*> items;
+
+	void MakeOBJ(int OBJ_I) {
+		if (bools[OBJ_I] == false) {
+			if (std::get<2>(StaticObjectPass[OBJ_I]) == 'd') {
+				items[OBJ_I] = new M3DR(std::get<1>(StaticObjectPass[OBJ_I])(), std::get<3>(StaticObjectPass[OBJ_I]));
+			}
+			else if (std::get<2>(StaticObjectPass[OBJ_I]) == 's') {
+				items[OBJ_I] = new M3DR(*((std::string*)(std::get<1>(StaticObjectPass[OBJ_I])())), std::get<3>(StaticObjectPass[OBJ_I]));
+			}
+
+			bools[OBJ_I] = true;
+		}
+	}
+
+	M3DR* GetOBJ(int OBJ_I) {
+		MakeOBJ(OBJ_I);
+		return items[OBJ_I];
+	}
+
+	StaticObject() {
+		bools.resize(StaticObjectPass.size());
+		items.resize(StaticObjectPass.size());
+
+	}
+
+
+
+};

@@ -163,7 +163,12 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		//TODO add image with string name, make new object, and make the show-er for it
 	}
 	void AddModelToList(const std::string& Path, const std::string& Name, const int& Type) {
-		ModelStore.push_back(new BuiltModel_c(Path, Name, Type));
+		BuiltModel_c* tmp = new BuiltModel_c(Path, Name, Type);
+		if (tmp->tmpM3DR.modelDat.size() == 0) {
+			delete tmp;
+			return;
+		}
+		ModelStore.push_back(tmp);
 		Renderable::DXM->CompiledData = false;
 	}
 
@@ -475,17 +480,19 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 				continue;
 				i -= 1;
 			}
-			if(true) {
 
-				if (ModelStore[i]->Type == -1) {
-					ImGui::Text("Path:"); ImGui::SameLine();
-					ImGui::Text(ModelStore[i]->Path.c_str());
-				}
-				else {
-					ImGui::Text("Static Object:"); ImGui::SameLine();
-					ImGui::Text(std::get<0>(StaticObjectPass[ModelStore[i]->Type]).c_str());
-				}
+			if (ModelStore[i]->Type == -1) {
+				ImGui::Text("Path:"); ImGui::SameLine();
+				ImGui::Text(ModelStore[i]->Path.c_str());
 			}
+			else {
+				ImGui::Text("Static Object:"); ImGui::SameLine();
+				ImGui::Text(std::get<0>(StaticObjectPass[ModelStore[i]->Type]).c_str());
+			}
+
+			//for (ModelStore[i]->tmpM3DR->) {
+
+			//}
 		}
 	}
 	void DrawMODEL() {

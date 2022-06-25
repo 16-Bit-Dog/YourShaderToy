@@ -1,12 +1,17 @@
+in M3DR draw:
 
-textures loading crashes due to sub reosurce data
+object: name
 
-make texture for deccer test <-- I have bug causing offset from create texture to crash
-
-add deccer texture to loader, load from my .d data variable if has texture is true- then test my HasError Bool if it works for mesage
+HasTex's (put a toggle for all 8)
+    shows each 8 with texture info
+    
+SHOW button:
+    double click allows breaking down M3DR into small renderer window DX11?
 
 show width and height and stats of deccer object somehow in model view -make it for all object types as well
 test
+
+make dll #define toggle loader
 
 default data crashes
 

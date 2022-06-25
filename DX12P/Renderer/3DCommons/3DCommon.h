@@ -214,6 +214,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 	/*
 	abstract general 
 	*/
+	UINT VertexStride = 0;
 
 	std::string FilePath = "";
 	std::string DirPath = "";
@@ -888,7 +889,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 
 		out = path.substr(0, counter);
 	}
-	void LoadFBXFileWithVertex(std::string path) {
+	void LoadFBXFileWithVertex(const std::string& path) {
 		FilePath = path;
 		
 		CropPathToGetDir(FilePath, DirPath);
@@ -913,6 +914,32 @@ struct M3DR : MaterialEnum { //model Resource data only
 		FillTopBones();
 	}
 
+	void LoadPathBased(const std::string& path = "", float ScaleVertex_t = 1.0f) {
+		ScaleVertex = ScaleVertex_t;
+		VertexStride = sizeof(VNT);
+		if (path != "") LoadFBXFileWithVertex(path);
+		else std::cout << "no file at path";
+	}
+	void LoadVertexVectorBased(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
+		ScaleVertex = ScaleVertex_t;
+		VertexStride = sizeof(VNT);
+		RESIZE_VECTORS_OBJ_LOAD(1);
+		modelDat[0] = *V;
+		AutoFillIndice(0);
+		VertexPostProcess();
+
+		if (ClearPtr) delete V;
+	}
+
+	M3DR(const std::string& path, float ScaleVertex_t = 1.0f) {
+		LoadPathBased(path, ScaleVertex_t);
+	}
+	M3DR(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
+		LoadVertexVectorBased(V, ClearPtr, ScaleVertex_t);
+	}
+	M3DR() {
+
+	}
 	~M3DR() {
 		//TODO: make deconstructor
 	}

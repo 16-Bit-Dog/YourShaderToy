@@ -11,6 +11,8 @@
 #include "RenderableManager.h"
 #include "Renderable.h"
 #include "Window_Struct.h"
+#include "3DCommons/3DCommon.h"
+#include "3DCommons/StaticObjects.h"
 #include <random>
 
 void DealWithNameConflict(std::set<std::string>* usedName, std::string* Name, const std::string& suffixConflict);
@@ -424,13 +426,15 @@ struct BuiltImage_c : ObjectBuilder {
 
 struct BuiltModel_c : ObjectBuilder {
 
+	bool failed = false;
+
 	std::string Path = "";
 	std::string Name = ""; //same as Buffer <-- when loaded 
 	std::string NameRW = ""; //same as UAV which is already made in 3DDXObj.h - when I fetch, 
 
 	int Type;
 	//TODO: preinclude cube and sphere file which includes as menu item if you click the option, and auto sets up in loader
-
+	M3DR tmpM3DR;
 
 	void BuildItem() {
 		Renderable::ROB->LoadModelFromData(this);
@@ -439,15 +443,23 @@ struct BuiltModel_c : ObjectBuilder {
 
 	BuiltModel_c(const std::string& p, std::string s, const int& t) {
 		//TODO fill M3DR based on path in D3D11ResourceObjects.h, else stop trying to load and throw error saying "invalid" 
-		
+		if (t == -1) {
+			tmpM3DR = M3DR(Path);
+		}
+		else {
+			tmpM3DR = *StaticObject::obj->GetOBJ(t);
+		}
+
+		if (tmpM3DR.modelDat.size() == 0) failed = true;
+
 		Path = p;
 
 		if (s == "") s = "TMP_MODEL";
 		else Name = s;
 
 		
-		DealWithNameConflict(&usedNameCont, &Name, "MODEL")
-			;
+		DealWithNameConflict(&usedNameCont, &Name, "MODEL");
+
 		NameRW = Name + "_RW";
 
 		DealWithNameConflict(&usedNameCont, &NameRW, "MODEL_RW");

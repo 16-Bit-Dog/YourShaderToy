@@ -10,10 +10,9 @@
 #include "DX11H.h"
 #include "DX11ShaderFuncs.h"
 #include "Renderable.h"
-#include "StaticObjectsDX11.h"
 #include "Editor_Window.h"
 #include "FileManagerResourceStruct.h"
-
+#include "StaticDX11Object.h"
 
 
 struct RTVData_DX11 : RTVData_Base {
@@ -415,11 +414,10 @@ struct ModelToRendererDX11 : ModelToRenderer_Base{
 		Type = data->Type;
 
 		if (data->Type == - 1) {
-			Model = new DX11M3DR(data->Path);
+			Model = new DX11M3DR(data->tmpM3DR);
 		}
 		else if (data->Type >-1 && data->Type<StaticObjectPass.size()) {
-			StaticDX11Object::obj->MakeOBJ(data->Type);
-			Model = StaticDX11Object::obj->items[data->Type];
+			Model = new DX11M3DR(data->tmpM3DR);
 		}
 #ifdef GET_OBJECT_STATIC
 		OutputStringToFileForCopyPata(&Model);
@@ -759,12 +757,12 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 				}
 				else {
 					//run if no vertex data load default cube
-					StaticDX11Object::obj->MakeOBJ(0);
-					void* tmpAddress = (void*)StaticDX11Object::obj->items[0]->VBuf[0].Get();
+					DX11M3DR* tmpC = GetD3D11Cube();
+					void* tmpAddress = (void*)tmpC->VBuf[0].Get();
 					if (MainDX11Objects::obj->TestForOptimize.Model != tmpAddress) {
-						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&tmpAddress, &StaticDX11Object::obj->items[0]->VertexStride, &OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(StaticDX11Object::obj->items[0]->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(StaticDX11Object::obj->items[0]->Indice[0].size(), 0, 0);
+						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&tmpAddress, &tmpC->VertexStride, &OffsetDef);
+						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(tmpC->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
+						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(tmpC->Indice[0].size(), 0, 0);
 
 						MainDX11Objects::obj->TestForOptimize.Model = tmpAddress;
 					}

@@ -195,7 +195,7 @@
     <ClInclude Include="Renderer\DX11\D3D11ResourceObjects.h" />
     <ClInclude Include="Renderer\DX11\DX11H.h" />
     <ClInclude Include="Renderer\DX11\DX11IncludeMain.h" />
-    <ClInclude Include="Renderer\DX11\StaticObjectsDX11.h" />
+    <ClInclude Include="Renderer\DX11\StaticDX11Object.h" />
     <ClInclude Include="Renderer\DX12\d3dx12.h" />
     <ClInclude Include="Renderer\DX12\DX12H.h" />
     <ClInclude Include="Renderer\DX12\DX12IncludeMain.h" />

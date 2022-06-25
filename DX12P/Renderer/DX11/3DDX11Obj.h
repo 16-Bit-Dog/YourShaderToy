@@ -135,8 +135,6 @@ struct DX11M3DR : M3DR{
 
 	};
 
-	UINT VertexStride = 0;
-
 	inline static ComPtr<ID3D11Device5> dxDevice;
 	inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext;
 
@@ -326,49 +324,80 @@ struct DX11M3DR : M3DR{
 
 		dxDevice->CreateBlendState(&blendVal, &BlendState);
 	}
-
+	void AlwaysRunPostM3DR() {
+		CreateArmatureCBuf();
+		LoadVertexIndiceData();
+		DefaultCBuf();
+		SetupBlendStateDefault();
+		DefaultSampler();
+		DefaultAllMatBuf();
+		LoadTextures();
+	}
 
 	DX11M3DR(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
-		ScaleVertex = ScaleVertex_t;
+		LoadVertexVectorBased(V, ClearPtr, ScaleVertex_t);
 
-		VertexStride = sizeof(VNT);
+		//DX11 Specific
 
-		RESIZE_VECTORS_OBJ_LOAD(1);
-		CreateArmatureCBuf();
-		modelDat[0] = *V;
-		AutoFillIndice(0);
-		VertexPostProcess();
-
-		LoadVertexIndiceData();
-		DefaultCBuf();
-		SetupBlendStateDefault();
-		DefaultSampler();
-		DefaultAllMatBuf();
-
-		LoadTextures();
-
-		if (ClearPtr) delete V;
+		AlwaysRunPostM3DR();
 
 	}
-	DX11M3DR(std::string path = "", float ScaleVertex_t = 1.0f) {
-		//SetupTexLinkResource();
-		ScaleVertex = ScaleVertex_t;
+	DX11M3DR(const std::string& path = "", float ScaleVertex_t = 1.0f) {
+		LoadPathBased(path, ScaleVertex_t);
 
-		VertexStride = sizeof(VNT);
+		//DX11 Specific
 
-		SetupBlendStateDefault();
-		if (path != "") {
-			LoadFBXFileWithVertex(path);
-		}
-		else {
-			std::cout << "no file at path";
-		}
+		AlwaysRunPostM3DR();
 
-		LoadVertexIndiceData();
-		DefaultCBuf();
-		DefaultSampler();
-		DefaultAllMatBuf();
-		LoadTextures();
+	}
+	DX11M3DR() {
+
+	}
+
+	DX11M3DR& operator= (M3DR& tmp) {
+		this->VertexStride = tmp.VertexStride;
+
+		this->FilePath = tmp.FilePath;
+		this->DirPath = tmp.DirPath;
+		this->MatData = tmp.MatData;
+		this->MatDataName = tmp.MatDataName;
+		this->ScaleVertex = tmp.ScaleVertex;
+		this->UpdateVDat = tmp.UpdateVDat;
+		this->UpdateAnimDat = tmp.UpdateAnimDat;
+		this->ObjTune = tmp.ObjTune;
+		this->ObjTune = tmp.ObjTune;
+		this->modelDat = tmp.modelDat;
+
+		this->modelDatCheck = tmp.modelDatCheck;
+		this->Bones = tmp.Bones;
+		this->rootObj = tmp.rootObj;
+		this->BoneDataTLMA = tmp.BoneDataTLMA;
+		this->animNameS = tmp.animNameS;
+		this->animNameI = tmp.animNameI;
+		this->animStack = tmp.animStack;
+
+		this->animStackMaxTime = tmp.animStackMaxTime;
+		this->AnimVCacheMade = tmp.AnimVCacheMade;
+		this->AnimVCacheData = tmp.AnimVCacheData;
+		this->animDat = tmp.animDat;
+		this->ClusterObject = tmp.ClusterObject;
+		this->VboneDat = tmp.VboneDat;
+		this->Indice = tmp.Indice;
+		this->globalInverseTransform = tmp.globalInverseTransform;
+		this->globalTransform = tmp.globalTransform;
+
+		return *this;
+	}
+	
+
+	DX11M3DR(M3DR& tmp) {
+		*this = tmp;
+		/*
+		TODO, load tmp into d3d11dxr, and immedeatly load m3dr into for file manager --> change it so:
+		- file manager can show data right away. - then this specific dx11 data is only in compile mode
+			- delete dx11 is seperate from m3dr regular - every compile reloads and copies
+			*/
+		AlwaysRunPostM3DR();
 	}
 	~DX11M3DR() {
 		//TODO: make deconstructor
