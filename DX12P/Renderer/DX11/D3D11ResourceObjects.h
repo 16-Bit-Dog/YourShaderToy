@@ -222,7 +222,7 @@ struct ImageObjectToRendererDX11 : ImageObjectToRenderer_Base {
 		samplerName = data->SamplerName;
 		name = data->Name;
 		HasRW = data->ReadWrite;
-
+		
 		if (data->data.bpp_c == 8) {
 			format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			formatString = "unorm float4";
@@ -484,6 +484,20 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 	std::unordered_map<uint64_t, RTVData_DX11*> RTVData;
 	std::unordered_map<uint64_t, DEPTHData_DX11*> DEPTHData;
 
+	template <typename T, class T2>
+	void cleanOutMap(std::unordered_map<T, T2*>& r) {
+		for (const auto& i : r) delete i.second;
+		r.clear();
+
+	}
+	~ResourceObjectBaseDX11() {
+		delete PredefinedData;
+		cleanOutMap(ImageData);
+		cleanOutMap(ModelData);
+		cleanOutMap(ConstantData);
+		cleanOutMap(RTVData);
+		cleanOutMap(DEPTHData);
+	}
 
 	void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) {
 		if (data == nullptr) {
@@ -608,12 +622,12 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	}
 
-	void ClearAllPredefined() {
+	void ClearAllPredefined() override {
 		if(PredefinedData != nullptr)
 		delete PredefinedData; //TODO: deal with delete later
 		PredefinedData = nullptr;
 	}
-	void ClearAllImages() {
+	void ClearAllImages()  override {
 
 		for (const auto& i : ImageData) {
 			delete i.second;
@@ -621,7 +635,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		ImageData.clear();
 	}
-	void ClearAllModels() {
+	void ClearAllModels()  override {
 
 		for (const auto& i : ModelData) {
 			delete i.second;
@@ -629,7 +643,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		ModelData.clear();
 	}
-	void ClearAllConstants() {
+	void ClearAllConstants()  override {
 
 		for (const auto& i : ConstantData) {
 			delete i.second;
@@ -637,8 +651,10 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		ConstantData.clear();
 	}
-	void ClearAllObjects() {
-		//ClearAllPredefined();
+	void ClearAllObjects(bool fullClean) override{
+		if (fullClean) {
+			ClearAllPredefined();
+		}
 		ClearAllImages();
 		ClearAllModels();
 		ClearAllConstants();
@@ -656,6 +672,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		PredefinedData = new PredefinedToRendererDX11(bI);
 	}
 	void UpdatePredefinedFromData(BuiltPredefined_c* bI) {
+		if (PredefinedData == NULL) LoadPredefinedFromData(bI);
 		PredefinedData->update(bI);
 	}
 
@@ -738,6 +755,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 					DX11M3DR* Model = (DX11M3DR*)((DX11M3DR*)((*item)->PObj->Vertex.RawModel));
 					MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
 					MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
+					MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
 
 					for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
 
@@ -943,12 +961,15 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		for (auto& i : RTVData) {
 			i.second->ReleaseBuffers();
 		}
+		RTVData.clear();
 		for (auto& i : DEPTHData) {
 			i.second->ReleaseBuffers();
 		}
+		DEPTHData.clear();
 		for (auto& i : ImageData) {
 			i.second->ReleaseBuffersNonSamp();
 		}
+		ImageData.clear();
 	}
 	void MakeRTVAndDepthAndResizeTex() {
 		for (auto& i : RTVData) {

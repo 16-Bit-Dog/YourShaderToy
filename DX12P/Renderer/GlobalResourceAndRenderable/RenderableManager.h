@@ -12,20 +12,32 @@
 //}
 //#endif
 
-void CreateAndSetRendererBaseDX11() {
+void SetDX11Renderer() {
+	//if (Renderable::DXM != nullptr) Renderable::DXM = nullptr;
+
+	Renderable::DXM = MainDX11Objects::obj;
+	
 	ResourceObjectBaseDX11::obj = new ResourceObjectBaseDX11();
 	ResourceObjectBaseDX11::obj->SetResourceObjectBaseDX11();
+
+	Renderable::DXM->RendererStartUpLogic();
+
 }
 
-void SetDX11Renderer() {
-	if (Renderable::DXM != nullptr) delete Renderable::DXM;
-	Renderable::DXM = MainDX11Objects::obj;
-	CreateAndSetRendererBaseDX11();
+void CleanRenderer() {
+	if (Renderable::DXM != nullptr) {
+		Renderable::DXM->CleanRendererState();
+	}
 }
-
 void SetDX12Renderer() {
-	if (Renderable::DXM != nullptr) delete Renderable::DXM;
+	//if (Renderable::DXM != nullptr) delete Renderable::DXM;
+	
 	Renderable::DXM = MainDX12Objects::obj;
+	
+	ResourceObjectBaseDX11::obj = new ResourceObjectBaseDX11();
+	ResourceObjectBaseDX11::obj->SetResourceObjectBaseDX11();
+
+	Renderable::DXM->RendererStartUpLogic();
 	//SetFileManagerRenderable();
 
 }

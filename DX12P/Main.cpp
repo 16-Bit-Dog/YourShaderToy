@@ -40,13 +40,10 @@ int runMain() {
 
 int GLFWPreLogic() {
 
-
-	SetDX11Renderer(); //default DX11
-	
 	glfwInit();
-	
-	Renderable::DXM->RendererStartUpLogic();
 
+	SetDX11Renderer(); //default DX11	
+	
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	StartUpFillVecs(); // before first context do basic Setup

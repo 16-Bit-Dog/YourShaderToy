@@ -11,6 +11,8 @@
 
 using namespace DirectX;
 
+struct ResourceObjectBaseDX11;
+
 struct PipelineObjectIntermediateStateDX11 {
     
     struct ComputeDataHolder {
@@ -51,6 +53,10 @@ struct PipelineObjectIntermediateStateDX11 {
 
 
 struct MainDX11Objects : Renderable{
+
+    Renderable* GetR() {
+        return this;
+    }
 
     struct InUseTest {
         ID3D11RasterizerState* RasterObject = nullptr;
@@ -95,7 +101,7 @@ struct MainDX11Objects : Renderable{
 #endif // DEBUG
 
     ComPtr<ID3D11DeviceContext4> dxDeviceContext = 0;
-    ComPtr<IDXGISwapChain1> dxSwapChain = nullptr;
+    ComPtr<IDXGISwapChain1> dxSwapChain;
 
     D3D11_DEPTH_STENCIL_VIEW_DESC dxDepthStencilDesc{
     DXGI_FORMAT_D32_FLOAT,D3D11_DSV_DIMENSION_TEXTURE2D
@@ -187,7 +193,6 @@ struct MainDX11Objects : Renderable{
         }
     }
 
-
     
     void ClearBuffer(bool clearColorT = true, XMFLOAT4 p = { 0.0f,0.5f,0.0f,1.0f }) {
         if (clearColorT) {
@@ -248,6 +253,29 @@ struct MainDX11Objects : Renderable{
         dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
     }
 
+    void DestroySwapChainAssociate(bool makeRTVandDEPTH = true) {
+        ID3D11Texture2D* backBuffer = nullptr;
+
+        if (dxSwapChain != nullptr) {
+            dxDeviceContext->ClearState();
+            dxDeviceContext->Flush();
+
+            dxRenderTargetView.Reset();
+            // Clear the previous window size specific context.
+            SetNullRTVandDEPTH();
+            dxDeviceContext->Flush();
+
+            dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
+        }
+        if (backBuffer != nullptr) {
+            SafeReleaseAlt(backBuffer);
+        }
+        if (dxSwapChain != nullptr) {
+            BufferReset = true;
+            RtvAndDepthBlock::ReleaseAllRTVAndDepth();
+            if(makeRTVandDEPTH) RtvAndDepthBlock::MakeRTVAndDepth();
+        }
+    }
     void CreateSwapChainAndAssociate(DXGI_FORMAT format) {
         swapChainDescW.Width = MainWidth;
         swapChainDescW.Height = MainHeight;
@@ -265,26 +293,9 @@ struct MainDX11Objects : Renderable{
         
         ID3D11Texture2D* backBuffer = nullptr;
 
-        if (dxSwapChain != nullptr) {
-            dxDeviceContext->ClearState();
-            dxDeviceContext->Flush();
+        DestroySwapChainAssociate();
 
-            dxRenderTargetView.Reset();
-            // Clear the previous window size specific context.
-            SetNullRTVandDEPTH();
-            dxDeviceContext->Flush();
-
-            dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
-        }
-        if (backBuffer != nullptr) {
-            SafeRelease(backBuffer);
-        }
-        if (dxSwapChain != nullptr) {
-
-            BufferReset = true;
-            RtvAndDepthBlock::ReleaseAllRTVAndDepth();
-            RtvAndDepthBlock::MakeRTVAndDepth();
-
+        if(dxSwapChain != nullptr){
 #ifdef _DEBUG
             //dxDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 #endif // _DEBUG
@@ -367,7 +378,7 @@ struct MainDX11Objects : Renderable{
         depthStencilStateDesc.StencilEnable = FALSE;
 
 
-        dxDevice->CreateDepthStencilState(&depthStencilStateDesc, &dxDepthStencilStateDefault);
+        dxDevice->CreateDepthStencilState(&depthStencilStateDesc, dxDepthStencilStateDefault.GetAddressOf());
 
 #ifdef DX11OBJ_LOADER
         DX11M3DR::SET_DX_CONTENT(dxDevice, dxDeviceContext);
@@ -418,33 +429,60 @@ struct MainDX11Objects : Renderable{
             nullptr,
             &devC);
 
+        
         ThrowFailed(dev.As(&dxDevice));
         ThrowFailed(devC.As(&dxDeviceContext));
 
+    }
+    
+    void MakeAdapterAndFactory() {
         //TODO, maybe use IDD_PPV_ARGS ? I can, but its not verbose I guess :Shrug:
         dxDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxGIDevice);
 #ifdef DEBUG
         dxDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&dxDebug);
 #endif // DEBUG
-
-        
-
-
         dxGIDevice->GetAdapter(&dxAdapter);
 
-        dxAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&dxFactory);
+        dxAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)dxFactory.GetAddressOf());
     }
-    
    
-    void RendererStartUpLogic() override{
-        NewDX11Object();
+    void MakeAndSetCam() {
         CAM_S = new CameraManagerD3D11(dxDevice.Get(), dxDeviceContext.Get(), &dxViewport);
         CAM = CAM_S;
+    }
+    void RendererStartUpLogic() override{
+        NewDX11Object();
+        MakeAdapterAndFactory();
+        MakeAndSetCam();
     }
 
 
     void CleanRendererState() override {
+        DestroySwapChainAssociate(false);
 
+        if (ROB != nullptr){
+            ROB->wrapClearAll(true);
+            delete ROB;
+            Renderable::ROB = nullptr;
+        }
+
+        ImGui_ImplDX11_Shutdown();
+
+        SafeReleaseAlt(dxFactory);
+        SafeReleaseAlt(dxAdapter);
+        SafeReleaseAlt(dxGIDevice);
+        SafeReleaseAlt(dxDebug);
+
+        dxDeviceContext->ClearState();
+        dxDeviceContext->Flush();
+        SafeReleaseAlt(dxDevice);
+        SafeReleaseAlt(dxDeviceContext);
+
+
+
+        delete CAM_S;
+        CompiledCode.clear();
+    
     }
 
     void CheckAndResizeMainBuffer() {

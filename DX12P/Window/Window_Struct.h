@@ -40,6 +40,11 @@ struct GLFW_Window_C {
 	GLFWscrollfun GLFWscrollfunObj;
 	GLFWmousebuttonfun GLFWmousebuttonfunObj;
 
+	inline static int LastFrameOfRendererNumber = 0;
+	inline static int RendererNumber = 0;
+
+	inline static void CheckToRemakeAndLaunchRenderer();
+
 	inline static int Width = 0;
 	inline static int Height = 0;
 

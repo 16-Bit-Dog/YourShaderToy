@@ -73,7 +73,7 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 		}
 	}
 	void CleanAllBuild() {
-		Renderable::DXM->ROB->ClearAllObjects();
+		Renderable::DXM->ROB->wrapClearAll(false);
 	}
 	void FillEditorTextRTV() {
 		Renderable::DXM->ROB->AddItemTextRTV(&MASTER_Editor::obj->AutoAddGlobalsRTV);

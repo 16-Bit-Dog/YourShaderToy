@@ -230,7 +230,7 @@ struct ShaderCDX11 {
 
         
         SafeRelease(pShaderBlob); // no longer need shader mem
-        SafeRelease(pErrorBlob); // no longer need shader mem <-- I frogot to safe release to delete and do other stuff... so I need to look back at that
+        SafeRelease(pErrorBlob); // no longer need shader mem of error
 
         return pShader;
     }

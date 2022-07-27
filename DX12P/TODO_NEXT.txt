@@ -1,5 +1,21 @@
+RendererStartUpLogic makes d3d11 device of d3d12 on 11 in dx12
+
+make super D3D12 object which has d3d11 object and uses that  to write as is, and calls the main render function of d3d11 using its, but it also uses this to draw its own unique stuff
+
+
+save which renderer was used last as well
+
+Also
+{
+make pointer to each uav,srv,samp element number, and only have offset - this allows me to make a "toggle bind [to pipeline and stage] button"
+
+}
+
+
+
 in M3DR draw:
 
+[
 object: name
 
 HasTex's (put a toggle for all 8)
@@ -8,24 +24,13 @@ HasTex's (put a toggle for all 8)
 SHOW button:
     double click allows breaking down M3DR into small renderer window DX11?
 
-show width and height and stats of deccer object somehow in model view -make it for all object types as well
+show width and height of tex and stats of deccer object somehow in model view -make it for all object types as well
 test
+]
 
 make dll #define toggle loader
 
-default data crashes
 
-
-//TODO: use ambient factor
-
-fill MatData in 3DCommon, and set Mat size inside DX113D
-pass const buffer to mat dat to shader thing, 1 const buf per model
-
-make material preview and editor
-
-make toggle: "use vertex colors" bool
-
-add a get tex to check if I can show it
 
 stream line the addition of d3d12 stuff
 

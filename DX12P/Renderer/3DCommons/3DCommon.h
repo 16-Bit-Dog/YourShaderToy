@@ -243,7 +243,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 	std::vector< std::vector< std::vector<XMFLOAT4X4> > > AnimVCacheData; //per anim, per interval - I have a set of matrix for VCache pre calc in order
 	std::vector<XMMATRIX> animDat; //animation data collection
 	std::vector<const ofbx::Cluster*> ClusterObject; 
-	std::vector < std::map<int, VertexBoneData> > VboneDat; //Vertex bone data
+	std::vector < std::unordered_map<int, VertexBoneData> > VboneDat; //Vertex bone data
 	std::vector < std::vector<UINT> > Indice; //indices vector
 	XMMATRIX globalInverseTransform; 
 	XMMATRIX globalTransform;

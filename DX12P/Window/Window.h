@@ -144,6 +144,30 @@ int GLFW_Window_C::RunWindowLogic() {
 	return -1;
 }
 
+void GLFW_Window_C::CheckToRemakeAndLaunchRenderer() {
+	if (GLFW_Window_C::LastFrameOfRendererNumber != GLFW_Window_C::RendererNumber) {
+		GLFW_Window_C::LastFrameOfRendererNumber = GLFW_Window_C::RendererNumber;
+		if (GLFW_Window_C::LastFrameOfRendererNumber == 1) {
+			CleanRenderer();
+
+			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
+			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
+
+			SetDX12Renderer();
+			MainWin->FillDXMWithNewGLFW();
+		}
+		else {
+			CleanRenderer();
+
+			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
+			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
+
+			SetDX11Renderer();
+			MainWin->FillDXMWithNewGLFW();
+		}
+	}
+}
+
 void GLFW_Window_C::KillWindow() {
 	CleanSwapChain();
 	RemoveAssociatedGUIFromWindowObj();
@@ -240,6 +264,8 @@ void AllWin::LoopRunAllContext() {
 		}
 		//finish render logic
 		MASTER_IM_GUI::obj->EndRender();
+
+		GLFW_Window_C::CheckToRemakeAndLaunchRenderer();
 	}
 
 	if(GLFW_Window_C::SaveImGuiAfterShutdown) 	ImGui::SaveIniSettingsToDisk("");

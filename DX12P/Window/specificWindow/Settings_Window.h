@@ -45,7 +45,16 @@ struct MASTER_Setting : MASTER_Function_Inherit {
 			if (ImGui::Button("SAVE WINDOWING SETTINGS##save ini file for ImGui")) {
 				ImGui::SaveIniSettingsToDisk("");
 			}
-			ImGui::Checkbox("Save ImGUI Settings on Program shutdown##save ini after shut off", &GLFW_Window_C::SaveImGuiAfterShutdown);
+			ImGui::Checkbox("Save ImGUI Settings on program shutdown##save ini after shut off", &GLFW_Window_C::SaveImGuiAfterShutdown);
+
+			//
+			ImGui::Text("Choose the renderer (support for DXR and Mesh shaders are only D3D12");
+			ImGui::InputInt("##Choose the renderer (support for DXR and Mesh shaders are only D3D12)", &GLFW_Window_C::RendererNumber);
+			ImGui::SameLine();
+			ImGui::HelpMarker("0 is D3D11, 1 is D3D11");
+			if (GLFW_Window_C::RendererNumber < 0) GLFW_Window_C::RendererNumber = 0;	
+			if (GLFW_Window_C::RendererNumber > 1) GLFW_Window_C::RendererNumber = 1;
+			//
 
 			ImGui::Checkbox("Auto Code Compile", &Renderable::DXM->AutoCodeCompile);
 			if(Renderable::DXM->AutoCodeCompile) ImGui::InputFloat("Time until Auto Code Compile", &Renderable::DXM->AutoCodeCompile_Wait);

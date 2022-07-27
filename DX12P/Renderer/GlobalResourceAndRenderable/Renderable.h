@@ -181,6 +181,8 @@ struct StencilTypeMapMadeData_hash
 
 struct Renderable {
 
+	virtual Renderable* GetR() = 0;
+
 	inline static std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
 
 	inline static int BLOCK_SIZE = 8;
@@ -195,6 +197,8 @@ struct Renderable {
 	
 	///////////////////////
 	
+	bool extendedFeatures = false; //like rtx and stuff
+
 	HWND hwnd;
 	GLFWwindow* window;
 

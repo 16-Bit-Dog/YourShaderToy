@@ -22,7 +22,11 @@ struct CameraManagerD3D11 : CameraManager {
 	ComPtr<ID3D11Buffer> DefWorldMatrix;
 	ComPtr<ID3D11Buffer> DefViewMatrix;
 	ComPtr<ID3D11Buffer> DefProjMatrix;
-	
+	~CameraManagerD3D11() {
+
+		SafeRelease(dxDevice);
+
+	}
 	//check if it is the first or not pass to this renderer to setup default buffer values to renderer start location
 	bool SetFirst = false;
 

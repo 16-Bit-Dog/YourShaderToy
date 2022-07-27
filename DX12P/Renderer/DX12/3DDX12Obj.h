@@ -6,7 +6,7 @@
 using namespace Microsoft::WRL;
 // DirectX 11 & windows specific headers/lib.
 #pragma comment(lib, "Dwmapi.lib")
-#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "winmm.lib")
@@ -14,15 +14,12 @@ using namespace Microsoft::WRL;
 
 #include <Windows.h>
 #include <dwmapi.h>
-#include <d3d11.h>
-#include <d3d11_3.h>
-#include <d3d11_4.h>
+#include <d3d12.h>
+#include "d3dx12.h" //very good helper struct for DX12 - MSDN just refuses to teach raw stuff like D3D12_CPU_DESCRIPTOR_HANDLE prob due to it being a bad idea
+#include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
-#include <d3dcompiler.h>
-#include <DirectXMath.h>
-#include <dxgi1_2.h>
 #include <wrl.h>
 #include <AtlBase.h>
 #include <atlconv.h>
@@ -37,31 +34,31 @@ using namespace Microsoft::WRL;
 
 //TODO: load texture with WCI loader
 
-struct DX11M3DR : M3DR{
+struct DX12M3DR : M3DR{
 
-	inline static D3D11_INPUT_ELEMENT_DESC dxVertexLayoutDesc[] =
+	inline static D3D12_INPUT_ELEMENT_DESC dxVertexLayoutDesc[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BLENDID", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BLENDID", 0, DXGI_FORMAT_R32G32B32A32_SINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	struct TextureObject {
-		std::array<ComPtr<ID3D11ShaderResourceView>, TEX_COUNT> TexSRV;
-		std::array<ComPtr<ID3D11UnorderedAccessView>, TEX_COUNT > TexUAV;
-		std::array <ComPtr<ID3D11Texture2D>, TEX_COUNT> TexR;
+		std::array<D3D12_CPU_DESCRIPTOR_HANDLE, TEX_COUNT> TexSRV;
+		std::array<D3D12_CPU_DESCRIPTOR_HANDLE, TEX_COUNT > TexUAV;
+		std::array <ComPtr<ID3D12Resource>, TEX_COUNT> TexR;
 	
 		void Load_Texture(int num, MaterialDataNamePair& mdnp) {
 			
-			D3D11_SUBRESOURCE_DATA defaultResourceData;
-			defaultResourceData.pSysMem = mdnp.d;
-			defaultResourceData.SysMemPitch = mdnp.width * mdnp.channels;
-			defaultResourceData.SysMemSlicePitch = mdnp.height * mdnp.width * mdnp.channels;
+			D3D12_SUBRESOURCE_DATA defaultResourceData;
+			defaultResourceData.pData = mdnp.d;
+			defaultResourceData.RowPitch = mdnp.width * mdnp.channels;
+			defaultResourceData.SlicePitch = mdnp.height * mdnp.width * mdnp.channels;
 
 			/*
 			std::vector<uint8_t> a;
@@ -70,37 +67,44 @@ struct DX11M3DR : M3DR{
 			int b = a[defaultResourceData.SysMemSlicePitch-1];
 			*/
 
-			D3D11_TEXTURE2D_DESC gpuTexDesc;
-			ZeroMemory(&gpuTexDesc, sizeof(D3D11_TEXTURE2D_DESC));
+			D3D12_RESOURCE_DESC gpuTexDesc;
+			ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
 			gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		
 			gpuTexDesc.Width = mdnp.width;
 			gpuTexDesc.Height = mdnp.height;
 		
 			gpuTexDesc.MipLevels = 1;
-			gpuTexDesc.ArraySize = 1;
-			gpuTexDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |
-				D3D11_BIND_SHADER_RESOURCE;
+			gpuTexDesc.DepthOrArraySize = 1;
+			//gpuTexDesc.SampleDesc = 
+			gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 			gpuTexDesc.SampleDesc.Count = 1;
 			gpuTexDesc.SampleDesc.Quality = 0;
-			gpuTexDesc.MiscFlags = 0;
-			gpuTexDesc.CPUAccessFlags = 0;
-			gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
 
-			D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+			D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 			//UAVDesc.Texture2D
-			ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+			ZeroMemory(&UAVDesc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 			UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
-			UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+			UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 			
-			dxDevice->CreateTexture2D(
+			D3D12_HEAP_PROPERTIES heapP;
+			heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
+			heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+			heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+			heapP.CreationNodeMask = 0;
+			heapP.VisibleNodeMask = 0;
+
+			D3D12_HEAP_FLAGS heapF = 
+
+
+			dxDevice->CreateCommittedResource(
 					&gpuTexDesc,
 					&defaultResourceData,
 					&TexR[num]);
 
-			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), &UAVDesc, &TexUAV[num]);
+			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), nullptr, &UAVDesc, TexUAV[num]);
 
-			auto hr = dxDevice->CreateShaderResourceView(TexR[num].Get(), nullptr, &TexSRV[num]);
+			dxDevice->CreateShaderResourceView(TexR[num].Get(), nullptr, TexSRV[num]);
 
 			//SafeRelease(TexR[num]);
 			//delete[] defaultResourceData.pSysMem;
@@ -127,33 +131,31 @@ struct DX11M3DR : M3DR{
 		}
 	}
 
-	struct MaterialDX11 {
+	struct MaterialDX12 {
 
 		bool UpdateMat = false;
 
-		ComPtr<ID3D11Buffer> MatDataBuf;
+		ComPtr<ID3D12Resource> MatDataBuf;
 
 	};
 
-	inline static ComPtr<ID3D11Device5> dxDevice;
-	inline static ComPtr<ID3D11DeviceContext4> dxDeviceContext;
+	inline static ComPtr<ID3D12Device> dxDevice;
 
-	inline static void SET_DX_CONTENT(ComPtr<ID3D11Device5> dxDevice_tmp, ComPtr<ID3D11DeviceContext4> dxDeviceContext_tmp) {
-		DX11M3DR::dxDevice = dxDevice_tmp.Get();
-		DX11M3DR::dxDeviceContext = dxDeviceContext_tmp.Get();
+	inline static void SET_DX_CONTENT(ComPtr<ID3D12Device> dxDevice_tmp) {
+		DX12M3DR::dxDevice = dxDevice_tmp.Get();
 	}
 
-	std::vector<MaterialDX11> Mat = {};
+	std::vector<MaterialDX12> Mat = {};
 	
-	ComPtr<ID3D11SamplerState> Sampler = NULL;
-	ComPtr<ID3D11BlendState> BlendState = NULL;
+	std::pair< D3D12_SAMPLER_DESC, ComPtr<D3D12_CPU_DESCRIPTOR_HANDLE>> Sampler = {};
+	D3D12_BLEND_DESC BlendState = {};
 
-	ComPtr<ID3D11Buffer> CBuf;
-	ComPtr<ID3D11Buffer> ArmatureCBuf;
+	ComPtr<ID3D12Resource> CBuf;
+	ComPtr<ID3D12Resource> ArmatureCBuf;
 
-	std::vector < ComPtr<ID3D11Buffer> > VBuf;
-	std::vector < ComPtr<ID3D11UnorderedAccessView> > VBufUAV;
-	std::vector < ComPtr<ID3D11Buffer> > IBuf;
+	std::vector < ComPtr<ID3D12Resource> > VBuf;
+	std::vector < ComPtr<D3D12_CPU_DESCRIPTOR_HANDLE> > VBufUAV;
+	std::vector < ComPtr<ID3D12Resource> > IBuf;
 
 
 

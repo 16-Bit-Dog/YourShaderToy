@@ -6,20 +6,21 @@
 namespace HLSLBuilder {
 	static void AddItemTextDefault(std::vector<std::string>* v, PredefinedToRenderer_Base* obj) {
 
-		v->push_back("cbuffer " + obj->Name + ": register(b" + obj->CBName() + ") { \n");
-		for (int i = 0; i < obj->typesInOrderName.size(); i++) {
-			if (obj->typesInOrder[i] == INT_OBJ) {
-				v->push_back("	int " + obj->typesInOrderName[i] + ";\n");
+		if (obj != NULL) {
+			v->push_back("cbuffer " + obj->Name + ": register(b" + obj->CBName() + ") { \n");
+			for (int i = 0; i < obj->typesInOrderName.size(); i++) {
+				if (obj->typesInOrder[i] == INT_OBJ) {
+					v->push_back("	int " + obj->typesInOrderName[i] + ";\n");
+				}
+				else if (obj->typesInOrder[i] == UINT_OBJ) {
+					v->push_back("	uint " + obj->typesInOrderName[i] + ";\n");
+				}
+				else if (obj->typesInOrder[i] == FLOAT_OBJ) {
+					v->push_back("	float " + obj->typesInOrderName[i] + ";\n");
+				}
 			}
-			else if (obj->typesInOrder[i] == UINT_OBJ) {
-				v->push_back("	uint " + obj->typesInOrderName[i] + ";\n");
-			}
-			else if (obj->typesInOrder[i] == FLOAT_OBJ) {
-				v->push_back("	float " + obj->typesInOrderName[i] + ";\n");
-			}
+			v->push_back("};\n");
 		}
-		v->push_back("};\n");
-
 	}
 	static void AddItemTextImages(std::vector<std::string>* v, ImageObjectToRenderer_Base* obj) {
 

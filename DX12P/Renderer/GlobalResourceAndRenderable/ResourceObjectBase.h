@@ -260,6 +260,7 @@ struct DEPTHData_Base : RegisterMaps {
 
 struct ImageObjectToRenderer_Base : RegisterMaps {
 	bool HasRW = false;
+	bool HasRWinPixelShader = false;
 
 	bool LinkSizeToRTV = false;
 
@@ -368,12 +369,14 @@ struct ResourceObjectBase {
 	virtual void ClearAllImages() = 0;
 	virtual void ClearAllModels() = 0;
 	virtual void ClearAllConstants() = 0;
-	virtual void ClearAllObjects() {
-	//	ClearAllPredefined();
-		ClearAllImages();
-		ClearAllModels();
-		ClearAllConstants();
+	virtual void ClearAllObjects(bool fullClean) = 0;
+
+
+	void wrapClearAll(bool clearPredefined) {
+		ClearAllObjects(clearPredefined);
 	}
+
+
 	virtual void LoadImageFromData(BuiltImage_c* bI) = 0;
 	virtual void LoadModelFromData(BuiltModel_c* bI) = 0;
 	virtual void LoadConstantFromData(BuiltConstant_c* bI) = 0;
@@ -383,7 +386,7 @@ struct ResourceObjectBase {
 	virtual void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) = 0;
 	
 	~ResourceObjectBase() {
-		ClearAllObjects();
+		//wrapClearAll(true);
 	}
 
 
