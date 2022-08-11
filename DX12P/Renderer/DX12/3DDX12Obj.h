@@ -1,7 +1,8 @@
 //this lib should work as a lone pair with 3DCommon and DXSafeInclude for anyone coding
+#ifdef OFF_DX12OBJ
 
-#ifndef DX11OBJ_LOADER
-#define DX11OBJ_LOADER
+#ifndef DX12OBJ_LOADER
+#define DX12OBJ_LOADER
 #define WIN32_LEAN_AND_MEAN
 using namespace Microsoft::WRL;
 // DirectX 11 & windows specific headers/lib.
@@ -67,8 +68,9 @@ struct DX12M3DR : M3DR{
 			int b = a[defaultResourceData.SysMemSlicePitch-1];
 			*/
 
-			D3D12_RESOURCE_DESC gpuTexDesc;
+			D3D12_RESOURCE_DESC gpuTexDesc;	
 			ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+			gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 			gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		
 			gpuTexDesc.Width = mdnp.width;
@@ -80,6 +82,7 @@ struct DX12M3DR : M3DR{
 			gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 			gpuTexDesc.SampleDesc.Count = 1;
 			gpuTexDesc.SampleDesc.Quality = 0;
+
 
 			D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 			//UAVDesc.Texture2D
@@ -93,14 +96,58 @@ struct DX12M3DR : M3DR{
 			heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
 			heapP.CreationNodeMask = 0;
 			heapP.VisibleNodeMask = 0;
+			
 
-			D3D12_HEAP_FLAGS heapF = 
+			D3D12_HEAP_FLAGS heapF = {};
 
+			D3D12_RESOURCE_STATES Rstate = D3D12_RESOURCE_STATE_UNORDERED_ACCESS 
+				| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
+			D3D12_CLEAR_VALUE CV = {};
+			CV.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			CV.Color[0] = 0.0f;
+			CV.Color[1] = 0.0f;
+			CV.Color[2] = 0.0f;
+			CV.Color[3] = 1.0f;
+			
+
+			dxDevice->CreateCommittedResource(
+				&heapP,
+				heapF,
+				&gpuTexDesc,
+				Rstate,
+				&CV,
+				//&defaultResourceData,
+				__uuidof(TexR[num]), &TexR[num]);
+
+			D3D12_BOX box = {};
+			box.top = 0;
+			box.bottom = gpuTexDesc.Height;
+			box.left = 0;
+			box.right = gpuTexDesc.Width;
+
+			TexR[num]->WriteToSubresource(
+				0,
+				&box,
+				defaultResourceData.pData,
+				defaultResourceData.RowPitch,
+				defaultResourceData.SlicePitch);
+
+			/*
 			dxDevice->CreateCommittedResource(
 					&gpuTexDesc,
 					&defaultResourceData,
 					&TexR[num]);
+			
+  [in]            const D3D12_HEAP_PROPERTIES *pHeapProperties,
+  [in]            D3D12_HEAP_FLAGS            HeapFlags,
+  [in]            const D3D12_RESOURCE_DESC   *pDesc,
+  [in]            D3D12_RESOURCE_STATES       InitialResourceState,
+  [in, optional]  const D3D12_CLEAR_VALUE     *pOptimizedClearValue,
+  [in]            REFIID                      riidResource,
+  [out, optional] void                        **ppvResource
+
+			*/
 
 			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), nullptr, &UAVDesc, TexUAV[num]);
 
@@ -166,6 +213,23 @@ struct DX12M3DR : M3DR{
 
 			BoneDataTLMA.push_back(tmpForFill);
 		}
+
+
+		D3D12_RESOURCE_DESC gpuTexDesc;
+		ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+		gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+		gpuTexDesc.Width = mdnp.width;
+		gpuTexDesc.Height = mdnp.height;
+
+		gpuTexDesc.MipLevels = 1;
+		gpuTexDesc.DepthOrArraySize = 1;
+		//gpuTexDesc.SampleDesc = 
+		gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		gpuTexDesc.SampleDesc.Count = 1;
+		gpuTexDesc.SampleDesc.Quality = 0;
+
 
 		D3D11_BUFFER_DESC bufDesc;
 		ZeroMemory(&bufDesc, sizeof(bufDesc));
@@ -401,10 +465,12 @@ struct DX12M3DR : M3DR{
 			*/
 		AlwaysRunPostM3DR();
 	}
-	~DX11M3DR() {
+	~DX12M3DR() {
 		//TODO: make deconstructor
 	}
 };
 
+
+#endif
 
 #endif

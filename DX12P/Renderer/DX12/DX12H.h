@@ -16,7 +16,7 @@ struct MainDX12Objects : Renderable{
     
     inline static MainDX12Objects* obj;
 
-    ComPtr<ID3D11On12Device2> dx11OnDx12Device;
+    //ComPtr<ID3D11On12Device2> dx11OnDx12Device;
 
     MainDX11Objects* dx11obj;
 
@@ -275,7 +275,7 @@ struct MainDX12Objects : Renderable{
     }
 
     void SetupDX11DX12() {
-
+        /*
         dx11obj = MainDX11Objects::obj;
 
         UINT createDeviceFlags = 0; //D3D11_CREATE_DEVICE_BGRA_SUPPORT should also be here if need be
@@ -286,7 +286,7 @@ struct MainDX12Objects : Renderable{
         ComPtr<ID3D11Device> tmpD;
         ComPtr<ID3D11DeviceContext> tmpDC;
 
-        ThrowFailed(D3D11On12CreateDevice(
+        ThrowFailed(D3D12CreateDevice(
         dxDevice.Get(),
         createDeviceFlags,
         nullptr,
@@ -306,6 +306,7 @@ struct MainDX12Objects : Renderable{
 
         dx11obj->MakeAdapterAndFactory();
         dx11obj->MakeAndSetCam();
+        */
     }
 
 	void RendererStartUpLogic() override{
