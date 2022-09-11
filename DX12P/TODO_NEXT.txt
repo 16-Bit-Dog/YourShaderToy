@@ -1,3 +1,6 @@
+d3d12 texture loader support: TODO<, make sampler on heap stuff, and vertex index buffer stuff
+
+
 RendererStartUpLogic makes d3d11 device of d3d12 on 11 in dx12
 
 make super D3D12 object which has d3d11 object and uses that  to write as is, and calls the main render function of d3d11 using its, but it also uses this to draw its own unique stuff

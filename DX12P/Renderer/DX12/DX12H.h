@@ -2,6 +2,7 @@
 //finally I will try to use com_ptr's
 
 #include "DX12ShaderFuncs.h"
+#include "3DDX12Obj.h"
 #include "DX11H.h"
 #include <../imGUI/imgui.h>
 #include <../imGUI/imgui_impl_glfw.h>
@@ -18,10 +19,8 @@ struct MainDX12Objects : Renderable{
 
     //ComPtr<ID3D11On12Device2> dx11OnDx12Device;
 
-    MainDX11Objects* dx11obj;
-
     Renderable* GetR() {
-        return MainDX11Objects::obj->GetR();
+        return MainDX12Objects::obj->GetR();
     }
 
 
@@ -171,7 +170,7 @@ struct MainDX12Objects : Renderable{
     DXGI_SWAP_CHAIN_DESC1 swapChainDescW;
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainDescF;
 
-    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) override{
+    void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) override {
 
 
         window = windowW;
@@ -203,14 +202,12 @@ struct MainDX12Objects : Renderable{
 
 
         ComPtr<IDXGISwapChain1> swapChain;
-        ThrowFailed(factory->CreateSwapChainForHwnd(m_commandQueue.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, dx11obj->dxSwapChain.GetAddressOf()));
+        ThrowFailed(factory->CreateSwapChainForHwnd(m_commandQueue.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, swapChain.GetAddressOf()));
 
         //dx11obj->dxSwapChain = swapChain.Get();
 
-        dx11obj->dxSwapChain = m_swapChain;
         
-        
-        dx11obj->MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), sWidth, sHeight);
+        MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), sWidth, sHeight);
 
         //ThrowFailed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER)); I want to allow toggle of fullscreen and windowed mode
 
@@ -224,7 +221,6 @@ struct MainDX12Objects : Renderable{
             rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             ThrowFailed(dxDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
         }
-
         // Create frame resources.
         {
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
