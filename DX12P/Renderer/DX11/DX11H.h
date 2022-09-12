@@ -54,6 +54,8 @@ struct PipelineObjectIntermediateStateDX11 {
 
 struct MainDX11Objects : Renderable{
 
+    const UINT BUFCOUNT = 2;
+
     Renderable* GetR() {
         return this;
     }
@@ -253,6 +255,8 @@ struct MainDX11Objects : Renderable{
         dxDeviceContext->OMSetRenderTargets(ARRAYSIZE(nullViews), nullViews, nullptr);
     }
 
+
+
     void DestroySwapChainAssociate(bool makeRTVandDEPTH = true) {
         ID3D11Texture2D* backBuffer = nullptr;
 
@@ -265,21 +269,27 @@ struct MainDX11Objects : Renderable{
             SetNullRTVandDEPTH();
             dxDeviceContext->Flush();
 
-            dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
-        }
-        if (backBuffer != nullptr) {
-            SafeReleaseAlt(backBuffer);
+            //for (int i = 0; i < BUFCOUNT; i++) {
+                dxSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
+                if (backBuffer != nullptr) {
+                    SafeReleaseAlt(backBuffer);
+                }
+            //}
+
         }
         if (dxSwapChain != nullptr) {
             BufferReset = true;
             RtvAndDepthBlock::ReleaseAllRTVAndDepth();
+            
             if(makeRTVandDEPTH) RtvAndDepthBlock::MakeRTVAndDepth();
         }
     }
+
+
     void CreateSwapChainAndAssociate(DXGI_FORMAT format) {
         swapChainDescW.Width = MainWidth;
         swapChainDescW.Height = MainHeight;
-        swapChainDescW.BufferCount = 2;
+        swapChainDescW.BufferCount = BUFCOUNT;
         swapChainDescW.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swapChainDescW.Format = format;
         swapChainDescW.SampleDesc.Count = 1;
@@ -459,6 +469,15 @@ struct MainDX11Objects : Renderable{
 
     void CleanRendererState() override {
         DestroySwapChainAssociate(false);
+        dxDepthStencilView->Release();
+        dxDepthStencilBuffer->Release();
+        dxDepthStencilStateDefault->Release();
+        ReleaseUMap(RasterObjects);
+        ReleaseUMap(DepthStencilObjects);
+        ReleaseUMap(BlendObjects);
+        delete CAM_S;
+
+        BufferReset = false;
 
         if (ROB != nullptr){
             ROB->wrapClearAll(true);
@@ -468,21 +487,31 @@ struct MainDX11Objects : Renderable{
 
         ImGui_ImplDX11_Shutdown();
 
-        SafeReleaseAlt(dxFactory);
-        SafeReleaseAlt(dxAdapter);
-        SafeReleaseAlt(dxGIDevice);
-        SafeReleaseAlt(dxDebug);
+        int a = dxSwapChain->Release();
 
         dxDeviceContext->ClearState();
         dxDeviceContext->Flush();
-        SafeReleaseAlt(dxDevice);
-        SafeReleaseAlt(dxDeviceContext);
+
+        //SafeRelease(dxFactory);
+        //SafeRelease(dxAdapter);
+        //SafeRelease(dxGIDevice);
+
+        SafeRelease(dxDeviceContext);
+
+#ifdef _DEBUG
+        dxDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+#endif
+        SafeRelease(dxDebug);
+
+        SafeRelease(dxDevice);
+        
+
+        
 
 
-
-        delete CAM_S;
         CompiledCode.clear();
-    
+
+
     }
 
     void CheckAndResizeMainBuffer() {
