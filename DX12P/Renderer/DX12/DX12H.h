@@ -182,7 +182,7 @@ struct MainDX12Objects : Renderable{
         MainHeightR = &sHeight;
 
         
-
+        swapChainDescW.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         swapChainDescW.Width = MainWidth;
         swapChainDescW.Height = MainHeight;
         swapChainDescW.BufferCount = FrameCount;
@@ -194,22 +194,17 @@ struct MainDX12Objects : Renderable{
         swapChainDescW.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
         swapChainDescW.Scaling = DXGI_SCALING_NONE;
 
-       
-
         swapChainDescF.Scaling = DXGI_MODE_SCALING_STRETCHED;
         swapChainDescF.RefreshRate = refreshRateStatic;
         swapChainDescF.Windowed = !bFullScreen;
 
-
         ComPtr<IDXGISwapChain1> swapChain;
+        
         ThrowFailed(factory->CreateSwapChainForHwnd(m_commandQueue.Get(), hwnd, &swapChainDescW, &swapChainDescF, NULL, swapChain.GetAddressOf()));
 
-        //dx11obj->dxSwapChain = swapChain.Get();
+        swapChain.As(&m_swapChain);
 
-        
-        MakeNewWindowSwapChainAndAssociate(window, glfwGetWin32Window(window), sWidth, sHeight);
-
-        //ThrowFailed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER)); I want to allow toggle of fullscreen and windowed mode
+        ThrowFailed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER)); //I want to allow toggle of fullscreen and windowed mode
 
         m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
