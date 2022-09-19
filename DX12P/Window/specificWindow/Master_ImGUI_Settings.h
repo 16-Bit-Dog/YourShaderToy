@@ -109,6 +109,8 @@ struct MASTER_IM_GUI {
 
 	void SetAndCreateimGUIContext(GLFWwindow* w) {
 		SetGUIWindow(w);
+		glfwSetKeyCallback(GLFW_Window_C::MainWin->window, GLFW_Window_C::key_callback);
+
 		if (RendererMade == false) {
 			GUIContext = ImGui::CreateContext();
 			ImGuiIO& GUIio = ImGui::GetIO();

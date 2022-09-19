@@ -1,3 +1,4 @@
+#pragma once
 #include "3DDX11Obj.h"
 #include "3DCommons/StaticObjects.h"
 

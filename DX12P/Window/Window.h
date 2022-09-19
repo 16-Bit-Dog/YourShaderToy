@@ -147,23 +147,25 @@ int GLFW_Window_C::RunWindowLogic() {
 void GLFW_Window_C::CheckToRemakeAndLaunchRenderer() {
 	if (GLFW_Window_C::LastFrameOfRendererNumber != GLFW_Window_C::RendererNumber) {
 		GLFW_Window_C::LastFrameOfRendererNumber = GLFW_Window_C::RendererNumber;
+		MASTER_IM_GUI::obj->RendererMade = false;
 		if (GLFW_Window_C::LastFrameOfRendererNumber == 1) {
 			CleanRenderer();
 
 			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
 			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
-
 			SetDX12Renderer();
 			MainWin->FillDXMWithNewGLFW();
+			MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
+
 		}
 		else {
 			CleanRenderer();
 
 			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
 			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
-
 			SetDX11Renderer();
 			MainWin->FillDXMWithNewGLFW();
+			MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
 		}
 	}
 }
@@ -209,7 +211,6 @@ void AllWin::LoopRunAllContext() {
 
 	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(WinList[0]->window);
 	
-	glfwSetKeyCallback(GLFW_Window_C::MainWin->window, GLFW_Window_C::key_callback);
 	//run all main big GLFW windows with associate sub imgui inside
 
 	AllWin::toRun.push_back(MASTER_Pipeline::CheckToRecompileCodeAuto); //add recompile code as a to run preamble

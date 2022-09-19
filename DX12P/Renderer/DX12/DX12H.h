@@ -82,6 +82,8 @@ struct MainDX12Objects : Renderable{
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_lastFenceValue = 0;
     
+
+
     void ImGUIInit() override{
         ImGui_ImplDX12_Init(dxDevice.Get(), FrameCount, DXGI_FORMAT_R8G8B8A8_UNORM, ImGUIHeap.Get(), ImGUIHeap->GetCPUDescriptorHandleForHeapStart(), ImGUIHeap->GetGPUDescriptorHandleForHeapStart());
     }

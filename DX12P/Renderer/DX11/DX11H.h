@@ -403,6 +403,7 @@ struct MainDX11Objects : Renderable{
     }
 
     void ImGUINewFrameLogic() override{
+
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -469,12 +470,13 @@ struct MainDX11Objects : Renderable{
 
     void CleanRendererState() override {
         DestroySwapChainAssociate(false);
+        if(dxIL) dxIL->Release();
         dxDepthStencilView->Release();
         dxDepthStencilBuffer->Release();
         dxDepthStencilStateDefault->Release();
-        ReleaseUMap(RasterObjects);
-        ReleaseUMap(DepthStencilObjects);
-        ReleaseUMap(BlendObjects);
+        //ReleaseUMap(RasterObjects);
+        //ReleaseUMap(DepthStencilObjects);
+        //ReleaseUMap(BlendObjects);
         delete CAM_S;
 
         BufferReset = false;
@@ -486,8 +488,10 @@ struct MainDX11Objects : Renderable{
         }
 
         ImGui_ImplDX11_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
 
-        int a = dxSwapChain->Release();
+        dxSwapChain->Release();
 
         dxDeviceContext->ClearState();
         dxDeviceContext->Flush();

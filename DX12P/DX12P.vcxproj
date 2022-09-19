@@ -197,9 +197,11 @@
     <ClInclude Include="Renderer\DX11\DX11IncludeMain.h" />
     <ClInclude Include="Renderer\DX11\StaticDX11Object.h" />
     <ClInclude Include="Renderer\DX12\3DDX12Obj.h" />
+    <ClInclude Include="Renderer\DX12\D3D12ResourceObjects.h" />
     <ClInclude Include="Renderer\DX12\d3dx12.h" />
     <ClInclude Include="Renderer\DX12\DX12H.h" />
     <ClInclude Include="Renderer\DX12\DX12IncludeMain.h" />
+    <ClInclude Include="Renderer\DX12\StaticDX12Object.h" />
     <ClInclude Include="Renderer\DXSafeInclude.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\FileManagerResourceStruct.h" />
     <ClInclude Include="Renderer\GlobalResourceAndRenderable\HLSLBuilder.h" />
