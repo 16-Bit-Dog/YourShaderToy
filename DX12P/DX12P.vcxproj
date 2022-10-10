@@ -188,6 +188,7 @@
     <ClInclude Include="PipelineObj\PipelineObj.h" />
     <ClInclude Include="PipelineObj\PixelShaderPipeline.h" />
     <ClInclude Include="PipelineObj\VertexShaderPipeline.h" />
+    <ClInclude Include="rendererDefines.h" />
     <ClInclude Include="Renderer\3DCommons\3DCommon.h" />
     <ClInclude Include="Renderer\3DCommons\ofbxMini.h" />
     <ClInclude Include="Renderer\3DCommons\StaticObjects.h" />

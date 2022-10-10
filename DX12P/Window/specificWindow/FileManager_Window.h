@@ -111,6 +111,8 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 	void BuildAllObjectsItem() {
 		CleanAllBuild();
+
+		Renderable::DXM->ROB->PreBuildLogic();
 //		BuildAllDefaults();
 		BuildAllImages();
 		BuildAllModels();

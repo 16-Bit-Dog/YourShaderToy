@@ -28,9 +28,6 @@
     <Filter Include="Header Files\Renderer\DX11">
       <UniqueIdentifier>{4be6ce7a-ac47-46ae-abdd-506667007ba5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Renderer\ShaderFuncs">
-      <UniqueIdentifier>{22057ae3-41a3-4efa-a9b6-2406c86200cc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Window\specificWindow">
       <UniqueIdentifier>{aff57264-71d4-4e3f-a10e-74ce6030d57a}</UniqueIdentifier>
     </Filter>
@@ -134,14 +131,8 @@
     <ClInclude Include="imGUI\imgui_impl_dx11.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h">
-      <Filter>Header Files\Renderer\ShaderFuncs</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\DXSafeInclude.h">
       <Filter>Header Files\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h">
-      <Filter>Header Files\Renderer\ShaderFuncs</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\3DCommons\ofbxMini.h">
       <Filter>Header Files\Renderer\3DCommons</Filter>
@@ -277,6 +268,15 @@
     </ClInclude>
     <ClInclude Include="Renderer\DX12\StaticDX12Object.h">
       <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderFunc\DX12ShaderFuncs.h">
+      <Filter>Header Files\Renderer\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderFunc\DX11ShaderFuncs.h">
+      <Filter>Header Files\Renderer\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="rendererDefines.h">
+      <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

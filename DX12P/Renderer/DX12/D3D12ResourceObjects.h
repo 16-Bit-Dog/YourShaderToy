@@ -1,3 +1,4 @@
+#ifndef D3D12_OFF
 
 #ifndef DX12_H_RESOURCE_OBJ
 #define DX12_H_RESOURCE_OBJ
@@ -15,54 +16,79 @@
 #include "StaticDX12Object.h"
 
 
+
 struct RTVData_DX12 : RTVData_Base {
-	ComPtr<ID3D11RenderTargetView> rtv = nullptr;
-	ComPtr<ID3D11Texture2D> t = nullptr;
-	ComPtr<ID3D11UnorderedAccessView> uav = nullptr;
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv = {};
+	ComPtr<ID3D12Resource> t = nullptr;
+	D3D12_CPU_DESCRIPTOR_HANDLE uav = {};
 	
 	bool ClearEveryNewPass = true;
 
 	void ReleaseBuffers() {
 		t.Reset(); 
-		rtv.Reset();
-		uav.Reset();
+		rtv = {};
+		uav = {};
 	}
 
 	void MakeBuffers() {
-		D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
-		ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+		D3D12_RESOURCE_DESC gpuTexDesc;
+		ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+		gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		depthStencilBufferDesc.ArraySize = 1;
-		depthStencilBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
-		depthStencilBufferDesc.CPUAccessFlags = 0;
-		depthStencilBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		depthStencilBufferDesc.Width = MainDX11Objects::obj->MainWidth;
-		depthStencilBufferDesc.Height = MainDX11Objects::obj->MainHeight;
-		depthStencilBufferDesc.MipLevels = 1;
+		gpuTexDesc.Width = MainDX12Objects::obj->MainWidth;
+		gpuTexDesc.Height = MainDX12Objects::obj->MainHeight;
 
-		depthStencilBufferDesc.SampleDesc.Count = 1;
-		depthStencilBufferDesc.SampleDesc.Quality = 0;
-
-		depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-
-		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateTexture2D(
-			&depthStencilBufferDesc,
-			nullptr,
-			t.GetAddressOf()));
+		gpuTexDesc.MipLevels = 1;
+		gpuTexDesc.DepthOrArraySize = 1;
+		//gpuTexDesc.SampleDesc = 
+		gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		gpuTexDesc.SampleDesc.Count = 1;
+		gpuTexDesc.SampleDesc.Quality = 0;
 
 
-		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateRenderTargetView(
-			t.Get(),
-			nullptr,
-			rtv.GetAddressOf()));
-
-		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		//UAVDesc.Texture2D
-		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+		ZeroMemory(&UAVDesc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
 		UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
-		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
-		MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(t.Get(), &UAVDesc, &uav);
+		D3D12_HEAP_PROPERTIES heapP;
+		heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+		heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		heapP.CreationNodeMask = 0;
+		heapP.VisibleNodeMask = 0;
+
+
+		D3D12_HEAP_FLAGS heapF = {};
+
+		D3D12_RESOURCE_STATES Rstate = D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+		D3D12_CLEAR_VALUE CV = {};
+		CV.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		CV.Color[0] = 0.0f;
+		CV.Color[1] = 0.0f;
+		CV.Color[2] = 0.0f;
+		CV.Color[3] = 1.0f;
+
+
+		MainDX12Objects::obj->dxDevice->CreateCommittedResource(
+			&heapP,
+			heapF,
+			&gpuTexDesc,
+			Rstate,
+			&CV,
+			//&defaultResourceData,
+			__uuidof(t), &t);
+
+		D3D12_RENDER_TARGET_VIEW_DESC rtv_desc;
+		rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+		MainDX12Objects::obj->dxDevice->CreateRenderTargetView(t.Get(), &rtv_desc, rtv);
+		MainDX12Objects::obj->dxDevice->CreateUnorderedAccessView(t.Get(), nullptr, &UAVDesc, MainDX12Objects::obj->ResolveUavBufLocation(this->uav_num));
 
 	}
 	RTVData_DX12(RenderTarget_s* r) {
@@ -78,58 +104,79 @@ struct RTVData_DX12 : RTVData_Base {
 };
 
 struct DEPTHData_DX12 : DEPTHData_Base {
-	ComPtr<ID3D11DepthStencilView> dsv = nullptr;
-	ComPtr<ID3D11Texture2D> t = nullptr;
-	ComPtr<ID3D11ShaderResourceView> srv = nullptr;
-
+	D3D12_CPU_DESCRIPTOR_HANDLE dsv = {};
+	ComPtr<ID3D12Resource> t = nullptr;
+	D3D12_CPU_DESCRIPTOR_HANDLE srv = {};
+	
 	bool ClearEveryNewPass = true;
 
 	void ReleaseBuffers() {
 		t.Reset();
-		dsv.Reset();
-		srv.Reset();
+		dsv = {};
+		srv = {};
 		//SafeRelease(srv);
 	}
 	void MakeBuffers() {
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc;
+		dsv_desc.Flags = D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL;
+		dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+		D3D12_RESOURCE_DESC gpuTexDesc;
+		ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+		gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		gpuTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+		gpuTexDesc.Width = MainDX12Objects::obj->MainWidth;
+		gpuTexDesc.Height = MainDX12Objects::obj->MainHeight;
+
+		gpuTexDesc.MipLevels = 1;
+		gpuTexDesc.DepthOrArraySize = 1;
+		//gpuTexDesc.SampleDesc = 
+		gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		gpuTexDesc.SampleDesc.Count = 1;
+		gpuTexDesc.SampleDesc.Quality = 0;
 
 
-		D3D11_TEXTURE2D_DESC depthStencilBufferDesc;
-		ZeroMemory(&depthStencilBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+		
+		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+		ZeroMemory(&SRVDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+		SRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		
 
-		depthStencilBufferDesc.ArraySize = 1;
-		depthStencilBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-		depthStencilBufferDesc.CPUAccessFlags = 0;
-		depthStencilBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-		depthStencilBufferDesc.Width = MainDX11Objects::obj->MainWidth;
-		depthStencilBufferDesc.Height = MainDX11Objects::obj->MainHeight;
-		depthStencilBufferDesc.MipLevels = 1;
-
-		depthStencilBufferDesc.SampleDesc.Count = 1;
-		depthStencilBufferDesc.SampleDesc.Quality = 0;
-
-		depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-
-		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateTexture2D(
-			&depthStencilBufferDesc,
-			nullptr,
-			t.GetAddressOf()));
+		D3D12_HEAP_PROPERTIES heapP;
+		heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+		heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		heapP.CreationNodeMask = 0;
+		heapP.VisibleNodeMask = 0;
 
 
-		ThrowFailed(MainDX11Objects::obj->dxDevice->CreateDepthStencilView(
-			t.Get(),
-			&MainDX11Objects::obj->dxDepthStencilDesc,
-			dsv.GetAddressOf()));
+		D3D12_HEAP_FLAGS heapF = {};
 
-		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-		//UAVDesc.Texture2D
-		ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-		SRVDesc.Texture2D.MostDetailedMip = 0;
-		SRVDesc.Texture2D.MipLevels = -1;
-		SRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		D3D12_RESOURCE_STATES Rstate = D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+		D3D12_CLEAR_VALUE CV = {};
+		CV.Format = DXGI_FORMAT_R32_TYPELESS;
+		CV.Color[0] = 0.0f;
+		CV.Color[1] = 0.0f;
+		CV.Color[2] = 0.0f;
+		CV.Color[3] = 1.0f;
 
 
-		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(t.Get(), &SRVDesc, &srv);
+		MainDX12Objects::obj->dxDevice->CreateCommittedResource(
+			&heapP,
+			heapF,
+			&gpuTexDesc,
+			Rstate,
+			&CV,
+			//&defaultResourceData,
+			__uuidof(t), &t);
+
+
+		MainDX12Objects::obj->dxDevice->CreateDepthStencilView(t.Get(), &dsv_desc, dsv);
+		MainDX12Objects::obj->dxDevice->CreateShaderResourceView(t.Get(), &SRVDesc, MainDX12Objects::obj->ResolveSrvBufLocation(this->srv_num));
 
 	}
 	DEPTHData_DX12(DepthTarget_s* d) {
@@ -145,10 +192,12 @@ struct DEPTHData_DX12 : DEPTHData_Base {
 
 struct ImageObjectToRendererDX12 : ImageObjectToRenderer_Base {
 
-	ComPtr<ID3D11ShaderResourceView> srv;
-	ComPtr<ID3D11UnorderedAccessView> uav;
-	ComPtr<ID3D11SamplerState> Samp;
-	D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
+	D3D12_CPU_DESCRIPTOR_HANDLE srv;
+	D3D12_CPU_DESCRIPTOR_HANDLE uav;
+	ComPtr<ID3D12Resource> buf;
+	ComPtr<ID3D12DescriptorHeap> Samp;
+
+	D3D12_SUBRESOURCE_DATA defaultResourceData; //default data
 	uint8_t* pSysMem = nullptr;
 
 	DXGI_FORMAT format;
@@ -159,58 +208,121 @@ struct ImageObjectToRendererDX12 : ImageObjectToRenderer_Base {
 	int bpp = 0;
 
 	void ReleaseBuffersNonSamp() {
-		SafeRelease(uav);
-
-		SafeRelease(srv);
+		SafeRelease(buf);
+		SafeRelease(Samp);
 	}
 	void MakeBuffers(BuiltImage_c* data) {
-		ComPtr<ID3D11Texture2D> r = NULL;
-
-		D3D11_TEXTURE2D_DESC gpuTexDesc;
-		ZeroMemory(&gpuTexDesc, sizeof(D3D11_TEXTURE2D_DESC));
+		
+		D3D12_RESOURCE_DESC gpuTexDesc;
+		ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+		gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		gpuTexDesc.Format = format;
+
+		//gpuTexDesc.Width = MainDX12Objects::obj->MainWidth;
+		//gpuTexDesc.Height = MainDX11Objects::obj->MainHeight;
+
+		gpuTexDesc.MipLevels = 1;
+		gpuTexDesc.DepthOrArraySize = 1;
+		//gpuTexDesc.SampleDesc = 
+		gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		gpuTexDesc.SampleDesc.Count = 1;
+		gpuTexDesc.SampleDesc.Quality = 0;
+
+		
 		if (LinkSizeToRTV == false) {
 			gpuTexDesc.Width = data->data.sizeX_c;
 			gpuTexDesc.Height = data->data.sizeY_c;
-			defaultResourceData.pSysMem = data->data.dataV;
+			defaultResourceData.pData = data->data.dataV;
 		}
 		else {
-			pSysMem = ScaleBuffersToSizeCPU(pSysMem, sizeY, sizeX, channels, bpp, MainDX11Objects::obj->MainWidth, MainDX11Objects::obj->MainHeight);
-			defaultResourceData.pSysMem = pSysMem;
-			gpuTexDesc.Width = MainDX11Objects::obj->MainWidth;
-			gpuTexDesc.Height = MainDX11Objects::obj->MainHeight;
-		}
+			pSysMem = ScaleBuffersToSizeCPU(pSysMem, sizeY, sizeX, channels, bpp, MainDX12Objects::obj->MainWidth, MainDX11Objects::obj->MainHeight);
+			defaultResourceData.pData = pSysMem;
+			gpuTexDesc.Width = MainDX12Objects::obj->MainWidth;
+			gpuTexDesc.Height = MainDX12Objects::obj->MainHeight;
+		}		
 
-		defaultResourceData.SysMemPitch = gpuTexDesc.Width * channels * bpp;
-		defaultResourceData.SysMemSlicePitch = gpuTexDesc.Height * gpuTexDesc.Width * channels * bpp;
+		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+		ZeroMemory(&SRVDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+		SRVDesc.Format = format;
+		SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-		gpuTexDesc.MipLevels = 1;
-		gpuTexDesc.ArraySize = 1;
-		gpuTexDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS |
-			D3D11_BIND_SHADER_RESOURCE;
-		gpuTexDesc.SampleDesc.Count = 1;
-		gpuTexDesc.SampleDesc.Quality = 0;
-		gpuTexDesc.MiscFlags = 0;
-		gpuTexDesc.CPUAccessFlags = 0;
-		gpuTexDesc.Usage = D3D11_USAGE_DEFAULT;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+		ZeroMemory(&UAVDesc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
+		SRVDesc.Format = format; //
+		SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-		MainDX11Objects::obj->dxDevice->CreateTexture2D(
+		D3D12_HEAP_PROPERTIES heapP;
+		heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+		heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		heapP.CreationNodeMask = 0;
+		heapP.VisibleNodeMask = 0;
+
+
+		D3D12_HEAP_FLAGS heapF = {};
+
+		D3D12_RESOURCE_STATES Rstate = D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+		D3D12_CLEAR_VALUE CV = {};
+		CV.Format = format;
+		CV.Color[0] = 0.0f;
+		CV.Color[1] = 0.0f;
+		CV.Color[2] = 0.0f;
+		CV.Color[3] = 1.0f;
+
+
+		MainDX12Objects::obj->dxDevice->CreateCommittedResource(
+			&heapP,
+			heapF,
 			&gpuTexDesc,
-			&defaultResourceData,
-			r.GetAddressOf());
+			Rstate,
+			&CV,
+			//&defaultResourceData,
+			__uuidof(buf), &buf);
 
-		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-		//UAVDesc.Texture2D
-		ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-		UAVDesc.Format = format; //
-		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
-		if (HasRW) {
-			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(r.Get(), &UAVDesc, &uav);
-		}
+		D3D12_BOX box = {};
+		box.top = 0;
+		box.bottom = gpuTexDesc.Height;
+		box.left = 0;
+		box.right = gpuTexDesc.Width;
 
-		MainDX11Objects::obj->dxDevice->CreateShaderResourceView(r.Get(), nullptr, &srv);
-		//send data to SRV and UAV
+		buf->WriteToSubresource(
+			0,
+			&box,
+			defaultResourceData.pData,
+			defaultResourceData.RowPitch,
+			defaultResourceData.SlicePitch);
+
+		MainDX12Objects::obj->dxDevice->CreateShaderResourceView(buf.Get(), &SRVDesc, MainDX12Objects::obj->ResolveSrvBufLocation(this->srv_num));
+
+		MainDX12Objects::obj->dxDevice->CreateUnorderedAccessView(buf.Get(), NULL, &UAVDesc, MainDX12Objects::obj->ResolveUavBufLocation(this->uav_num));
+
+
+
+		D3D12_DESCRIPTOR_HEAP_DESC samplerHDesc;
+		samplerHDesc.NumDescriptors = 1;
+		samplerHDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+		samplerHDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&samplerHDesc, IID_PPV_ARGS(&Samp));
+		D3D12_SAMPLER_DESC samplerDesc;
+
+		samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 8;
+		samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC{ D3D12_COMPARISON_FUNC_NEVER }; //never remove model for now - always pass render pass
+		samplerDesc.MinLOD = 1;
+		samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+		samplerDesc.Filter = D3D12_FILTER{ D3D12_FILTER_MIN_MAG_MIP_LINEAR };
+		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_MIRROR };
+
+
+		MainDX12Objects::obj->dxDevice->CreateSampler(&samplerDesc, MainDX12Objects::obj->ResolveSampBufLocation(this->sampler_num));
+
 		
 	}
 	
@@ -256,33 +368,34 @@ struct ImageObjectToRendererDX12 : ImageObjectToRenderer_Base {
 		pSysMem = (uint8_t*)malloc(dataS);
 		(*pSysMem) = (*((uint8_t*)data->data.dataV));
 		
+		defaultResourceData.pData = (void*)pSysMem;
+		defaultResourceData.RowPitch = sizeX * channels * bpp;
+		defaultResourceData.SlicePitch = sizeY * sizeY * channels * bpp;
 
-		defaultResourceData.pSysMem = pSysMem;
-		defaultResourceData.SysMemPitch = sizeX * channels * bpp;
-		defaultResourceData.SysMemSlicePitch = sizeY * sizeX * channels * bpp;
-
+		
 		MakeBuffers(data);
 
-		D3D11_SAMPLER_DESC samp_desc;
+	
+		D3D12_SAMPLER_DESC samplerDesc = {};
 
-		samp_desc.Filter = D3D11_FILTER{ D3D11_FILTER_ANISOTROPIC };
-		samp_desc.AddressU = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
-		samp_desc.AddressV = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
-		samp_desc.AddressW = D3D11_TEXTURE_ADDRESS_MODE{ D3D11_TEXTURE_ADDRESS_WRAP };
-		samp_desc.MipLODBias = 0;
-		samp_desc.MaxAnisotropy = 8;
-		samp_desc.ComparisonFunc = D3D11_COMPARISON_FUNC{ D3D11_COMPARISON_LESS };
-		samp_desc.MinLOD = 1;
-		samp_desc.MaxLOD = D3D11_FLOAT32_MAX;
+		samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 8;
+		samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC{ D3D12_COMPARISON_FUNC_LESS };
+		samplerDesc.MinLOD = 1;
+		samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+		samplerDesc.Filter = D3D12_FILTER{ D3D12_FILTER_MIN_MAG_MIP_LINEAR };
+		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_MIRROR };
 
-		MainDX11Objects::obj->dxDevice->CreateSamplerState(&samp_desc, &Samp);
+		MainDX12Objects::obj->dxDevice->CreateSampler(&samplerDesc, Samp->GetCPUDescriptorHandleForHeapStart());
 
 	}
 	~ImageObjectToRendererDX12() {
 		delete[] pSysMem;
 
-		SafeRelease(srv);
-		SafeRelease(uav);
+		SafeRelease(buf);
 		SafeRelease(Samp);
 		//SafeRelease TODO: check if I need to clean up anything
 	}
@@ -290,11 +403,13 @@ struct ImageObjectToRendererDX12 : ImageObjectToRenderer_Base {
 
 
 struct StructObjectToRendererDX12 : StructObjectToRenderer_Base{
-	ComPtr<ID3D11Buffer> con;
-	
-	ComPtr<ID3D11Buffer> uavB; // sperate modifiable object data for a const pair and not const
-	ComPtr<ID3D11UnorderedAccessView> uav;
-	ComPtr<ID3D11ShaderResourceView> srv;
+	ComPtr<ID3D12Resource> con;
+	D3D12_CPU_DESCRIPTOR_HANDLE conDesc = {};
+
+
+	ComPtr<ID3D12Resource> uavB; // sperate modifiable object data for a const pair and not const
+	D3D12_CPU_DESCRIPTOR_HANDLE uav = {};
+	D3D12_CPU_DESCRIPTOR_HANDLE srv = {};
 
 	StructObjectToRendererDX12(BuiltConstant_c* data) {
 		
@@ -307,87 +422,125 @@ struct StructObjectToRendererDX12 : StructObjectToRenderer_Base{
 
 		ReferToData = data->vars; //copy
 
-		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size()  + ReferToData.FT.size();
-		int memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
-		int memSizePost = memSize;
-		while (memSizePost % 16 != 0) memSizePost += 4;
+		int memSizePost;
+		int memSize;
+		float* Data;
 
-		float* Data = (float*)malloc(memSize);
-
-		typesInOrder.resize(ElementCount);
-		typesInOrderName.resize(ElementCount);
-		//typesInOrderNameRW.resize(ElementCount);
-
-		int offset = 0;
-		for (int i = 0; i < ReferToData.IT.size(); i++) {
-			typesInOrder[i + offset] = INT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.IT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.IT[i].val); //stick raw bytes as float into Data
-		}
-		offset += ReferToData.IT.size();
-		for (int i = 0; i < ReferToData.UT.size(); i++) {
-			typesInOrder[i + offset] = UINT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.UT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.UT[i].val); //stick raw bytes as float into Data
-		}
-		offset += ReferToData.UT.size();
-		for (int i = 0; i < ReferToData.FT.size(); i++) {
-			typesInOrder[i + offset] = FLOAT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.FT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = (ReferToData.FT[i].val);
-		}
+		CalculateMemoryOrganization(&Data, memSize, memSizePost);
 
 
-
-
-		D3D11_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = memSizePost;
-		
-		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
-		defaultResourceData.pSysMem = Data;
-
-		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
+		HasRW = data->ReadWrite;
 
 		
 		if (data->ReadWrite) {
-			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-			ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-			SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
-			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-			SRVDesc.Buffer.FirstElement = 0;
-			SRVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
 
 
-			D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-			//UAVDesc.Texture2D
-			ZeroMemory(&UAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-			UAVDesc.Format = DXGI_FORMAT_UNKNOWN; //
-			UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-			UAVDesc.Buffer.FirstElement = 0;
-			UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
-
-			ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
-			bufDesc.Usage = D3D11_USAGE_DEFAULT;
-			bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-			bufDesc.CPUAccessFlags = 0;
-			bufDesc.ByteWidth = memSize;
-			bufDesc.StructureByteStride = sizeof(float);
-			bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-
+			/*
 			MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &uavB);
 
 			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
 			MainDX11Objects::obj->dxDevice->CreateShaderResourceView(uavB.Get(), &SRVDesc, &srv);
-
-			HasRW = data->ReadWrite;
+			*/
 	
+			D3D12_SUBRESOURCE_DATA defaultResourceData;
+			defaultResourceData.pData = Data;
+			defaultResourceData.RowPitch = memSize;
+			defaultResourceData.SlicePitch = 1;
+
+			D3D12_RESOURCE_DESC gpuTexDesc;
+			ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
+			gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+			gpuTexDesc.Format = DXGI_FORMAT_UNKNOWN;
+
+			gpuTexDesc.Width = memSize;
+			gpuTexDesc.Height = 1;
+
+			gpuTexDesc.MipLevels = 1;
+			gpuTexDesc.DepthOrArraySize = 1;
+
+			gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			gpuTexDesc.SampleDesc.Count = 1;
+			gpuTexDesc.SampleDesc.Quality = 0;
+
+
+			D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+			//UAVDesc.Texture2D
+			ZeroMemory(&UAVDesc, sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC));
+			UAVDesc.Format = DXGI_FORMAT_UNKNOWN; //
+			UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+			D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+			ZeroMemory(&SRVDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+			SRVDesc.Format = DXGI_FORMAT_UNKNOWN; //
+			SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+
+			D3D12_HEAP_PROPERTIES heapP;
+			heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
+			heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+			heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+			heapP.CreationNodeMask = 0;
+			heapP.VisibleNodeMask = 0;
+
+
+			D3D12_HEAP_FLAGS heapF = {};
+
+			D3D12_RESOURCE_STATES Rstate = D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+				| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+			D3D12_CLEAR_VALUE CV = {};
+			CV.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			CV.Color[0] = 0.0f;
+			CV.Color[1] = 0.0f;
+			CV.Color[2] = 0.0f;
+			CV.Color[3] = 1.0f;
+
+
+			MainDX12Objects::obj->dxDevice->CreateCommittedResource(
+				&heapP,
+				heapF,
+				&gpuTexDesc,
+				Rstate,
+				&CV,
+				__uuidof(uavB), &uavB);
+
+
+			D3D12_BOX box = {};
+			box.top = 0;
+			box.bottom = gpuTexDesc.Height;
+			box.left = 0;
+			box.right = gpuTexDesc.Width;
+
+			uavB->WriteToSubresource(
+				0,
+				&box,
+				defaultResourceData.pData,
+				defaultResourceData.RowPitch,
+				defaultResourceData.SlicePitch);
+
+			MainDX12Objects::obj->dxDevice->CreateUnorderedAccessView(uavB.Get(), nullptr, &UAVDesc, uav);
+
+			MainDX12Objects::obj->dxDevice->CreateShaderResourceView(uavB.Get(), &SRVDesc, srv);
+
+
+		}
+		else {
+			
+			DX12M3DR::CreateCBufDepth1(con, conDesc, memSizePost, MainDX12Objects::obj->dxDevice);
+
+			D3D12_BOX box = {};
+			box.top = 0;
+			box.bottom = 1;
+			box.left = 0;
+			box.right = memSize;
+
+			con->WriteToSubresource(
+				0,
+				&box,
+				&Data,
+				memSize,
+				1);
+		
 		}
 
 		delete Data;
@@ -432,26 +585,25 @@ struct ModelToRendererDX12 : ModelToRenderer_Base{
 
 struct PredefinedToRendererDX12 : PredefinedToRenderer_Base{
 
-	ComPtr<ID3D11Buffer> Cdata;
-	
+	ComPtr<ID3D12Resource> CData;	
+	D3D12_CPU_DESCRIPTOR_HANDLE CDataDesc = {};
 
 	PredefinedToRendererDX12(BuiltPredefined_c* data) {
 		
-		D3D11_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, sizeof(bufDesc));
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = sizeof(CONST_DATA_PASS_c);
+		DX12M3DR::CreateCBufDepth1(CData, CDataDesc, sizeof(CONST_DATA_PASS_c), MainDX12Objects::obj->dxDevice);
 
-		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
-		defaultResourceData.pSysMem = data->data;
+		D3D12_BOX box = {};
+		box.top = 0;
+		box.bottom = 1;
+		box.left = 0;
+		box.right = sizeof(CONST_DATA_PASS_c);
 
-		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &Cdata);
-
-		//Create size based on data size thing, and then pass to const, and layout in vector here the var type layout with enums
-		//TODO: load data into const buffer under names stated previously
-
+		CData->WriteToSubresource(
+			0,
+			&box,
+			&data->data,
+			sizeof(CONST_DATA_PASS_c),
+			1);
 
 	}
 
@@ -460,7 +612,20 @@ struct PredefinedToRendererDX12 : PredefinedToRenderer_Base{
 	}
 
 	void update(BuiltPredefined_c* bI) {
-		MainDX11Objects::obj->dxDeviceContext->UpdateSubresource(Cdata.Get(), 0, nullptr, bI->data, 0, 0);
+		
+		D3D12_BOX box = {};
+		box.top = 0;
+		box.bottom = 1;
+		box.left = 0;
+		box.right = sizeof(CONST_DATA_PASS_c);
+
+		CData->WriteToSubresource(
+			0,
+			&box,
+			bI->data,
+			sizeof(CONST_DATA_PASS_c),
+			1);
+
 	}
 };
 
@@ -543,11 +708,16 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 	inline static const UINT NOneP = 0;
 
 	void PreBindImageData(ImageObjectToRendererDX12* ID) {
-	//	ID->UAV_R
-	//	ID->uav
+		//MainDX12Objects::obj->Heaps.SRVHeapRef[ID->srv_num] = &ID->srv;
+		//MainDX12Objects::obj->Heaps.UAVHeapRef[ID->uav_num] = &ID->uav;
+		//MainDX12Objects::obj->Heaps.SAMPHeapRef[ID->sampler_num] = &ID->Samp->GetCPUDescriptorHandleForHeapStart();
 
+		//MainDX12Objects::obj->m_rootSig
+		//MainDX12Objects::obj->m_commandList->SetDescriptorHeaps
+		
+		/*
 		//MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers();
-		MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(ID->srv_num, 1, &ID->srv);
+		MainDX12Objects::obj->dxDeviceContext->VSSetShaderResources(ID->srv_num, 1, &ID->srv);
 		MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(ID->sampler_num, 1, &ID->Samp);
 
 		//MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers();
@@ -558,6 +728,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		
 		MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, &ID->uav, &NOneP);
 		MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(ID->sampler_num, 1, &ID->Samp);
+		*/
 	}
 	void PreBindAllImageData() {
 		for (const auto& i : ImageData) {
@@ -570,9 +741,12 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 
 		for (int i = 0; i < MaterialEnum::TEX_COUNT; i++) {
 			if (Model->MatData[Obj].TexOn[i]) {
-				MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
-				MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
-				MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, &tmpF, &NOneP);
+	//			MainDX12Objects::obj->Heaps.SRVHeapRef[i] = &Model->TexObj[Obj].TexSRV;
+	//			MainDX12Objects::obj->Heaps.UAVHeapRef[i] = &Model->TexObj[Obj].TexUAV;
+
+				//MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
+				//MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, Model->TexObj[Obj].TexSRV[i].GetAddressOf());
+				//MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, &tmpF, &NOneP);
 
 			}
 		}
@@ -585,19 +759,23 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 
 		for (int i = 0; i < MaterialEnum::TEX_COUNT; i++) {
 			if (Model->MatData[Obj].TexOn[i]) {
-				MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, &tmpF);
-				MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, &tmpF);
-				MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, Model->TexObj[Obj].TexUAV[i].GetAddressOf(), &NOneP);
+				//MainDX12Objects::obj->Heaps.SRVHeapRef[i] = &Model->TexObj[Obj].TexSRV;
+				//MainDX12Objects::obj->Heaps.UAVHeapRef[i] = &Model->TexObj[Obj].TexUAV;
+				
+				//MainDX11Objects::obj->dxDeviceContext->VSSetShaderResources(i, 1, &tmpF);
+				//MainDX11Objects::obj->dxDeviceContext->PSSetShaderResources(i, 1, &tmpF);
+				//MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i, 1, Model->TexObj[Obj].TexUAV[i].GetAddressOf(), &NOneP);
 			}
 		}
 	}
 	void PreBindConstantData(StructObjectToRendererDX12* ID) {
+		//MainDX12Objects::obj->Heaps.CONHeapRef[ID->cb_num] = &ID->conDesc;
 		
-		MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
+		//MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
 
-		MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
+		//MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(ID->cb_num, 1, ID->con.GetAddressOf());
 
-		MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, ID->uav.GetAddressOf(), &NOneP);
+		//MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(ID->uav_num, 1, ID->uav.GetAddressOf(), &NOneP);
 
 
 	}
@@ -607,18 +785,24 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		}
 	}
 	void PreBindDefault() {
-		MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
+		//MainDX12Objects::obj->Heaps.CONHeapRef[PredefinedData->cb_num] = &PredefinedData->CDataDesc;
 
-		MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
+
+		//MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->GetAddressOf());
+
+		//MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 	
-		MainDX11Objects::obj->dxDeviceContext->CSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
+		//MainDX11Objects::obj->dxDeviceContext->CSSetConstantBuffers(PredefinedData->cb_num, 1, PredefinedData->Cdata.GetAddressOf());
 	}
 	//TODO: add individual compile buttons and checkmark for if up to date data
+
+
+
 	void PreBindAllResources() {
 
-		PreBindAllImageData();
-		PreBindAllConstantData();
-		PreBindDefault();
+		//PreBindAllImageData();
+		//PreBindAllConstantData();
+		//PreBindDefault();
 
 	}
 
@@ -652,12 +836,21 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		ConstantData.clear();
 	}
 	void ClearAllObjects(bool fullClean) override{
+		SafeRelease(MainDX12Objects::obj->descHeapConSrvUav);
+		SafeRelease(MainDX12Objects::obj->descHeapSamp);
+
+
+		//MainDX12Objects::obj->Heaps.CONHeapRef.clear();
+		//MainDX12Objects::obj->Heaps.SRVHeapRef.clear();
+		//MainDX12Objects::obj->Heaps.UAVHeapRef.clear();
+		//MainDX12Objects::obj->Heaps.SAMPHeapRef.clear();
+
 		if (fullClean) {
-			ClearAllPredefined();
+		//	ClearAllPredefined();
 		}
-		ClearAllImages();
-		ClearAllModels();
-		ClearAllConstants();
+		//ClearAllImages();
+		//ClearAllModels();
+		//ClearAllConstants();
 	}
 	void LoadImageFromData(BuiltImage_c* bI) {
 		ImageData[bI->Name] = new ImageObjectToRendererDX12(bI);
@@ -692,28 +885,30 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 			MainDX11Objects::obj->dxDeviceContext->CSSetShaderResources(i.second->srv_num, 1, i.second->srv.GetAddressOf());
 		}
 	}
+	void PrefillCommandList(PipelineObjectIntermediateStateDX12** item) {
+		(*item)->cmdLists.push_back(ComPtr<ID3D12GraphicsCommandList>());
+		ComPtr<ID3D12GraphicsCommandList>& tmpCmdList = (*item)->cmdLists[(*item)->cmdLists.size() - 1];
+		
+		if (!(*item)->PObj->ComputeOnlyToggle) {
 
-	template<class T> 
-	void UnBindCSToUAV(T& data){
-		ID3D11UnorderedAccessView* nullC = nullptr;
-
-		for (auto& i : data) {
-			MainDX11Objects::obj->dxDeviceContext->CSSetUnorderedAccessViews(i.second->uav_num, 1, &nullC, &OffsetDef);
+			tmpCmdList->SetGraphicsRootSignature(MainDX12Objects::obj->defaultRootSig.Get());
+			tmpCmdList->OMSetRenderTargets(1, RTVData[(*item)->RTV_Num]->rtv.ptr);
 		}
+		if (!(*item)->PObj->TurnComputeOffToggle) {
+			tmpCmdList->SetComputeRootSignature(MainDX12Objects::obj->defaultRootSig.Get());
+
+
+		}
+
 	}
 
-	template<class T>
-	void UnBindCSToSRV(T& data) {
-		ID3D11ShaderResourceView* nullC = nullptr;
-
-		for (auto& i : data) {
-			MainDX11Objects::obj->dxDeviceContext->CSSetShaderResources(i.second->srv_num, 1, &nullC);
-		}
-	}
-
+	/*
 	void RunLogic(PipelineObjectIntermediateStateDX12** item) {
 		if ((*item)->PObj->On) {
 			//TODO, make run logic, then make code output in order
+			
+			MainDX12Objects::obj->defaultCommandList.Reset();
+
 
 			MainDX11Objects::obj->dxDeviceContext->OMSetRenderTargets(1, RTVData[(*item)->RTV_Num]->rtv.GetAddressOf(), DEPTHData[(*item)->DEPTH_Num]->dsv.Get());
 
@@ -721,19 +916,16 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 				MainDX11Objects::obj->MakeBlend((*item)->PObj->Vertex.BlendToMake);
 				ID3D11BlendState* bss = MainDX11Objects::obj->BlendObjects[(*item)->PObj->Vertex.BlendToMake].Get();
 				if (MainDX11Objects::obj->TestForOptimize.BlendObject != bss || MainDX11Objects::obj->TestForOptimize.BlendFactor != (*item)->PObj->Vertex.BlendFactor) {
-					MainDX11Objects::obj->dxDeviceContext->OMSetBlendState(bss, &(*item)->PObj->Vertex.BlendFactor[0], 0xffffffff/*Write all*/);
+					MainDX11Objects::obj->dxDeviceContext->OMSetBlendState(bss, &(*item)->PObj->Vertex.BlendFactor[0], 0xffffffff);
 					MainDX11Objects::obj->TestForOptimize.BlendObject = bss;
 					MainDX11Objects::obj->TestForOptimize.BlendFactor = (*item)->PObj->Vertex.BlendFactor;
 				}
-
-				MainDX11Objects::obj->MakeRaster((*item)->PObj->Vertex.RasterToMake);
 				ID3D11RasterizerState* rss = MainDX11Objects::obj->RasterObjects[(*item)->PObj->Vertex.RasterToMake].Get();
 				if (MainDX11Objects::obj->TestForOptimize.RasterObject != rss) {
 					MainDX11Objects::obj->dxDeviceContext->RSSetState(rss);
 					MainDX11Objects::obj->TestForOptimize.RasterObject = rss;
 				}
 
-				MainDX11Objects::obj->MakeDepthStencil((*item)->PObj->Vertex.StencilToMake); //try to make if not existing yet
 				ID3D11DepthStencilState** dss = MainDX11Objects::obj->DepthStencilObjects[(*item)->PObj->Vertex.StencilToMake].GetAddressOf();
 				if (MainDX11Objects::obj->TestForOptimize.DepthStencilObject != *dss) {
 					MainDX11Objects::obj->dxDeviceContext->OMGetDepthStencilState(dss, &MainDX11Objects::obj->REF_FOR_DEPTH_STENCIL);
@@ -752,7 +944,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 
 				if ((*item)->PObj->Vertex.Vdata.size() != 0) {
 
-					DX11M3DR* Model = (DX11M3DR*)((DX11M3DR*)((*item)->PObj->Vertex.RawModel));
+					DX12M3DR* Model = (DX12M3DR*)((DX12M3DR*)((*item)->PObj->Vertex.RawModel));
 					MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
 					MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
 					MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
@@ -792,9 +984,6 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 
 			if (!(*item)->PObj->TurnComputeOffToggle) {
 
-				BindCSToUAV(RTVData);
-				BindCSToSRV(DEPTHData);
-
 				for (int i = 0; i < (*item)->Compute.size(); i++) {
 					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
 						MainDX11Objects::obj->dxDeviceContext->CSSetShader((*item)->Compute[i].CDat, NULL, NULL);
@@ -809,25 +998,24 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 					
 				}
 
-				UnBindCSToUAV(RTVData);
-				UnBindCSToSRV(DEPTHData);
 			
 			}
 
 		}
 	}
+	*/
 	int SizeOfRTV() {
 		return RTVData.size();
 	}
 	void ClearRTVAndDepth() {
 		for (auto& i : RTVData) {
 			if (i.second->ClearEveryNewPass) {
-				MainDX11Objects::obj->dxDeviceContext->ClearRenderTargetView(i.second->rtv.Get(), &MainDX11Objects::obj->CLEAR_COLOR[0]);
+		//		MainDX11Objects::obj->dxDeviceContext->ClearRenderTargetView(i.second->rtv.Get(), &MainDX11Objects::obj->CLEAR_COLOR[0]);
 			}
 		}
 		for (auto& i : DEPTHData) {
 			if (i.second->ClearEveryNewPass) {
-				MainDX11Objects::obj->dxDeviceContext->ClearDepthStencilView(i.second->dsv.Get(), D3D11_CLEAR_DEPTH, 1, 0);
+			//	MainDX11Objects::obj->dxDeviceContext->ClearDepthStencilView(i.second->dsv.Get(), D3D11_CLEAR_DEPTH, 1, 0);
 			}
 		}
 	}
@@ -843,8 +1031,8 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		
 		PreBindAllResources();
 		
-		PipelineObjectIntermediateStateDX11* itemP = new PipelineObjectIntermediateStateDX11();
-		PipelineObjectIntermediateStateDX11** item = &itemP;
+		PipelineObjectIntermediateStateDX12* itemP = new PipelineObjectIntermediateStateDX12();
+		PipelineObjectIntermediateStateDX12** item = &itemP;
 		
 		(*item)->PObj = Pobj.second;
 		(*item)->VName = Pobj.second->Vertex.name;
@@ -874,24 +1062,26 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 			return -1; 
 		}
 
+		//            { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
+
 		//TODO: template do these 3 into 1 function
 		//compile Pixel Shader if not exist
-		if (PipelineObjectIntermediateStateDX11::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX11::PixelShaderMap.end()){
-			PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName] = ShaderCDX11::obj->LoadShader<ID3D11PixelShader>(&BasePipeline::code[BasePipeline::PIXEL], Pobj.second->Pixel.name, "latest", &Pobj.second->Pixel.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		if (PipelineObjectIntermediateStateDX12::PixelShaderMap.find((*item)->PName) == PipelineObjectIntermediateStateDX12::PixelShaderMap.end()){
+			PipelineObjectIntermediateStateDX12::PixelShaderMap[(*item)->PName] = ShaderCDX12::CompileShader(&BasePipeline::code[BasePipeline::PIXEL], Pobj.second->Pixel.name, SHADER_PREFIX_D3D12::PS_PREFIX_D3D12, &Pobj.second->Pixel.ErrorMessage_s);
 			SetErrorShowIfHasError(Pobj.second->Pixel, Pobj.second);
 		}
-		(*item)->PDat = PipelineObjectIntermediateStateDX11::PixelShaderMap[(*item)->PName].Get();
+		(*item)->PDat = PipelineObjectIntermediateStateDX12::PixelShaderMap[(*item)->PName];
 		if ((*item)->PDat == nullptr) { 
 			delete itemP;
 			return -1;
 		}
 
 		//compile Vertex Shader if not exist
-		if (PipelineObjectIntermediateStateDX11::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX11::VertexShaderMap.end()) {
-			PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName] = ShaderCDX11::obj->LoadShader<ID3D11VertexShader>(&BasePipeline::code[BasePipeline::VERTEX], Pobj.second->Vertex.name, "latest", &Pobj.second->Vertex.ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+		if (PipelineObjectIntermediateStateDX12::VertexShaderMap.find((*item)->VName) == PipelineObjectIntermediateStateDX12::VertexShaderMap.end()) {
+			PipelineObjectIntermediateStateDX12::VertexShaderMap[(*item)->VName] = ShaderCDX12::CompileShader(&BasePipeline::code[BasePipeline::VERTEX], Pobj.second->Vertex.name, SHADER_PREFIX_D3D12::VS_PREFIX_D3D12, &Pobj.second->Vertex.ErrorMessage_s);
 			SetErrorShowIfHasError(Pobj.second->Vertex, Pobj.second);
 		}
-		(*item)->VDat = PipelineObjectIntermediateStateDX11::VertexShaderMap[(*item)->VName].Get();
+		(*item)->VDat = PipelineObjectIntermediateStateDX12::VertexShaderMap[(*item)->VName];
 
 		if ((*item)->VDat == nullptr) { 
 			delete itemP;
@@ -901,26 +1091,56 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		//compile Compute shader if not exist
 		for (const auto& i : (*item)->PObj->Compute) {
 
-			if (PipelineObjectIntermediateStateDX11::ComputeShaderMap.find((*item)->Compute[iter].CName) == PipelineObjectIntermediateStateDX11::ComputeShaderMap.end()) {
-				PipelineObjectIntermediateStateDX11::ComputeShaderMap[(*item)->Compute[iter].CName] = ShaderCDX11::obj->LoadShader<ID3D11ComputeShader>(&BasePipeline::code[BasePipeline::COMPUTE], i.second->name, "latest", &i.second->ErrorMessage_s, MainDX11Objects::obj->dxDevice.Get(), MainDX11Objects::obj->dxIL.GetAddressOf());
+			if (PipelineObjectIntermediateStateDX12::ComputeShaderMap.find((*item)->Compute[iter].CName) == PipelineObjectIntermediateStateDX12::ComputeShaderMap.end()) {
+				PipelineObjectIntermediateStateDX12::ComputeShaderMap[(*item)->Compute[iter].CName] = ShaderCDX12::CompileShader(&BasePipeline::code[BasePipeline::COMPUTE], i.second->name, SHADER_PREFIX_D3D12::CS_PREFIX_D3D12, &i.second->ErrorMessage_s);
 				SetErrorShowIfHasError(*i.second, Pobj.second);
 			}
-			(*item)->Compute[iter].CDat = PipelineObjectIntermediateStateDX11::ComputeShaderMap[(*item)->Compute[iter].CName].Get();
+			(*item)->Compute[iter].CDat = PipelineObjectIntermediateStateDX12::ComputeShaderMap[(*item)->Compute[iter].CName];
 
 
 			iter++;
 		}
 
+		
+
+		(*item)->defaultGraphicsPipelineStateDesc = {};
+		(*item)->defaultGraphicsPipelineStateDesc.NodeMask = 0;
+		(*item)->defaultGraphicsPipelineStateDesc.pRootSignature = MainDX12Objects::obj->defaultRootSig.Get();
+		(*item)->defaultGraphicsPipelineStateDesc.InputLayout = MainDX12Objects::obj->dxIL;
+		(*item)->defaultGraphicsPipelineStateDesc.BlendState = MainDX12Objects::obj->MakeBlend((*item)->PObj->Vertex.BlendToMake);;
+		(*item)->defaultGraphicsPipelineStateDesc.DepthStencilState = MainDX12Objects::obj->MakeDepthStencil((*item)->PObj->Vertex.StencilToMake);
+		(*item)->defaultGraphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_R32_TYPELESS;
+		//MainDX12Objects::obj->defaultGraphicsPipelineStateDesc.DS = NULL;
+		//MainDX12Objects::obj->defaultGraphicsPipelineStateDesc.HS = NULL;
+		(*item)->defaultGraphicsPipelineStateDesc.NumRenderTargets = 0;
+		(*item)->defaultGraphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		(*item)->defaultGraphicsPipelineStateDesc.PS = *(*item)->PDat;
+		(*item)->defaultGraphicsPipelineStateDesc.RasterizerState = MainDX12Objects::obj->MakeRaster((*item)->PObj->Vertex.RasterToMake);
+		(*item)->defaultGraphicsPipelineStateDesc.RTVFormats = DXGI_FORMAT_R8G8B8A8_UNORM;
+		//MainDX12Objects::obj->defaultGraphicsPipelineStateDesc.StreamOutput = NULL;
+		(*item)->defaultGraphicsPipelineStateDesc.VS = *(*item)->VDat;
+
+		(*item)->PrepComputeShader();
+		//MainDX12Objects::obj->defaultComputePipelineStateDesc.CachedPSO = NULL;		
+#ifdef DEBUG
+		(*item)->defaultGraphicsPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG;
+		(*item)->PrepComputeShader();
+#else
+		MainDX12Objects::obj->defaultGraphicsPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+#endif 
+
+		PrefillCommandList(item);
+
 		if ((*item)->PObj->On == true) {//Not needed if statment
 			(*item)->ToRunLogic = [&]() {
-				RunLogic(&MainDX11Objects::obj->CompiledCode[MainDX11Objects::obj->CompiledCode.size()-1]);
+				RunLogic(&MainDX12Objects::obj->CompiledCodeV[MainDX12Objects::obj->CompiledCodeV.size()-1]);
 			};
 		}
 		else {
 			delete itemP;
 			return -1;
 		}
-		MainDX11Objects::obj->CompiledCode.push_back(itemP);
+		MainDX12Objects::obj->CompiledCodeV.push_back(itemP);
 	}
 
 	template<class T> 
@@ -931,9 +1151,9 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		map.clear();
 	}
 	void ClearShaderCache() {
-		ClearShaderMap(PipelineObjectIntermediateStateDX11::PixelShaderMap);
-		ClearShaderMap(PipelineObjectIntermediateStateDX11::VertexShaderMap);
-		ClearShaderMap(PipelineObjectIntermediateStateDX11::ComputeShaderMap);
+		ClearShaderMap(PipelineObjectIntermediateStateDX12::PixelShaderMap);
+		ClearShaderMap(PipelineObjectIntermediateStateDX12::VertexShaderMap);
+		ClearShaderMap(PipelineObjectIntermediateStateDX12::ComputeShaderMap);
 	}
 
 	void GenRTVFromExistingMap() {
@@ -943,7 +1163,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		RTVData.clear();
 
 		for (auto& i : RTV_DEPTH::RTV) {
-			RTVData[i.first] = new RTVData_DX11(i.second);
+			RTVData[i.first] = new RTVData_DX12(i.second);
 		}
 	}
 	void GenDEPTHFromExistingMap() {
@@ -953,7 +1173,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		DEPTHData.clear();
 
 		for (auto& i : RTV_DEPTH::DEPTH) {
-			DEPTHData[i.first] = new DEPTHData_DX11(i.second);
+			DEPTHData[i.first] = new DEPTHData_DX12(i.second);
 		}
 	}
 
@@ -1022,7 +1242,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepthAndResizeTex(); };
 		RtvAndDepthBlock::SizeOfRTV = [&]() {return SizeOfRTV();};
 			
-		MainDX11Objects::obj->CompiledCode.clear();
+		MainDX11Objects::obj->CompiledCodeV.clear();
 
 		ClearShaderCache();
 		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
@@ -1043,7 +1263,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		GenDEPTHFromExistingMap();
 
 		MapTools::CheckIfSelectedExists(RTV_DEPTH::RTV, &PipelineObj::SelectedFinalRTV);
-		PipelineObjectIntermediateStateDX11::SelectedFinalRTV = RTVData[PipelineObj::SelectedFinalRTV]->t.Get();
+		PipelineObjectIntermediateStateDX12::SelectedFinalRTV = RTVData[PipelineObj::SelectedFinalRTV]->t.Get();
 		//This was done to not add to ref counter since I acctually don't want to unknowingly not delete the resource -- I delete at 2 specific points known in time
 
 		for (const auto& i : OrderedPipelineState->P) { //loop through all ordered pipeline objects
@@ -1051,11 +1271,31 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 			CompileNewPipelineObject(i);
 
 		}
+	}
 
+	void PreBuildLogic() {
+
+		MainDX12Objects::obj->descHeapSamp.NumDescriptors = RegisterMaps::S_R.size() - RegisterMaps::INITIAL_SAMP;
+
+		MainDX12Objects::obj->descHeapConSrvUav.NumDescriptors =
+		RegisterMaps::SRV_R.size() - RegisterMaps::INITIAL_SRV +
+		RegisterMaps::UAV_R.size() - RegisterMaps::INITIAL_UAV +
+		RegisterMaps::CB_R.size() - RegisterMaps::INITIAL_CB;
+		MainDX12Objects::obj->BlockedOffSetForSrvHeapStart = 0;
+		MainDX12Objects::obj->BlockedOffSetForConHeapStart = MainDX12Objects::obj->m_SRV_CON_UAV_IS * (RegisterMaps::SRV_R.size() - RegisterMaps::INITIAL_SRV);
+		MainDX12Objects::obj->BlockedOffSetForUavHeapStart = MainDX12Objects::obj->BlockedOffSetForConHeapStart + MainDX12Objects::obj->m_SRV_CON_UAV_IS * (RegisterMaps::CB_R.size() - RegisterMaps::INITIAL_CB);
+
+		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&MainDX12Objects::obj->descHeapSamp, __uuidof(MainDX12Objects::obj->HeapSamp), (void**)MainDX12Objects::obj->HeapSamp.GetAddressOf());
+		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&MainDX12Objects::obj->descHeapSamp, __uuidof(MainDX12Objects::obj->HeapConSrvUav), (void**)MainDX12Objects::obj->HeapConSrvUav.GetAddressOf());
+
+		
 
 	}
 
 };
+
+
+#endif
 
 
 #endif

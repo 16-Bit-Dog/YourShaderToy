@@ -307,55 +307,19 @@ struct StructObjectToRendererDX11 : StructObjectToRenderer_Base{
 
 		ReferToData = data->vars; //copy
 
-		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size()  + ReferToData.FT.size();
-		int memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
-		int memSizePost = memSize;
-		while (memSizePost % 16 != 0) memSizePost += 4;
+		int memSizePost;
+		int memSize;
+		float* Data;
+		
+		CalculateMemoryOrganization(&Data, memSize, memSizePost);
 
-		float* Data = (float*)malloc(memSize);
-
-		typesInOrder.resize(ElementCount);
-		typesInOrderName.resize(ElementCount);
-		//typesInOrderNameRW.resize(ElementCount);
-
-		int offset = 0;
-		for (int i = 0; i < ReferToData.IT.size(); i++) {
-			typesInOrder[i + offset] = INT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.IT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.IT[i].val); //stick raw bytes as float into Data
-		}
-		offset += ReferToData.IT.size();
-		for (int i = 0; i < ReferToData.UT.size(); i++) {
-			typesInOrder[i + offset] = UINT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.UT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = *reinterpret_cast<float*>(&ReferToData.UT[i].val); //stick raw bytes as float into Data
-		}
-		offset += ReferToData.UT.size();
-		for (int i = 0; i < ReferToData.FT.size(); i++) {
-			typesInOrder[i + offset] = FLOAT_OBJ;
-			typesInOrderName[i + offset] = ReferToData.FT[i].n;
-			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
-			Data[i + offset] = (ReferToData.FT[i].val);
-		}
-
-
-
-
+		HasRW = data->ReadWrite;
 		D3D11_BUFFER_DESC bufDesc;
 		ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-		bufDesc.ByteWidth = memSizePost;
-		
+
 		D3D11_SUBRESOURCE_DATA defaultResourceData; //default data
 		defaultResourceData.pSysMem = Data;
 
-		MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
-
-		
 		if (data->ReadWrite) {
 			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
 			ZeroMemory(&SRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
@@ -373,7 +337,6 @@ struct StructObjectToRendererDX11 : StructObjectToRenderer_Base{
 			UAVDesc.Buffer.FirstElement = 0;
 			UAVDesc.Buffer.NumElements = 1; //TODO: check if it loads the struct correctly
 
-			ZeroMemory(&bufDesc, sizeof(D3D11_BUFFER_DESC));
 			bufDesc.Usage = D3D11_USAGE_DEFAULT;
 			bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 			bufDesc.CPUAccessFlags = 0;
@@ -386,8 +349,18 @@ struct StructObjectToRendererDX11 : StructObjectToRenderer_Base{
 			MainDX11Objects::obj->dxDevice->CreateUnorderedAccessView(uavB.Get(), &UAVDesc, &uav);
 			MainDX11Objects::obj->dxDevice->CreateShaderResourceView(uavB.Get(), &SRVDesc, &srv);
 
-			HasRW = data->ReadWrite;
 	
+		}
+		else {
+
+			bufDesc.Usage = D3D11_USAGE_DEFAULT;
+			bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufDesc.CPUAccessFlags = 0;
+			bufDesc.ByteWidth = memSizePost;
+
+
+			MainDX11Objects::obj->dxDevice->CreateBuffer(&bufDesc, &defaultResourceData, &con);
+
 		}
 
 		delete Data;
@@ -913,14 +886,14 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 		if ((*item)->PObj->On == true) {//Not needed if statment
 			(*item)->ToRunLogic = [&]() {
-				RunLogic(&MainDX11Objects::obj->CompiledCode[MainDX11Objects::obj->CompiledCode.size()-1]);
+				RunLogic(&MainDX11Objects::obj->CompiledCodeV[MainDX11Objects::obj->CompiledCodeV.size()-1]);
 			};
 		}
 		else {
 			delete itemP;
 			return -1;
 		}
-		MainDX11Objects::obj->CompiledCode.push_back(itemP);
+		MainDX11Objects::obj->CompiledCodeV.push_back(itemP);
 	}
 
 	template<class T> 
@@ -1022,7 +995,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		RtvAndDepthBlock::MakeRTVAndDepth = [&]() {MakeRTVAndDepthAndResizeTex(); };
 		RtvAndDepthBlock::SizeOfRTV = [&]() {return SizeOfRTV();};
 			
-		MainDX11Objects::obj->CompiledCode.clear();
+		MainDX11Objects::obj->CompiledCodeV.clear();
 
 		ClearShaderCache();
 		//TODO, save code into format useable by human, if failed to compile skip and load err message into err section
@@ -1053,8 +1026,12 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 		}
 
 
+
 	}
 
+	void PreBuildLogic() {
+
+	}
 };
 
 

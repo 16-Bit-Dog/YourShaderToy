@@ -45,6 +45,9 @@ struct GLFW_Window_C {
 
 	inline static void CheckToRemakeAndLaunchRenderer();
 
+	inline static void RunD3D12RendererLaunchLogic();
+	inline static void RunD3D11RendererLaunchLogic();
+
 	inline static int Width = 0;
 	inline static int Height = 0;
 
@@ -86,7 +89,7 @@ struct GLFW_Window_C {
 
 	void CleanSwapChain();
 
-
+	
 	void WindowPreamble() {
 		glfwGetCursorPos(window, &MousePosX, &MousePosY);
 		glfwGetFramebufferSize(window, &Width, &Height);

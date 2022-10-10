@@ -5,16 +5,11 @@
 #include <DX11H.h>
 #include "FileManagerResourceStruct.h"
 #include "D3D11ResourceObjects.h"
+#include "D3D12ResourceObjects.h"
 
-//#ifdef FILE_MANAGER_STRUCTS
-//void SetFileManagerRenderable() {
-//	RendererFileM::SET_RENDERABLE(DXM);
-//}
-//#endif
 
 void SetDX11Renderer() {
-	//if (Renderable::DXM != nullptr) Renderable::DXM = nullptr;
-
+	
 	Renderable::DXM = MainDX11Objects::obj;
 	
 	ResourceObjectBaseDX11::obj = new ResourceObjectBaseDX11();
@@ -29,18 +24,20 @@ void CleanRenderer() {
 		Renderable::DXM->CleanRendererState();
 	}
 }
+
+#ifndef D3D12_OFF
+
 void SetDX12Renderer() {
-	//if (Renderable::DXM != nullptr) delete Renderable::DXM;
 	
 	Renderable::DXM = MainDX12Objects::obj;
 	
-	ResourceObjectBaseDX11::obj = new ResourceObjectBaseDX11();
-	ResourceObjectBaseDX11::obj->SetResourceObjectBaseDX11();
+	ResourceObjectBaseDX12::obj = new ResourceObjectBaseDX12();
+	ResourceObjectBaseDX12::obj->SetResourceObjectBaseDX12();
 
 	Renderable::DXM->RendererStartUpLogic();
-	//SetFileManagerRenderable();
-
+	
 }
+#endif
 
 
 #endif

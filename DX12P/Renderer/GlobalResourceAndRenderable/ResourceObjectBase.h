@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <cinttypes>
 #include <set>
+#include <string>
 #include "Type_Enum.h"
 
 struct VertexShaderPipeline;
@@ -153,7 +154,13 @@ struct TypeStorageMass {
 	//	std::vector< MatrixTypeAndName_c > MT;
 };
 
+
 struct RegisterMaps {
+	const static int INITIAL_UAV = 9;
+	const static int INITIAL_SRV = 9;
+	const static int INITIAL_CB = 8;
+	const static int INITIAL_SAMP = 2;
+
 	inline static std::set<int> UAV_R{0,1,2,3,4,5,6,7};
 	inline static std::set<int> SRV_R{0,1,2,3,4,5,6,7};
 	inline static std::set<int> CB_R{ 0,1,2,3,4,5,6 }; //for default matrixes
@@ -300,6 +307,41 @@ struct StructObjectToRenderer_Base : RegisterMaps {
 
 	bool HasRW = false;
 
+	void CalculateMemoryOrganization(float** Data, int& memSize, int& memSizePost) {
+		int ElementCount = ReferToData.IT.size() + ReferToData.UT.size() + ReferToData.FT.size();
+		memSize = ReferToData.IT.size() * sizeof(int32_t) + ReferToData.UT.size() * sizeof(uint32_t) + ReferToData.FT.size() * sizeof(float);
+		memSizePost = memSize;
+		while (memSizePost % 16 != 0) memSizePost += 4;
+
+		(*Data) = (float*)malloc(memSize);
+
+		typesInOrder.resize(ElementCount);
+		typesInOrderName.resize(ElementCount);
+		//typesInOrderNameRW.resize(ElementCount);
+
+		int offset = 0;
+		for (int i = 0; i < ReferToData.IT.size(); i++) {
+			typesInOrder[i + offset] = INT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.IT[i].n;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			(*Data)[i + offset] = *reinterpret_cast<float*>(&ReferToData.IT[i].val); //stick raw bytes as float into Data
+		}
+		offset += ReferToData.IT.size();
+		for (int i = 0; i < ReferToData.UT.size(); i++) {
+			typesInOrder[i + offset] = UINT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.UT[i].n;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			(*Data)[i + offset] = *reinterpret_cast<float*>(&ReferToData.UT[i].val); //stick raw bytes as float into Data
+		}
+		offset += ReferToData.UT.size();
+		for (int i = 0; i < ReferToData.FT.size(); i++) {
+			typesInOrder[i + offset] = FLOAT_OBJ;
+			typesInOrderName[i + offset] = ReferToData.FT[i].n;
+			//typesInOrderNameRW[i + offset] = ReferToData.IT[i].nRW;
+			(*Data)[i + offset] = (ReferToData.FT[i].val);
+		}
+	}
+
 	StructObjectToRenderer_Base() {
 
 		AddUAVNum();
@@ -382,9 +424,12 @@ struct ResourceObjectBase {
 	virtual void LoadConstantFromData(BuiltConstant_c* bI) = 0;
 	virtual void LoadPredefinedFromData(BuiltPredefined_c* bI) = 0;
 	virtual void UpdatePredefinedFromData(BuiltPredefined_c* bI) = 0;
-
+	
 	virtual void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) = 0;
 	
+	virtual void PreBuildLogic() = 0;
+
+
 	~ResourceObjectBase() {
 		//wrapClearAll(true);
 	}

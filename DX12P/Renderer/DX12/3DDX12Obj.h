@@ -39,7 +39,7 @@ using namespace Microsoft::WRL;
 struct DX12M3DR : M3DR{
 
 
-	void CreateCBufDepth1(ComPtr<ID3D12Resource>& resource, D3D12_CPU_DESCRIPTOR_HANDLE& resourceCpuDesc, int size) {
+	static void CreateCBufDepth1(ComPtr<ID3D12Resource>& resource, D3D12_CPU_DESCRIPTOR_HANDLE& resourceCpuDesc, int size, ComPtr<ID3D12Device>& dxDevice) {
 
 		D3D12_CLEAR_VALUE CV = {};
 		CV.Format = DXGI_FORMAT_UNKNOWN;
@@ -116,13 +116,6 @@ struct DX12M3DR : M3DR{
 			defaultResourceData.RowPitch = mdnp.width * mdnp.channels;
 			defaultResourceData.SlicePitch = mdnp.height * mdnp.width * mdnp.channels;
 
-			/*
-			std::vector<uint8_t> a;
-			a.resize(defaultResourceData.SysMemSlicePitch);
-			memcpy(&a[0], &mdnp.d[0], defaultResourceData.SysMemSlicePitch);
-			int b = a[defaultResourceData.SysMemSlicePitch-1];
-			*/
-
 			D3D12_RESOURCE_DESC gpuTexDesc;	
 			ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
 			gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -133,7 +126,7 @@ struct DX12M3DR : M3DR{
 		
 			gpuTexDesc.MipLevels = 1;
 			gpuTexDesc.DepthOrArraySize = 1;
-			//gpuTexDesc.SampleDesc = 
+
 			gpuTexDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 			gpuTexDesc.SampleDesc.Count = 1;
 			gpuTexDesc.SampleDesc.Quality = 0;
@@ -145,6 +138,11 @@ struct DX12M3DR : M3DR{
 			UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
 			UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 			
+			D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+			ZeroMemory(&SRVDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+			SRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
+			SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
 			D3D12_HEAP_PROPERTIES heapP;
 			heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
 			heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
@@ -172,7 +170,6 @@ struct DX12M3DR : M3DR{
 				&gpuTexDesc,
 				Rstate,
 				&CV,
-				//&defaultResourceData,
 				__uuidof(TexR[num]), &TexR[num]);
 			
 			
@@ -189,28 +186,9 @@ struct DX12M3DR : M3DR{
 				defaultResourceData.RowPitch,
 				defaultResourceData.SlicePitch);
 
-			/*
-			dxDevice->CreateCommittedResource(
-					&gpuTexDesc,
-					&defaultResourceData,
-					&TexR[num]);
-			
-  [in]            const D3D12_HEAP_PROPERTIES *pHeapProperties,
-  [in]            D3D12_HEAP_FLAGS            HeapFlags,
-  [in]            const D3D12_RESOURCE_DESC   *pDesc,
-  [in]            D3D12_RESOURCE_STATES       InitialResourceState,
-  [in, optional]  const D3D12_CLEAR_VALUE     *pOptimizedClearValue,
-  [in]            REFIID                      riidResource,
-  [out, optional] void                        **ppvResource
+			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), NULL, &UAVDesc, TexUAV[num]);
 
-			*/
-
-			dxDevice->CreateUnorderedAccessView(TexR[num].Get(), nullptr, &UAVDesc, TexUAV[num]);
-
-			dxDevice->CreateShaderResourceView(TexR[num].Get(), nullptr, TexSRV[num]);
-
-			//SafeRelease(TexR[num]);
-			//delete[] defaultResourceData.pSysMem;
+			dxDevice->CreateShaderResourceView(TexR[num].Get(), &SRVDesc, TexSRV[num]);
 		}
 	
 	};
@@ -289,7 +267,7 @@ struct DX12M3DR : M3DR{
 
 		int size = sizeof(XMFLOAT4X4) * BoneDataTLMA.size();
 
-		CreateCBufDepth1(ArmatureCBuf, ArmatureCBufCpuDesc, size);
+		CreateCBufDepth1(ArmatureCBuf, ArmatureCBufCpuDesc, size, dxDevice);
 		
 		
 		if (BoneDataTLMA.size() != 0) {
@@ -313,7 +291,7 @@ struct DX12M3DR : M3DR{
 	}
 	void DefaultMatBuf(int i) {
 
-		CreateCBufDepth1(Mat[i].MatDataBuf, Mat[i].CpuDesc, sizeof(MaterialData));
+		CreateCBufDepth1(Mat[i].MatDataBuf, Mat[i].CpuDesc, sizeof(MaterialData), dxDevice);
 
 		D3D12_BOX box = {};
 		box.top = 0;
@@ -425,7 +403,7 @@ struct DX12M3DR : M3DR{
 		}
 	}
 	void DefaultCBuf() {
-		CreateCBufDepth1(CBuf, CBufCpuDesc, sizeof(MaterialData)); 
+		CreateCBufDepth1(CBuf, CBufCpuDesc, sizeof(MaterialData), dxDevice); 
 		
 		D3D12_BOX box = {};
 		box.top = 0;

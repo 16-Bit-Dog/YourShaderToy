@@ -177,7 +177,10 @@ struct StencilTypeMapMadeData_hash
 	}
 };
 
-
+struct RATIONAL{
+	uint32_t Numerator = 0;
+	uint32_t Denominator = 0;
+};
 
 struct Renderable {
 
@@ -204,7 +207,7 @@ struct Renderable {
 
 	bool bFullScreen = false;
 
-	DXGI_RATIONAL refreshRateStatic;
+	RATIONAL refreshRateStatic {};
 
 	bool ClearRTV = true;
 	
@@ -245,4 +248,6 @@ struct Renderable {
 	virtual void RendererStartUpLogic() = 0;
 
 	virtual void CleanRendererState() = 0;//TODO on all renderers
+
 };
+

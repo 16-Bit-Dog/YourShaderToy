@@ -216,8 +216,9 @@ struct ShaderCDX11 {
         HRESULT hr = D3DCompile2(shaderInfo->c_str(), shaderInfo->length(), nullptr,
             nullptr, nullptr, entryPoint.c_str(),
             profile.c_str(), flags, 0, 0, 0, 0, &pShaderBlob, &pErrorBlob);
-        OutputDebugStringA("\n");
+        
         if (pErrorBlob != nullptr) {
+            OutputDebugStringA("\n");
             OutputDebugStringA((const char*)pErrorBlob->GetBufferPointer());
             (*Error) = (const char*)pErrorBlob->GetBufferPointer();
         }

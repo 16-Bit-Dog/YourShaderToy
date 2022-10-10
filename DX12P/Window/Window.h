@@ -144,28 +144,44 @@ int GLFW_Window_C::RunWindowLogic() {
 	return -1;
 }
 
+#ifndef D3D12_OFF
+
+void GLFW_Window_C::RunD3D12RendererLaunchLogic() {
+	CleanRenderer();
+
+	//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
+	GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
+	SetDX12Renderer();
+	MainWin->FillDXMWithNewGLFW();
+	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
+
+}
+#endif
+
+void GLFW_Window_C::RunD3D11RendererLaunchLogic() {
+	CleanRenderer();
+
+	//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
+	GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
+	SetDX11Renderer();
+	MainWin->FillDXMWithNewGLFW();
+	MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
+
+}
 void GLFW_Window_C::CheckToRemakeAndLaunchRenderer() {
 	if (GLFW_Window_C::LastFrameOfRendererNumber != GLFW_Window_C::RendererNumber) {
 		GLFW_Window_C::LastFrameOfRendererNumber = GLFW_Window_C::RendererNumber;
 		MASTER_IM_GUI::obj->RendererMade = false;
+
+
 		if (GLFW_Window_C::LastFrameOfRendererNumber == 1) {
-			CleanRenderer();
+#ifndef D3D12_OFF
 
-			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
-			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
-			SetDX12Renderer();
-			MainWin->FillDXMWithNewGLFW();
-			MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
-
+			RunD3D12RendererLaunchLogic();
+#endif
 		}
 		else {
-			CleanRenderer();
-
-			//glfwDestroyWindow(GLFW_Window_C::MainWin->window);
-			GLFW_Window_C::MainWin->window = glfwCreateWindow(START_WIDTH, START_HEIGHT, "MAIN_CONTEXT", NULL, NULL);
-			SetDX11Renderer();
-			MainWin->FillDXMWithNewGLFW();
-			MASTER_IM_GUI::obj->SetAndCreateimGUIContext(MainWin->window);
+			RunD3D11RendererLaunchLogic();
 		}
 	}
 }

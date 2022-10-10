@@ -53,6 +53,8 @@ struct PipelineObjectIntermediateStateDX11 {
 
 
 struct MainDX11Objects : Renderable{
+    
+
 
     const UINT BUFCOUNT = 2;
 
@@ -88,7 +90,7 @@ struct MainDX11Objects : Renderable{
 
     CameraManagerD3D11* CAM_S;
 
-    std::vector<PipelineObjectIntermediateStateDX11*> CompiledCode; //use this ordered to pass through code states
+    std::vector<PipelineObjectIntermediateStateDX11*> CompiledCodeV; //use this ordered to pass through code states
 
     inline static MainDX11Objects* obj;
 
@@ -229,7 +231,7 @@ struct MainDX11Objects : Renderable{
         TestForOptimize.SetNull();
 
         RtvAndDepthBlock::ClearRTVAndDepth();
-        for (const auto& i : CompiledCode) {
+        for (const auto& i : CompiledCodeV) {
             i->ToRunLogic();
         }
 
@@ -298,9 +300,15 @@ struct MainDX11Objects : Renderable{
         swapChainDescW.Scaling = DXGI_SCALING_NONE;
 
         swapChainDescF.Scaling = DXGI_MODE_SCALING_STRETCHED;
-        swapChainDescF.RefreshRate = refreshRateStatic;
+        
+        DXGI_RATIONAL tmpRational;
+        tmpRational.Numerator = refreshRateStatic.Numerator;
+        tmpRational.Denominator = refreshRateStatic.Denominator;
+
+        swapChainDescF.RefreshRate = tmpRational;
         swapChainDescF.Windowed = !bFullScreen;
         
+
         ID3D11Texture2D* backBuffer = nullptr;
 
         DestroySwapChainAssociate();
@@ -513,7 +521,7 @@ struct MainDX11Objects : Renderable{
         
 
 
-        CompiledCode.clear();
+        CompiledCodeV.clear();
 
 
     }
@@ -548,5 +556,7 @@ struct MainDX11Objects : Renderable{
 
         NewImGUIDat = false;
     }
+
+
 
 };

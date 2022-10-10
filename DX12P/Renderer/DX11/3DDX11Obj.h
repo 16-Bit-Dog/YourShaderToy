@@ -3,7 +3,6 @@
 #ifndef DX11OBJ_LOADER
 #define DX11OBJ_LOADER
 #define WIN32_LEAN_AND_MEAN
-using namespace Microsoft::WRL;
 // DirectX 11 & windows specific headers/lib.
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -33,6 +32,9 @@ using namespace Microsoft::WRL;
 
 
 #include "3DCommons/3DCommon.h"
+
+using namespace Microsoft::WRL;
+
 //#include "RenderableManager.h"
 
 //TODO: load texture with WCI loader

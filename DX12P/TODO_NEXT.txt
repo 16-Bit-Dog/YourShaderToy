@@ -1,4 +1,20 @@
-d3d12 texture loader support: TODO make ImguiD3D12 work properly
+
+
+pre allocate command lists func, and run through these lists with ToRunLogic binding RunLogic (clean when remake shaders)
+
+TODO: check my command allocator per commadn lsit logic
+
+- heap per model and model data 0-t7; everything else in 1 big table heap?
+- clearRTVandDepth not working as intended, add clear to these
+- load up defaultCommandList, make copy cmd list to run clear on all rtv and depth- make pipeline obj's
+make preload into command list run command - and just run over and over in RunLogic?!?!?
+- bind what I have so far and test before blocking up model 
+- test renderer
+
+fix mem preference from L1 to proper
+reuse heap ranges 
+
+
 
 
 RendererStartUpLogic makes d3d11 device of d3d12 on 11 in dx12

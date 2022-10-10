@@ -1,3 +1,6 @@
+#include "rendererDefines.h"
+#ifndef D3D12_OFF
+
 #pragma once
 //finally I will try to use com_ptr's
 
@@ -11,7 +14,132 @@
 
 using namespace DirectX;
 
+struct ResourceObjectBaseDX12;
+
+struct PipelineObjectIntermediateStateDX12 {
+
+    struct ComputeDataHolder {
+        std::string CName;
+        D3D12_SHADER_BYTECODE* CDat;
+        bool AutoSetBlockToWindowSize = false;
+        uint32_t DimX;
+        uint32_t DimY;
+        uint32_t DimZ;
+    };
+
+
+
+    inline static ID3D12Resource* SelectedFinalRTV = nullptr;
+
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE*> VertexShaderMap;
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE*> PixelShaderMap;
+    inline static std::unordered_map<std::string, D3D12_SHADER_BYTECODE*> ComputeShaderMap;
+
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC defaultGraphicsPipelineStateDesc;
+    std::vector< D3D12_COMPUTE_PIPELINE_STATE_DESC > defaultComputePipelineStateDescV;
+    std::vector<ComPtr<ID3D12GraphicsCommandList>> cmdLists;
+
+    uint64_t RTV_Num = 0;
+    uint64_t DEPTH_Num = 0;
+
+    std::string VName = "";
+    D3D12_SHADER_BYTECODE* VDat = nullptr;
+
+    std::string PName = "";
+    D3D12_SHADER_BYTECODE* PDat = nullptr;
+
+    std::vector<ComputeDataHolder> Compute;
+
+    void setCSize(const int& size) {
+        Compute.resize(size);
+    }
+
+    PipelineObj* PObj;
+    //TODO: add compute shader stuff -- std::vector 
+    std::function<void()> ToRunLogic; //loops through code logic to run
+
+
+    void PrepComputeShader() {
+        defaultComputePipelineStateDescV.resize(Compute.size());
+        for (int i = 0; i < defaultComputePipelineStateDescV.size(); i++) {
+            defaultComputePipelineStateDescV[i] = {};
+            defaultComputePipelineStateDescV[i].NodeMask = 0;
+            defaultComputePipelineStateDescV[i].pRootSignature = MainDX12Objects::obj->defaultRootSig.Get();
+            defaultComputePipelineStateDescV[i].CS = *Compute[i].CDat;
+            defaultComputePipelineStateDescV[i].Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+        }
+    }
+    void SetToDebug() {
+
+        for (int i = 0; i < defaultComputePipelineStateDescV.size(); i++) {
+            defaultComputePipelineStateDescV[i].Flags = D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG;
+        }
+
+    }
+};
+
 struct MainDX12Objects : Renderable{
+
+    D3D12_BLEND_DESC MakeBlend(BlendTypeMapMadeData& BlendToMake) {
+        D3D12_BLEND_DESC blend = {};
+
+        blend.AlphaToCoverageEnable = BlendToMake.AlphaToCoverageEnable;
+        blend.IndependentBlendEnable = BlendToMake.IndependentBlendEnable;
+        blend.RenderTarget[0].BlendEnable = BlendToMake.BlendEnable;
+        blend.RenderTarget[0].BlendOp = D3D12_BLEND_OP(BlendToMake.BlendOp);
+        blend.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP(BlendToMake.BlendOpAlpha);
+        blend.RenderTarget[0].DestBlend = D3D12_BLEND(BlendToMake.DestBlend);
+        blend.RenderTarget[0].DestBlendAlpha = D3D12_BLEND(BlendToMake.DestBlendAlpha);
+        blend.RenderTarget[0].RenderTargetWriteMask = BlendToMake.RenderTargetWriteMask;
+        blend.RenderTarget[0].SrcBlend = D3D12_BLEND(BlendToMake.SrcBlend);
+        blend.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND(BlendToMake.SrcBlendAlpha);
+
+        return blend;
+    }
+
+    D3D12_DEPTH_STENCIL_DESC MakeDepthStencil(StencilTypeMapMadeData& StencilToMake) {
+            D3D12_DEPTH_STENCIL_DESC depthStencilStateDesc;
+            ZeroMemory(&depthStencilStateDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+
+            depthStencilStateDesc.DepthEnable = StencilToMake.EnableDepth; //this is a bad idea
+            depthStencilStateDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK(StencilToMake.DepthWriteMask);
+            depthStencilStateDesc.DepthFunc = D3D12_COMPARISON_FUNC(StencilToMake.DepthComp);
+            depthStencilStateDesc.StencilEnable = StencilToMake.EnableStencil; //for now don't want it TODO: add stencil enable for faces properly later
+
+            depthStencilStateDesc.StencilReadMask = StencilToMake.WhereToReadFromStencil;
+            depthStencilStateDesc.StencilWriteMask = StencilToMake.WhereToWriteToStencil;
+            // Stencil operations if pixel is front tri-facing.
+
+            depthStencilStateDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP(StencilToMake.FrontFaceStencilFailOp);
+            depthStencilStateDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP(StencilToMake.FrontFaceStencilDepthFailOp);
+            depthStencilStateDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP(StencilToMake.FrontFaceStencilPassOp);
+            depthStencilStateDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC(StencilToMake.FrontTriComp);
+
+            // Stencil operations if pixel is back tri-facing.
+            depthStencilStateDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP(StencilToMake.BackFaceStencilFailOp);
+            depthStencilStateDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP(StencilToMake.BackFaceStencilDepthFailOp);
+            depthStencilStateDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP(StencilToMake.BackFaceStencilPassOp);
+            depthStencilStateDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC(StencilToMake.BackTriComp);
+
+        }
+
+    D3D12_RASTERIZER_DESC MakeRaster(RasterTypeMapMadeData& RasterToMake) {
+
+        D3D12_RASTERIZER_DESC rasterizerDesc = {};
+
+            rasterizerDesc.AntialiasedLineEnable = RasterToMake.AAL;
+            rasterizerDesc.CullMode = D3D12_CULL_MODE(RasterToMake.cull);
+            rasterizerDesc.DepthBias = 0.0f;
+            rasterizerDesc.DepthBiasClamp = 0.0f;
+            rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+            rasterizerDesc.DepthClipEnable = false;
+            rasterizerDesc.FillMode = D3D12_FILL_MODE(RasterToMake.ToFill + 2);
+            rasterizerDesc.FrontCounterClockwise = FALSE;
+            rasterizerDesc.MultisampleEnable = FALSE;
+
+            return rasterizerDesc;
+    }
 
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
     
@@ -53,6 +181,12 @@ struct MainDX12Objects : Renderable{
     ComPtr<ID3D12Debug> debugLayer;
 #endif // DEBUG
 
+    UINT m_RTV_IS;
+    UINT m_SRV_CON_UAV_IS;
+    UINT m_DSV_IS;
+    UINT m_SAMP_IS;
+
+
     //for now heavily learned from MSDN docs
     HANDLE m_swapChainWaitableObject = NULL;
     D3D12_VIEWPORT m_viewport;
@@ -62,14 +196,87 @@ struct MainDX12Objects : Renderable{
     ComPtr<IDXGISwapChain3> m_swapChain; //index 0 is main
     FrameContext FrameC[FrameCount];
     ComPtr<ID3D12CommandQueue> m_commandQueue;
-    ComPtr<ID3D12RootSignature> m_rootSignature;
-    ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-    ComPtr<ID3D12PipelineState> m_pipelineState;
-    ComPtr<ID3D12GraphicsCommandList> m_commandList;
-    UINT m_RTV_IS;
-    UINT m_SRV_IS;
-    UINT m_DSV_IS;
-    UINT m_SAMP_IS;
+
+    
+
+    D3D12_DESCRIPTOR_HEAP_DESC descHeapConSrvUav;
+    ComPtr<ID3D12DescriptorHeap> HeapConSrvUav;
+    int BlockedOffSetForConHeapStart = 0;
+    int BlockedOffSetForSrvHeapStart = 0;
+    int BlockedOffSetForUavHeapStart = 0;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE ResolveConBufLocation(int registerNum) {
+        D3D12_CPU_DESCRIPTOR_HANDLE tmp;
+        tmp.ptr = HeapConSrvUav->GetCPUDescriptorHandleForHeapStart().ptr + BlockedOffSetForConHeapStart + m_SRV_CON_UAV_IS * (registerNum - RegisterMaps::INITIAL_CB);
+        return tmp;
+    }
+    D3D12_CPU_DESCRIPTOR_HANDLE ResolveSrvBufLocation(int registerNum) {
+        D3D12_CPU_DESCRIPTOR_HANDLE tmp;
+        tmp.ptr = HeapConSrvUav->GetCPUDescriptorHandleForHeapStart().ptr + BlockedOffSetForSrvHeapStart + m_SRV_CON_UAV_IS * (registerNum - RegisterMaps::INITIAL_SRV);
+        return tmp;
+    }
+    D3D12_CPU_DESCRIPTOR_HANDLE ResolveUavBufLocation(int registerNum) {
+        D3D12_CPU_DESCRIPTOR_HANDLE tmp;
+        tmp.ptr = HeapConSrvUav->GetCPUDescriptorHandleForHeapStart().ptr + BlockedOffSetForUavHeapStart + m_SRV_CON_UAV_IS * (registerNum - RegisterMaps::INITIAL_UAV);
+        return tmp;
+    }
+
+    D3D12_DESCRIPTOR_HEAP_DESC descHeapSamp;
+    int BlockedOffSetForSampHeapStart = 0;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE ResolveSampBufLocation(int registerNum) {
+        D3D12_CPU_DESCRIPTOR_HANDLE tmp;
+        tmp.ptr = HeapConSrvUav->GetCPUDescriptorHandleForHeapStart().ptr + BlockedOffSetForSampHeapStart + m_SAMP_IS * (registerNum - RegisterMaps::INITIAL_SAMP);
+        return tmp;
+    }
+
+    ComPtr<ID3D12DescriptorHeap> HeapSamp;
+    
+    struct Heaps {
+        Heaps() {
+
+        }
+        std::map<int, void*> RTVHeapRef;
+        ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+        /*
+        std::map<int, void*> SRVHeapRef;
+        ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+        std::map<int, void*> UAVHeapRef;
+        ComPtr<ID3D12DescriptorHeap> m_uavHeap;
+        std::map<int, void*> CONHeapRef;
+        ComPtr<ID3D12DescriptorHeap> m_conHeap;
+        std::map<int, void*> SAMPHeapRef;
+        ComPtr<ID3D12DescriptorHeap> m_samHeap;
+        */
+    }Heaps;
+    
+    
+    enum {
+
+        SrvDescRange = 0,
+        UavDescRange,
+        ConDescRange,
+        SampDescRange,
+
+    };
+
+    enum {
+
+        SrvUavConRootParam = 0,
+        SampRootParam = 0,
+
+    };
+
+    std::vector<D3D12_DESCRIPTOR_RANGE> defaultDescRangeBlock;
+    std::vector<D3D12_ROOT_DESCRIPTOR_TABLE> defaultDescTable;
+    std::vector<D3D12_ROOT_PARAMETER> defaultRootParam;
+    D3D12_ROOT_SIGNATURE_DESC defaultRootSigDesc;
+    ComPtr<ID3D12RootSignature> defaultRootSig;
+
+    std::vector< ComPtr<ID3D12PipelineState> > defaultPipelineState;
+    std::vector < ComPtr<ID3D12PipelineState> > defaultComputePipelineState;
+    ComPtr<ID3D12GraphicsCommandList> defaultCommandList;//main command list
+    
 
 
     // App resources.
@@ -82,6 +289,8 @@ struct MainDX12Objects : Renderable{
     ComPtr<ID3D12Fence> m_fence;
     UINT64 m_lastFenceValue = 0;
     
+    std::vector<PipelineObjectIntermediateStateDX12*> CompiledCodeV; //use this ordered to pass through code states
+
 
 
     void ImGUIInit() override{
@@ -172,6 +381,13 @@ struct MainDX12Objects : Renderable{
     DXGI_SWAP_CHAIN_DESC1 swapChainDescW;
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainDescF;
 
+    void CreateCommandListWithCurrAllocator(ComPtr<ID3D12GraphicsCommandList>& gcl, int backBuffer /*use m_swapChain->GetCurrentBackBufferIndex(); but call once for no overhead*/) {
+        
+        ThrowFailed(dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[backBuffer].commandAllocator, NULL, IID_PPV_ARGS(&gcl)));
+
+        ThrowFailed(defaultCommandList->Close());
+    }
+
     void MakeNewWindowSwapChainAndAssociate(GLFWwindow* windowW, HWND sHwnd, int& sWidth, int& sHeight) override {
 
 
@@ -216,11 +432,11 @@ struct MainDX12Objects : Renderable{
             rtvHeapDesc.NumDescriptors = FrameCount;
             rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
             rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-            ThrowFailed(dxDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+            ThrowFailed(dxDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&Heaps.m_rtvHeap)));
         }
         // Create frame resources.
         {
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(Heaps.m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
             // Create a RTV for each frame.
             for (UINT n = 0; n < FrameCount; n++)
@@ -232,11 +448,11 @@ struct MainDX12Objects : Renderable{
             }
         }
         for (int i = 0; i < FrameCount; i++)
-        ThrowFailed(dxDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
+            ThrowFailed(dxDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
 
-        ThrowFailed(dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[0].commandAllocator, NULL, IID_PPV_ARGS(&m_commandList)));
+        ThrowFailed(dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[0].commandAllocator, NULL, IID_PPV_ARGS(&defaultCommandList)));
 
-        ThrowFailed(m_commandList->Close());
+        ThrowFailed(defaultCommandList->Close());
 
         ThrowFailed(dxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
            
@@ -261,52 +477,105 @@ struct MainDX12Objects : Renderable{
 
     void GetDescHandleIncrements() {
         m_RTV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        m_SRV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_SRV_CON_UAV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         m_DSV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
         m_SAMP_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
     }
+   
 
-    void SetupDX11DX12() {
-        /*
-        dx11obj = MainDX11Objects::obj;
+    void CleanRendererState() override {
 
-        UINT createDeviceFlags = 0; //D3D11_CREATE_DEVICE_BGRA_SUPPORT should also be here if need be
-#if _DEBUG
-        createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-        ComPtr<ID3D11Device> tmpD;
-        ComPtr<ID3D11DeviceContext> tmpDC;
-
-        ThrowFailed(D3D12CreateDevice(
-        dxDevice.Get(),
-        createDeviceFlags,
-        nullptr,
-        0,
-        reinterpret_cast<IUnknown**>(m_commandQueue.GetAddressOf()),
-        1,
-        0,
-        tmpD.GetAddressOf(),//dx11obj->dxDevice.GetAddressOf(),
-        tmpDC.GetAddressOf(),//dx11obj->dxDeviceContext.GetAddressOf(),
-        nullptr
-        ));
-
-    // Query the 11On12 device from the 11 device.
-        ThrowFailed(tmpD.As(&dx11obj->dxDevice));
-        ThrowFailed(tmpDC.As(&dx11obj->dxDeviceContext));
-        ThrowFailed(tmpD.As(&dx11OnDx12Device));
-
-        dx11obj->MakeAdapterAndFactory();
-        dx11obj->MakeAndSetCam();
-        */
     }
 
+    void defaultDescriptorTableRanges() {
+        defaultDescRangeBlock.resize(4);
+        defaultRootParam.resize(2);
+
+        defaultDescRangeBlock[SrvDescRange].BaseShaderRegister = RegisterMaps::INITIAL_SRV;
+        defaultDescRangeBlock[SrvDescRange].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        defaultDescRangeBlock[SrvDescRange].NumDescriptors = UINT_MAX;// MainDX12Objects::obj->Heaps.SRVHeapRef.size();
+        defaultDescRangeBlock[SrvDescRange].RegisterSpace = 0;
+        defaultDescRangeBlock[SrvDescRange].OffsetInDescriptorsFromTableStart = 0;
+
+        defaultDescRangeBlock[UavDescRange].BaseShaderRegister = RegisterMaps::INITIAL_UAV;
+        defaultDescRangeBlock[UavDescRange].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        defaultDescRangeBlock[UavDescRange].NumDescriptors = UINT_MAX;// MainDX12Objects::obj->Heaps.UAVHeapRef.size();
+        defaultDescRangeBlock[UavDescRange].RegisterSpace = 0;
+        defaultDescRangeBlock[UavDescRange].OffsetInDescriptorsFromTableStart = 0;
+
+        defaultDescRangeBlock[ConDescRange].BaseShaderRegister = RegisterMaps::INITIAL_CB;
+        defaultDescRangeBlock[ConDescRange].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        defaultDescRangeBlock[ConDescRange].NumDescriptors = UINT_MAX;;// MainDX12Objects::obj->Heaps.CONHeapRef.size();
+        defaultDescRangeBlock[ConDescRange].RegisterSpace = 0;
+        defaultDescRangeBlock[ConDescRange].OffsetInDescriptorsFromTableStart = 0;
+
+        defaultDescRangeBlock[SampDescRange].BaseShaderRegister = RegisterMaps::INITIAL_SAMP;
+        defaultDescRangeBlock[SampDescRange].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        defaultDescRangeBlock[SampDescRange].NumDescriptors = UINT_MAX;;// MainDX12Objects::obj->Heaps.SAMPHeapRef.size();
+        defaultDescRangeBlock[SampDescRange].RegisterSpace = 0;
+        defaultDescRangeBlock[SampDescRange].OffsetInDescriptorsFromTableStart = 0;
+
+
+        defaultDescTable[SrvUavConRootParam].NumDescriptorRanges = 3;
+        defaultDescTable[SrvUavConRootParam].pDescriptorRanges = defaultDescRangeBlock.data();
+
+
+        defaultDescTable[SampRootParam].NumDescriptorRanges = 1;
+        defaultDescTable[SampRootParam].pDescriptorRanges = &defaultDescRangeBlock.data()[SampDescRange];
+
+        defaultRootParam[SrvUavConRootParam].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        defaultRootParam[SrvUavConRootParam].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        defaultRootParam[SrvUavConRootParam].DescriptorTable = defaultDescTable[SrvUavConRootParam];
+
+        defaultRootParam[SampRootParam].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        defaultRootParam[SampRootParam].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        defaultRootParam[SampRootParam].DescriptorTable = defaultDescTable[SampRootParam];
+
+
+    }
+
+    void defaultRootSigConstruction() {
+        defaultRootSigDesc.NumStaticSamplers = 0;
+        defaultRootSigDesc.NumParameters = 2;
+        defaultRootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        defaultRootSigDesc.pParameters = defaultRootParam.data();
+
+        ComPtr<ID3DBlob> pOutBlob;
+        ComPtr<ID3DBlob> pErrorBlob;
+        ThrowFailed(D3D12SerializeRootSignature(&defaultRootSigDesc,
+            D3D_ROOT_SIGNATURE_VERSION_1_0, pOutBlob.GetAddressOf(),
+            pErrorBlob.GetAddressOf()));
+
+        ThrowFailed(dxDevice->CreateRootSignature(0, pOutBlob->GetBufferPointer(),
+            pOutBlob->GetBufferSize(), __uuidof(ID3D12RootSignature),
+            (void**)&defaultRootSig));
+
+        if (pErrorBlob != nullptr) {
+            OutputDebugStringA("\n");
+            OutputDebugStringA((const char*)pErrorBlob->GetBufferPointer());
+        }
+
+        descHeapConSrvUav.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        descHeapConSrvUav.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        descHeapConSrvUav.NodeMask = 0;
+        
+        descHeapSamp.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+        descHeapSamp.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        descHeapSamp.NodeMask = 0;
+
+        defaultCommandList->SetComputeRootSignature(defaultRootSig.Get());
+        defaultCommandList->SetGraphicsRootSignature(defaultRootSig.Get());
+        
+    }
+    
 	void RendererStartUpLogic() override{
         SetupRendererDebugLayer();
         SetupDXAdapterAndQueue();
         GetDescHandleIncrements();
-        SetupDX11DX12();
+
+        defaultDescriptorTableRanges();
+        defaultRootSigConstruction();
 
     }
 
@@ -346,28 +615,28 @@ struct MainDX12Objects : Renderable{
         barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
         barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        m_commandList->Reset(frameC->commandAllocator, NULL);
-        m_commandList->ResourceBarrier(1, &barrier);
+        defaultCommandList->Reset(frameC->commandAllocator, NULL);
+        defaultCommandList->ResourceBarrier(1, &barrier);
 
         // Render Dear ImGui graphics
         XMFLOAT4 clear_color = { 0.5,1,0,1 };
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        m_commandList->ClearRenderTargetView(m_renderTargets.rtvHandle[backBufferIdx], clear_color_with_alpha, 0, NULL);
-        m_commandList->OMSetRenderTargets(1, &m_renderTargets.rtvHandle[backBufferIdx], FALSE, nullptr);
-        m_commandList->SetDescriptorHeaps(1, ImGUIHeap.GetAddressOf());
+        defaultCommandList->ClearRenderTargetView(m_renderTargets.rtvHandle[backBufferIdx], clear_color_with_alpha, 0, NULL);
+        defaultCommandList->OMSetRenderTargets(1, &m_renderTargets.rtvHandle[backBufferIdx], FALSE, nullptr);
+        defaultCommandList->SetDescriptorHeaps(1, ImGUIHeap.GetAddressOf());
         
-        if(NewImGUIDat) ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
+        if(NewImGUIDat) ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), defaultCommandList.Get());
 
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-        m_commandList->ResourceBarrier(1, &barrier);
-        ThrowFailed(m_commandList->Close());
+        defaultCommandList->ResourceBarrier(1, &barrier);
+        ThrowFailed(defaultCommandList->Close());
 
-        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+        ID3D12CommandList* ppCommandLists[] = { defaultCommandList.Get() };
         m_commandQueue->ExecuteCommandLists(1, ppCommandLists);
 
         ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(NULL, m_commandList.Get());
+        ImGui::RenderPlatformWindowsDefault(NULL, defaultCommandList.Get());
 
         m_swapChain->Present(vsync, 0); // Present with vsync
         //g_pSwapChain->Present(0, 0); // Present without vsync
@@ -380,7 +649,8 @@ struct MainDX12Objects : Renderable{
         NewImGUIDat = false; 
     }
 
-    void CleanRendererState() override {
 
-    }
+    
 };
+
+#endif

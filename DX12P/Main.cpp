@@ -13,10 +13,12 @@ struct MainDX12Objects;
 struct GLFW_Window_C;
 struct AllWindowDrawLoop;
 
-
 void FillAllObjects() {
 
+#ifndef D3D12_OFF
 	MainDX12Objects::obj = new MainDX12Objects();
+#endif
+
 	MainDX11Objects::obj = new MainDX11Objects();
 	GLFW_Window_C::MainWin = new GLFW_Window_C();
 	MASTER_IM_GUI::obj = new MASTER_IM_GUI();
