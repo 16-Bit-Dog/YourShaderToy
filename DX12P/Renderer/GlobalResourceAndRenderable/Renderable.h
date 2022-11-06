@@ -186,6 +186,8 @@ struct Renderable {
 
 	virtual Renderable* GetR() = 0;
 
+	bool BuiltPredefined = false; //TODO: built objects is seperate option than built code
+
 	inline static std::array<float, 4> CLEAR_COLOR = std::array<float, 4> {0.1f, 0.5f, 0.1f, 1.0f};
 
 	inline static int BLOCK_SIZE = 8;

@@ -15,6 +15,7 @@
 using namespace DirectX;
 
 struct ResourceObjectBaseDX12;
+struct MainDX12Objects;
 
 struct PipelineObjectIntermediateStateDX12 {
 
@@ -27,6 +28,7 @@ struct PipelineObjectIntermediateStateDX12 {
         uint32_t DimZ;
     };
 
+    
 
 
     inline static ID3D12Resource* SelectedFinalRTV = nullptr;
@@ -60,16 +62,8 @@ struct PipelineObjectIntermediateStateDX12 {
     std::function<void()> ToRunLogic; //loops through code logic to run
 
 
-    void PrepComputeShader() {
-        defaultComputePipelineStateDescV.resize(Compute.size());
-        for (int i = 0; i < defaultComputePipelineStateDescV.size(); i++) {
-            defaultComputePipelineStateDescV[i] = {};
-            defaultComputePipelineStateDescV[i].NodeMask = 0;
-            defaultComputePipelineStateDescV[i].pRootSignature = MainDX12Objects::obj->defaultRootSig.Get();
-            defaultComputePipelineStateDescV[i].CS = *Compute[i].CDat;
-            defaultComputePipelineStateDescV[i].Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-        }
-    }
+    void PrepComputeShader();
+     
     void SetToDebug() {
 
         for (int i = 0; i < defaultComputePipelineStateDescV.size(); i++) {
@@ -80,6 +74,11 @@ struct PipelineObjectIntermediateStateDX12 {
 };
 
 struct MainDX12Objects : Renderable{
+
+    CameraManagerD3D12* CAM_S;
+
+
+    inline static MainDX12Objects* obj;
 
     D3D12_BLEND_DESC MakeBlend(BlendTypeMapMadeData& BlendToMake) {
         D3D12_BLEND_DESC blend = {};
@@ -121,7 +120,7 @@ struct MainDX12Objects : Renderable{
             depthStencilStateDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP(StencilToMake.BackFaceStencilDepthFailOp);
             depthStencilStateDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP(StencilToMake.BackFaceStencilPassOp);
             depthStencilStateDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC(StencilToMake.BackTriComp);
-
+            return depthStencilStateDesc;
         }
 
     D3D12_RASTERIZER_DESC MakeRaster(RasterTypeMapMadeData& RasterToMake) {
@@ -143,7 +142,6 @@ struct MainDX12Objects : Renderable{
 
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
     
-    inline static MainDX12Objects* obj;
 
     //ComPtr<ID3D11On12Device2> dx11OnDx12Device;
 
@@ -197,13 +195,13 @@ struct MainDX12Objects : Renderable{
     FrameContext FrameC[FrameCount];
     ComPtr<ID3D12CommandQueue> m_commandQueue;
 
-    
-
     D3D12_DESCRIPTOR_HEAP_DESC descHeapConSrvUav;
     ComPtr<ID3D12DescriptorHeap> HeapConSrvUav;
     int BlockedOffSetForConHeapStart = 0;
     int BlockedOffSetForSrvHeapStart = 0;
     int BlockedOffSetForUavHeapStart = 0;
+
+
 
     D3D12_CPU_DESCRIPTOR_HANDLE ResolveConBufLocation(int registerNum) {
         D3D12_CPU_DESCRIPTOR_HANDLE tmp;
@@ -257,14 +255,14 @@ struct MainDX12Objects : Renderable{
         UavDescRange,
         ConDescRange,
         SampDescRange,
-
+        COUNT_DescRange
     };
 
     enum {
 
         SrvUavConRootParam = 0,
-        SampRootParam = 0,
-
+        SampRootParam,
+        COUNT_RootParam,
     };
 
     std::vector<D3D12_DESCRIPTOR_RANGE> defaultDescRangeBlock;
@@ -411,9 +409,13 @@ struct MainDX12Objects : Renderable{
         swapChainDescW.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDescW.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
         swapChainDescW.Scaling = DXGI_SCALING_NONE;
-
         swapChainDescF.Scaling = DXGI_MODE_SCALING_STRETCHED;
-        swapChainDescF.RefreshRate = refreshRateStatic;
+        
+        DXGI_RATIONAL tmpRational;
+        tmpRational.Numerator = refreshRateStatic.Numerator;
+        tmpRational.Denominator = refreshRateStatic.Denominator;
+
+        swapChainDescF.RefreshRate = tmpRational;
         swapChainDescF.Windowed = !bFullScreen;
 
         ComPtr<IDXGISwapChain1> swapChain;
@@ -423,6 +425,17 @@ struct MainDX12Objects : Renderable{
         swapChain.As(&m_swapChain);
 
         ThrowFailed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER)); //I want to allow toggle of fullscreen and windowed mode
+
+        
+        ThrowFailed(dxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+           
+        m_fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        if (m_fenceEvent == NULL)
+            throw("fence event not made");
+
+        m_swapChain->SetMaximumFrameLatency(FrameCount);
+        m_swapChainWaitableObject = m_swapChain->GetFrameLatencyWaitableObject();
+
 
         m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
@@ -447,22 +460,7 @@ struct MainDX12Objects : Renderable{
 
             }
         }
-        for (int i = 0; i < FrameCount; i++)
-            ThrowFailed(dxDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
-
-        ThrowFailed(dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[0].commandAllocator, NULL, IID_PPV_ARGS(&defaultCommandList)));
-
-        ThrowFailed(defaultCommandList->Close());
-
-        ThrowFailed(dxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-           
-        m_fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-        if (m_fenceEvent == NULL)
-            throw("fence event not made");
-
-        m_swapChain->SetMaximumFrameLatency(FrameCount);
-        m_swapChainWaitableObject = m_swapChain->GetFrameLatencyWaitableObject();
-
+        
         MakeImGUIHeap();
         CreateRenderTarget();
     }
@@ -488,9 +486,23 @@ struct MainDX12Objects : Renderable{
 
     }
 
+    void defaultCommandAllocatorAndList() {
+
+        for (int i = 0; i < FrameCount; i++)
+            ThrowFailed(dxDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&FrameC[i].commandAllocator)));
+
+        ThrowFailed(dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, FrameC[0].commandAllocator, NULL, IID_PPV_ARGS(&defaultCommandList)));
+
+        //ThrowFailed(defaultCommandList->Close());
+
+    }
+    
     void defaultDescriptorTableRanges() {
-        defaultDescRangeBlock.resize(4);
-        defaultRootParam.resize(2);
+
+
+        defaultDescRangeBlock.resize(COUNT_DescRange);
+        defaultDescTable.resize(COUNT_RootParam);
+        defaultRootParam.resize(COUNT_RootParam);
 
         defaultDescRangeBlock[SrvDescRange].BaseShaderRegister = RegisterMaps::INITIAL_SRV;
         defaultDescRangeBlock[SrvDescRange].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -568,15 +580,22 @@ struct MainDX12Objects : Renderable{
         defaultCommandList->SetGraphicsRootSignature(defaultRootSig.Get());
         
     }
+
+    void MakeAndSetCam() {
+        CAM_S = new CameraManagerD3D12(dxDevice.Get(), dxDeviceContext.Get(), &dxViewport);
+        CAM = CAM_S;
+    }
     
 	void RendererStartUpLogic() override{
         SetupRendererDebugLayer();
         SetupDXAdapterAndQueue();
         GetDescHandleIncrements();
 
+        defaultCommandAllocatorAndList();
         defaultDescriptorTableRanges();
         defaultRootSigConstruction();
 
+        MakeAndSetCam();
     }
 
     FrameContext* WaitForNextFrameResources() {
@@ -653,4 +672,14 @@ struct MainDX12Objects : Renderable{
     
 };
 
+void PipelineObjectIntermediateStateDX12::PrepComputeShader(){
+    defaultComputePipelineStateDescV.resize(Compute.size());
+    for (int i = 0; i < defaultComputePipelineStateDescV.size(); i++) {
+        defaultComputePipelineStateDescV[i] = {};
+        defaultComputePipelineStateDescV[i].NodeMask = 0;
+        defaultComputePipelineStateDescV[i].pRootSignature = MainDX12Objects::obj->defaultRootSig.Get();
+        defaultComputePipelineStateDescV[i].CS = *Compute[i].CDat;
+        defaultComputePipelineStateDescV[i].Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+    }
+}
 #endif

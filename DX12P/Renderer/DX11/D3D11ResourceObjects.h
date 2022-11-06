@@ -1029,7 +1029,7 @@ struct ResourceObjectBaseDX11 : ResourceObjectBase {
 
 	}
 
-	void PreBuildLogic() {
+	void PreBuildLogic(bool Startup) {
 
 	}
 };

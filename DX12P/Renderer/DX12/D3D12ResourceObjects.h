@@ -572,6 +572,7 @@ struct ModelToRendererDX12 : ModelToRenderer_Base{
 		else if (data->Type >-1 && data->Type<StaticObjectPass.size()) {
 			Model = new DX12M3DR(data->tmpM3DR);
 		}
+		//Model->SET_MODEL_BUFFER_LOCATIONS(MainDX12Objects::obj->ResolveConBufLocation(6), MainDX12Objects::obj->ResolveSrvBufLocation(0), MainDX12Objects::obj->ResolveUavBufLocation(0), MainDX12Objects::obj->ResolveSampBufLocation(0));
 #ifdef GET_OBJECT_STATIC
 		OutputStringToFileForCopyPata(&Model);
 #endif
@@ -589,7 +590,7 @@ struct PredefinedToRendererDX12 : PredefinedToRenderer_Base{
 	D3D12_CPU_DESCRIPTOR_HANDLE CDataDesc = {};
 
 	PredefinedToRendererDX12(BuiltPredefined_c* data) {
-		
+		CDataDesc = MainDX12Objects::obj->ResolveConBufLocation(cb_num);
 		DX12M3DR::CreateCBufDepth1(CData, CDataDesc, sizeof(CONST_DATA_PASS_c), MainDX12Objects::obj->dxDevice);
 
 		D3D12_BOX box = {};
@@ -836,8 +837,8 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		ConstantData.clear();
 	}
 	void ClearAllObjects(bool fullClean) override{
-		SafeRelease(MainDX12Objects::obj->descHeapConSrvUav);
-		SafeRelease(MainDX12Objects::obj->descHeapSamp);
+		//SafeRelease(MainDX12Objects::obj->descHeapConSrvUav);
+		//SafeRelease(MainDX12Objects::obj->descHeapSamp);
 
 
 		//MainDX12Objects::obj->Heaps.CONHeapRef.clear();
@@ -886,124 +887,34 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		}
 	}
 	void PrefillCommandList(PipelineObjectIntermediateStateDX12** item) {
-		(*item)->cmdLists.push_back(ComPtr<ID3D12GraphicsCommandList>());
-		ComPtr<ID3D12GraphicsCommandList>& tmpCmdList = (*item)->cmdLists[(*item)->cmdLists.size() - 1];
 		
 		if (!(*item)->PObj->ComputeOnlyToggle) {
 
+			(*item)->cmdLists.push_back(ComPtr<ID3D12GraphicsCommandList>());
+			ComPtr<ID3D12GraphicsCommandList>& tmpCmdList = (*item)->cmdLists[(*item)->cmdLists.size() - 1];
+
 			tmpCmdList->SetGraphicsRootSignature(MainDX12Objects::obj->defaultRootSig.Get());
-			tmpCmdList->OMSetRenderTargets(1, RTVData[(*item)->RTV_Num]->rtv.ptr);
+			tmpCmdList->OMSetRenderTargets(1, &RTVData[(*item)->RTV_Num]->rtv, true, &DEPTHData[(*item)->DEPTH_Num]->dsv);
 		}
 		if (!(*item)->PObj->TurnComputeOffToggle) {
-			tmpCmdList->SetComputeRootSignature(MainDX12Objects::obj->defaultRootSig.Get());
+			for (int i = 0; i < (*item)->Compute.size(); i++) {
+				(*item)->cmdLists.push_back(ComPtr<ID3D12GraphicsCommandList>());
+				ComPtr<ID3D12GraphicsCommandList>& tmpCmdList = (*item)->cmdLists[(*item)->cmdLists.size() - 1];
 
+				tmpCmdList->SetComputeRootSignature(MainDX12Objects::obj->defaultRootSig.Get());
 
+			}
 		}
 
 	}
 
-	/*
+	
 	void RunLogic(PipelineObjectIntermediateStateDX12** item) {
 		if ((*item)->PObj->On) {
-			//TODO, make run logic, then make code output in order
-			
-			MainDX12Objects::obj->defaultCommandList.Reset();
-
-
-			MainDX11Objects::obj->dxDeviceContext->OMSetRenderTargets(1, RTVData[(*item)->RTV_Num]->rtv.GetAddressOf(), DEPTHData[(*item)->DEPTH_Num]->dsv.Get());
-
-			if (!(*item)->PObj->ComputeOnlyToggle) {
-				MainDX11Objects::obj->MakeBlend((*item)->PObj->Vertex.BlendToMake);
-				ID3D11BlendState* bss = MainDX11Objects::obj->BlendObjects[(*item)->PObj->Vertex.BlendToMake].Get();
-				if (MainDX11Objects::obj->TestForOptimize.BlendObject != bss || MainDX11Objects::obj->TestForOptimize.BlendFactor != (*item)->PObj->Vertex.BlendFactor) {
-					MainDX11Objects::obj->dxDeviceContext->OMSetBlendState(bss, &(*item)->PObj->Vertex.BlendFactor[0], 0xffffffff);
-					MainDX11Objects::obj->TestForOptimize.BlendObject = bss;
-					MainDX11Objects::obj->TestForOptimize.BlendFactor = (*item)->PObj->Vertex.BlendFactor;
-				}
-				ID3D11RasterizerState* rss = MainDX11Objects::obj->RasterObjects[(*item)->PObj->Vertex.RasterToMake].Get();
-				if (MainDX11Objects::obj->TestForOptimize.RasterObject != rss) {
-					MainDX11Objects::obj->dxDeviceContext->RSSetState(rss);
-					MainDX11Objects::obj->TestForOptimize.RasterObject = rss;
-				}
-
-				ID3D11DepthStencilState** dss = MainDX11Objects::obj->DepthStencilObjects[(*item)->PObj->Vertex.StencilToMake].GetAddressOf();
-				if (MainDX11Objects::obj->TestForOptimize.DepthStencilObject != *dss) {
-					MainDX11Objects::obj->dxDeviceContext->OMGetDepthStencilState(dss, &MainDX11Objects::obj->REF_FOR_DEPTH_STENCIL);
-					MainDX11Objects::obj->TestForOptimize.DepthStencilObject = *dss;
-				}
-
-				if (MainDX11Objects::obj->TestForOptimize.VertexShader != (*item)->VDat) {
-					MainDX11Objects::obj->dxDeviceContext->VSSetShader((*item)->VDat, NULL, NULL);
-					MainDX11Objects::obj->TestForOptimize.VertexShader = (*item)->VDat;
-				}
-
-				if (MainDX11Objects::obj->TestForOptimize.PixelShader != (*item)->PDat) {
-					MainDX11Objects::obj->dxDeviceContext->PSSetShader((*item)->PDat, NULL, NULL);
-					MainDX11Objects::obj->TestForOptimize.PixelShader = (*item)->PDat;
-				}
-
-				if ((*item)->PObj->Vertex.Vdata.size() != 0) {
-
-					DX12M3DR* Model = (DX12M3DR*)((DX12M3DR*)((*item)->PObj->Vertex.RawModel));
-					MainDX11Objects::obj->dxDeviceContext->PSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
-					MainDX11Objects::obj->dxDeviceContext->VSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
-					MainDX11Objects::obj->dxDeviceContext->CSSetSamplers(0, 1, Model->Sampler.GetAddressOf());
-
-					for (int i = 0; i < (*item)->PObj->Vertex.Vdata.size(); i++) {
-
-						if (MainDX11Objects::obj->TestForOptimize.Model != (*item)->PObj->Vertex.Vdata[i]) {
-							MainDX11Objects::obj->dxDeviceContext->VSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
-							MainDX11Objects::obj->dxDeviceContext->PSSetConstantBuffers(6, 1, ((ID3D11Buffer**)&(*item)->PObj->Vertex.MatInfo[i]));
-							BindModelData( Model, i );
-
-							MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&(*item)->PObj->Vertex.Vdata[i], &(*item)->PObj->Vertex.VertexStride, &OffsetDef);
-							MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer((ID3D11Buffer*)((*item)->PObj->Vertex.Idata[i]), DXGI_FORMAT_R32_UINT, OffsetDef);
-							MainDX11Objects::obj->dxDeviceContext->DrawIndexed((*item)->PObj->Vertex.Icount[i], 0, 0);
-
-							MainDX11Objects::obj->TestForOptimize.Model = (*item)->PObj->Vertex.Vdata[i];
-						}
-					}
-
-				}
-				else {
-					//run if no vertex data load default cube
-					DX11M3DR* tmpC = GetD3D11Cube();
-					void* tmpAddress = (void*)tmpC->VBuf[0].Get();
-					if (MainDX11Objects::obj->TestForOptimize.Model != tmpAddress) {
-						MainDX11Objects::obj->dxDeviceContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&tmpAddress, &tmpC->VertexStride, &OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->IASetIndexBuffer(tmpC->IBuf[0].Get(), DXGI_FORMAT_R32_UINT, OffsetDef);
-						MainDX11Objects::obj->dxDeviceContext->DrawIndexed(tmpC->Indice[0].size(), 0, 0);
-
-						MainDX11Objects::obj->TestForOptimize.Model = tmpAddress;
-					}
-
-				}
-			}
-			//
-			MainDX11Objects::obj->SetNullRTVandDEPTH();
-
-			if (!(*item)->PObj->TurnComputeOffToggle) {
-
-				for (int i = 0; i < (*item)->Compute.size(); i++) {
-					if (MainDX11Objects::obj->TestForOptimize.ComputeShader != (*item)->Compute[i].CDat) {
-						MainDX11Objects::obj->dxDeviceContext->CSSetShader((*item)->Compute[i].CDat, NULL, NULL);
-						MainDX11Objects::obj->TestForOptimize.ComputeShader = (*item)->Compute[i].CDat;
-					}
-					if ((*item)->Compute[i].AutoSetBlockToWindowSize == false) {
-						MainDX11Objects::obj->dxDeviceContext->Dispatch((*item)->Compute[i].DimX, (*item)->Compute[i].DimY, (*item)->Compute[i].DimZ);
-					}
-					else {
-						MainDX11Objects::obj->dxDeviceContext->Dispatch(int(MainDX11Objects::obj->MainWidth/ Renderable::BLOCK_X), int(MainDX11Objects::obj->MainHeight/Renderable::BLOCK_Y), 1);
-					}
-					
-				}
-
-			
-			}
-
+			//TODO: run command lists
 		}
 	}
-	*/
+	
 	int SizeOfRTV() {
 		return RTVData.size();
 	}
@@ -1116,7 +1027,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		(*item)->defaultGraphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		(*item)->defaultGraphicsPipelineStateDesc.PS = *(*item)->PDat;
 		(*item)->defaultGraphicsPipelineStateDesc.RasterizerState = MainDX12Objects::obj->MakeRaster((*item)->PObj->Vertex.RasterToMake);
-		(*item)->defaultGraphicsPipelineStateDesc.RTVFormats = DXGI_FORMAT_R8G8B8A8_UNORM;
+		(*item)->defaultGraphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		//MainDX12Objects::obj->defaultGraphicsPipelineStateDesc.StreamOutput = NULL;
 		(*item)->defaultGraphicsPipelineStateDesc.VS = *(*item)->VDat;
 
@@ -1144,9 +1055,9 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 	}
 
 	template<class T> 
-	void ClearShaderMap(std::unordered_map<std::string,T>& map) {
+	void ClearShaderMap(std::unordered_map<std::string,T*>& map) {
 		for (const auto& i : map) {
-			if (i.second != nullptr) i.second->Release();
+			if (i.second != nullptr) delete i.second;
 		}
 		map.clear();
 	}
@@ -1273,7 +1184,8 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		}
 	}
 
-	void PreBuildLogic() {
+	void PreBuildLogic(bool Startup) {
+		
 
 		MainDX12Objects::obj->descHeapSamp.NumDescriptors = RegisterMaps::S_R.size() - RegisterMaps::INITIAL_SAMP;
 
@@ -1286,7 +1198,7 @@ struct ResourceObjectBaseDX12 : ResourceObjectBase {
 		MainDX12Objects::obj->BlockedOffSetForUavHeapStart = MainDX12Objects::obj->BlockedOffSetForConHeapStart + MainDX12Objects::obj->m_SRV_CON_UAV_IS * (RegisterMaps::CB_R.size() - RegisterMaps::INITIAL_CB);
 
 		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&MainDX12Objects::obj->descHeapSamp, __uuidof(MainDX12Objects::obj->HeapSamp), (void**)MainDX12Objects::obj->HeapSamp.GetAddressOf());
-		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&MainDX12Objects::obj->descHeapSamp, __uuidof(MainDX12Objects::obj->HeapConSrvUav), (void**)MainDX12Objects::obj->HeapConSrvUav.GetAddressOf());
+		MainDX12Objects::obj->dxDevice->CreateDescriptorHeap(&MainDX12Objects::obj->descHeapConSrvUav, __uuidof(MainDX12Objects::obj->HeapConSrvUav), (void**)MainDX12Objects::obj->HeapConSrvUav.GetAddressOf());
 
 		
 

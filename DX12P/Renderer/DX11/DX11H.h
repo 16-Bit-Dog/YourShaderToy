@@ -383,7 +383,7 @@ struct MainDX11Objects : Renderable{
 
         MainWidthR = &sWidth;
         MainHeightR = &sHeight;
-
+        d
         CreateSwapChainAndAssociate(DXGI_FORMAT_R8G8B8A8_UNORM);
 
         D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc;

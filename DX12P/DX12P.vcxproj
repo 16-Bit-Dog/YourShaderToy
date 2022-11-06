@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="CameraManager\CamManager.h" />
     <ClInclude Include="CameraManager\CamManagerD3D11.h" />
+    <ClInclude Include="CameraManager\CamManagerD3D12.h" />
     <ClInclude Include="ImageLib\stb_image.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialog.h" />
     <ClInclude Include="imGUI\ImGUIFileDialog\ImGuiFileDialogConfig.h" />

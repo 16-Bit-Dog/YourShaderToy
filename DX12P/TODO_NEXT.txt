@@ -1,4 +1,6 @@
-
+do cam manager d3d12, make its own heap once for ever
+Allocate a new heap for CON, SRV, and UAV for model 3ddx12obj.h, also make samp heap
+I may need to set GPU desc location as well* for all code
 
 pre allocate command lists func, and run through these lists with ToRunLogic binding RunLogic (clean when remake shaders)
 

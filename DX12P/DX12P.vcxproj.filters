@@ -278,5 +278,8 @@
     <ClInclude Include="rendererDefines.h">
       <Filter>Header Files\Renderer\GlobalResourceAndRenderable</Filter>
     </ClInclude>
+    <ClInclude Include="CameraManager\CamManagerD3D12.h">
+      <Filter>Header Files\CamManager</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -41,17 +41,12 @@ struct DX12M3DR : M3DR{
 
 	static void CreateCBufDepth1(ComPtr<ID3D12Resource>& resource, D3D12_CPU_DESCRIPTOR_HANDLE& resourceCpuDesc, int size, ComPtr<ID3D12Device>& dxDevice) {
 
-		D3D12_CLEAR_VALUE CV = {};
-		CV.Format = DXGI_FORMAT_UNKNOWN;
-		CV.Color[0] = 0.0f;
-		CV.Color[1] = 0.0f;
-		CV.Color[2] = 0.0f;
-		CV.Color[3] = 1.0f;
-
 		D3D12_RESOURCE_DESC gpuTexDesc;
 		ZeroMemory(&gpuTexDesc, sizeof(D3D12_RESOURCE_DESC));
 		gpuTexDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		gpuTexDesc.Format = DXGI_FORMAT_UNKNOWN;
+		gpuTexDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
 
 		gpuTexDesc.Width = size;
 		gpuTexDesc.Height = 1;
@@ -63,10 +58,10 @@ struct DX12M3DR : M3DR{
 		gpuTexDesc.SampleDesc.Count = 1;
 		gpuTexDesc.SampleDesc.Quality = 0;
 
-		D3D12_HEAP_PROPERTIES heapP;
+		D3D12_HEAP_PROPERTIES heapP {};
 		heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
-		heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
-		heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+		heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 		heapP.CreationNodeMask = 0;
 		heapP.VisibleNodeMask = 0;
 
@@ -80,7 +75,7 @@ struct DX12M3DR : M3DR{
 			heapF,
 			&gpuTexDesc,
 			Rstate,
-			&CV,
+			NULL,
 			//&defaultResourceData,
 			__uuidof(resource), &resource);
 
@@ -109,6 +104,13 @@ struct DX12M3DR : M3DR{
 		std::array<D3D12_CPU_DESCRIPTOR_HANDLE, TEX_COUNT > TexUAV;
 		std::array <ComPtr<ID3D12Resource>, TEX_COUNT> TexR;
 	
+		void LoadLocationIntoTextureObject(UINT SRV_BASE_LOC, UINT UAV_BASE_LOC) {
+			for (int i = 0; i < TEX_COUNT; i++) {
+				TexSRV[i].ptr = SRV_BASE_LOC + DX12M3DR::m_CON_SRV_UAV_IS * i;
+				TexUAV[i].ptr = UAV_BASE_LOC + DX12M3DR::m_CON_SRV_UAV_IS * i;
+			}
+		}
+
 		void Load_Texture(int num, MaterialDataNamePair& mdnp) {
 			
 			D3D12_SUBRESOURCE_DATA defaultResourceData;
@@ -143,10 +145,10 @@ struct DX12M3DR : M3DR{
 			SRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //
 			SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-			D3D12_HEAP_PROPERTIES heapP;
+			D3D12_HEAP_PROPERTIES heapP{};
 			heapP.Type = D3D12_HEAP_TYPE_DEFAULT;
-			heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
-			heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_L1;
+			heapP.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+			heapP.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 			heapP.CreationNodeMask = 0;
 			heapP.VisibleNodeMask = 0;
 			
@@ -204,6 +206,7 @@ struct DX12M3DR : M3DR{
 		TexObj.resize(MatData.size());
 
 		for(int i = 0; i < MatData.size(); i++) {
+			TexObj[i].LoadLocationIntoTextureObject(m_FEED_SRV_LOCATION.ptr + (m_CON_SRV_UAV_IS * TEX_COUNT) * i, m_FEED_UAV_LOCATION.ptr + (m_CON_SRV_UAV_IS * TEX_COUNT)*i); //offset tex for new obj's
 			for (int ii = 0; ii < TEX_COUNT; ii++) {
 				if (MatData[i].TexOn[ii]){
 					TexObj[i].Load_Texture(ii, MatDataName[i].Tex[ii]);
@@ -222,14 +225,47 @@ struct DX12M3DR : M3DR{
 
 	inline static ComPtr<ID3D12Device> dxDevice;
 	inline static UINT m_RTV_IS;
-	inline static UINT m_SRV_IS;
+	inline static UINT m_CON_SRV_UAV_IS;
 	inline static UINT m_DSV_IS;
 	inline static UINT m_SAMP_IS;
 
+	D3D12_CPU_DESCRIPTOR_HANDLE m_FEED_CON_LOCATION{};
+	D3D12_CPU_DESCRIPTOR_HANDLE m_FEED_SRV_LOCATION{};
+	D3D12_CPU_DESCRIPTOR_HANDLE m_FEED_UAV_LOCATION{};
+	D3D12_CPU_DESCRIPTOR_HANDLE m_FEED_SAMP_LOCATION{};
+
+
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapConSrvUav;
+	ComPtr<ID3D12DescriptorHeap> HeapConSrvUav;
+
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapSamp;
+	ComPtr<ID3D12DescriptorHeap> HeapSamp;
+
+	void SET_AND_MAKE_HEAP_FOR_MODEL_BUFFER_LOCATIONS() {
+
+
+		descHeapConSrvUav.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		descHeapConSrvUav.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		descHeapConSrvUav.NodeMask = 0;
+
+		descHeapSamp.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+		descHeapSamp.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		descHeapSamp.NodeMask = 0;
+
+		ThrowFailed(dxDevice->CreateDescriptorHeap(&descHeapSamp, IID_PPV_ARGS(&HeapConSrvUav)));
+		ThrowFailed(dxDevice->CreateDescriptorHeap(&descHeapSamp, IID_PPV_ARGS(&HeapSamp)));
+
+		m_FEED_CON_LOCATION = HeapConSrvUav->GetCPUDescriptorHandleForHeapStart();//FEED_CON_LOCATION;
+		m_FEED_UAV_LOCATION.ptr = m_FEED_CON_LOCATION.ptr + m_CON_SRV_UAV_IS*(2 + MatData.size());//FEED_UAV_LOCATION;
+		m_FEED_SRV_LOCATION.ptr = m_FEED_UAV_LOCATION.ptr + TEX_COUNT * m_CON_SRV_UAV_IS * MatData.size();//FEED_SRV_LOCATION;
+		m_FEED_SAMP_LOCATION = HeapSamp->GetCPUDescriptorHandleForHeapStart();//FEED_SAMP_LOCATION;
+	}
+
 	inline static void SET_DX_CONTENT(ComPtr<ID3D12Device> dxDevice_tmp) {
+		
 		DX12M3DR::dxDevice = dxDevice_tmp.Get();
 		m_RTV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		m_SRV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_CON_SRV_UAV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_DSV_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		m_SAMP_IS = dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
@@ -237,8 +273,6 @@ struct DX12M3DR : M3DR{
 	D3D12_RENDER_TARGET_BLEND_DESC blendVal{};
 
 	std::vector<MaterialDX12> Mat = {};
-	
-	ComPtr<ID3D12DescriptorHeap> SamplerHeap;
 
 	D3D12_BLEND_DESC BlendState = {};
 
@@ -266,7 +300,7 @@ struct DX12M3DR : M3DR{
 		}
 
 		int size = sizeof(XMFLOAT4X4) * BoneDataTLMA.size();
-
+		ArmatureCBufCpuDesc.ptr = m_FEED_CON_LOCATION.ptr + m_CON_SRV_UAV_IS * MatData.size();
 		CreateCBufDepth1(ArmatureCBuf, ArmatureCBufCpuDesc, size, dxDevice);
 		
 		
@@ -290,7 +324,7 @@ struct DX12M3DR : M3DR{
 		}
 	}
 	void DefaultMatBuf(int i) {
-
+		Mat[i].CpuDesc.ptr = m_FEED_CON_LOCATION.ptr + m_CON_SRV_UAV_IS * i;
 		CreateCBufDepth1(Mat[i].MatDataBuf, Mat[i].CpuDesc, sizeof(MaterialData), dxDevice);
 
 		D3D12_BOX box = {};
@@ -330,7 +364,7 @@ struct DX12M3DR : M3DR{
 			SafeRelease(IBuf[i]);
 
 
-			D3D12_HEAP_PROPERTIES props;
+			D3D12_HEAP_PROPERTIES props{};
 			memset(&props, 0, sizeof(D3D12_HEAP_PROPERTIES));
 			props.Type = D3D12_HEAP_TYPE_UPLOAD;
 			props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -403,6 +437,7 @@ struct DX12M3DR : M3DR{
 		}
 	}
 	void DefaultCBuf() {
+		CBufCpuDesc.ptr = m_FEED_CON_LOCATION.ptr + m_CON_SRV_UAV_IS * MatData.size() + 1;
 		CreateCBufDepth1(CBuf, CBufCpuDesc, sizeof(MaterialData), dxDevice); 
 		
 		D3D12_BOX box = {};
@@ -420,14 +455,7 @@ struct DX12M3DR : M3DR{
 			1);
 	}
 	void DefaultSampler() {
-
 		
-		D3D12_DESCRIPTOR_HEAP_DESC samplerHDesc;
-		samplerHDesc.NumDescriptors = 1;
-		samplerHDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-		samplerHDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		
-		dxDevice->CreateDescriptorHeap(&samplerHDesc, IID_PPV_ARGS(&SamplerHeap));
 		D3D12_SAMPLER_DESC samplerDesc;
 
 		samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_WRAP };
@@ -442,7 +470,7 @@ struct DX12M3DR : M3DR{
 		samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE{ D3D12_TEXTURE_ADDRESS_MODE_MIRROR };
 		
 		
-		dxDevice->CreateSampler(&samplerDesc, SamplerHeap->GetCPUDescriptorHandleForHeapStart());
+		dxDevice->CreateSampler(&samplerDesc, m_FEED_SAMP_LOCATION);
 	}
 
 	void SetupBlendStateDefault() {
@@ -472,6 +500,8 @@ struct DX12M3DR : M3DR{
 	}
 
 	DX12M3DR(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
+		SET_AND_MAKE_HEAP_FOR_MODEL_BUFFER_LOCATIONS();
+
 		LoadVertexVectorBased(V, ClearPtr, ScaleVertex_t);
 
 		//DX11 Specific
@@ -480,7 +510,8 @@ struct DX12M3DR : M3DR{
 
 	}
 	DX12M3DR(const std::string& path = "", float ScaleVertex_t = 1.0f) {
-		LoadPathBased(path, ScaleVertex_t);
+		
+		LoadPathBased(path, ScaleVertex_t, [&] {SET_AND_MAKE_HEAP_FOR_MODEL_BUFFER_LOCATIONS(); });
 
 		//DX11 Specific
 

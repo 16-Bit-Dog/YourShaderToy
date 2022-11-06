@@ -427,7 +427,7 @@ struct ResourceObjectBase {
 	
 	virtual void SetDataToPipelineVertex(BuiltModel_c* data, VertexShaderPipeline& vp) = 0;
 	
-	virtual void PreBuildLogic() = 0;
+	virtual void PreBuildLogic(bool Startup = true) = 0;
 
 
 	~ResourceObjectBase() {

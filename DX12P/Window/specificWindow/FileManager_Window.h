@@ -664,9 +664,10 @@ struct MASTER_FileManager : MASTER_Function_Inherit {
 	}
 
 	void PredefinedUpdaterAuto() {
-		if (BuiltPredefined == false) {
+
+		if (Renderable::DXM->BuiltPredefined == false) {
 			BuildAllDefaults();
-			BuiltPredefined = true;
+			Renderable::DXM->BuiltPredefined = true;
 		}
 		else {
 			UpdateDefaults();

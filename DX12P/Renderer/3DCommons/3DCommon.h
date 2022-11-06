@@ -11,7 +11,7 @@
 #include <array>
 #include "stb_image.h"
 #include "filesystem"
-
+#include <functional>
 using namespace DirectX;
 
 
@@ -889,7 +889,7 @@ struct M3DR : MaterialEnum { //model Resource data only
 
 		out = path.substr(0, counter);
 	}
-	void LoadFBXFileWithVertex(const std::string& path) {
+	void LoadFBXFileWithVertex(const std::string& path, std::function<void()> MaterialPostVertexLoadPreData) {
 		FilePath = path;
 		
 		CropPathToGetDir(FilePath, DirPath);
@@ -897,6 +897,9 @@ struct M3DR : MaterialEnum { //model Resource data only
 		LoadFBXFile(path);
 
 		VertexPostProcess();
+		
+		if(MaterialPostVertexLoadPreData != NULL)
+			MaterialPostVertexLoadPreData();
 
 		SetAllBonesChildren();
 		SetAllBonesParent();
@@ -914,10 +917,10 @@ struct M3DR : MaterialEnum { //model Resource data only
 		FillTopBones();
 	}
 
-	void LoadPathBased(const std::string& path = "", float ScaleVertex_t = 1.0f) {
+	void LoadPathBased(const std::string& path = "", float ScaleVertex_t = 1.0f, std::function<void()> MaterialPostVertexLoadPreData = NULL) {
 		ScaleVertex = ScaleVertex_t;
 		VertexStride = sizeof(VNT);
-		if (path != "") LoadFBXFileWithVertex(path);
+		if (path != "") LoadFBXFileWithVertex(path, MaterialPostVertexLoadPreData);
 		else std::cout << "no file at path";
 	}
 	void LoadVertexVectorBased(std::vector<VNT>* V, bool ClearPtr = true, float ScaleVertex_t = 1.0f) {
